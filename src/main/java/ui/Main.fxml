@@ -238,6 +238,11 @@
               </items>
             </Menu>
             <Menu fx:id="menuColourThemes" mnemonicParsing="false" text="Colour Themes" />
+            <Menu mnemonicParsing="false" text="Help">
+              <items>
+                <MenuItem mnemonicParsing="false" onAction="#showAbout" text="About" />
+              </items>
+            </Menu>
         </menus>
       </MenuBar>
    </top>

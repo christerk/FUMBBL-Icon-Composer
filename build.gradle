@@ -35,9 +35,16 @@ sourceSets {
 	main {
 		resources {
 			srcDirs = ["src/main/java"]
-			includes = ["ui/*.fxml", "ui/*.css"]
+			includes = ["ui/*.fxml", "ui/*.css", "ui/LICENSE-3RD-PARTY"]
 		}
 	}
 }
+
+task copyLicenseFile(type: Copy) {
+	from 'LICENSE-3RD-PARTY'
+	into 'src/main/java/ui'
+}
+
+compileJava.dependsOn(copyLicenseFile)
 
 mainClassName = "com.fumbbl.iconcomposer.Main"

@@ -316,6 +316,10 @@ public class MainController extends BaseController implements Initializable {
 		controller.getStageManager().show(StageType.newDiagram);
 	}
 	
+	public void showAbout() {
+		controller.getStageManager().show(StageType.about);
+	}
+	
 	/*
 	 *   Update Methods
 	 */

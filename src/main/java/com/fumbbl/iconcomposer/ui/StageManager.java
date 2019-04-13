@@ -5,6 +5,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 
+import com.fumbbl.iconcomposer.controllers.BaseController;
 import com.fumbbl.iconcomposer.controllers.Controller;
 import com.fumbbl.iconcomposer.controllers.ControllerManager;
 import com.fumbbl.iconcomposer.model.Model;
@@ -22,13 +23,18 @@ public class StageManager {
 		stages.put(StageType.prefs, new PrefsStage());
 		stages.put(StageType.openRoster, new OpenRosterStage());
 		stages.put(StageType.newDiagram, new NewDiagramStage());
+		stages.put(StageType.about, new AboutStage());
+		stages.put(StageType.licenses, new LicenseStage());
 		
 		for (Entry<StageType, BaseStage> entry: stages.entrySet()) {
 			StageType type = entry.getKey();
 			BaseStage stage = entry.getValue();
 			stage.applyTheme();
 			stage.setMainController(controller);
-			controllerManager.registerController(type, stage.getController());
+			BaseController ctrl = stage.getController();
+			if (ctrl != null) {
+				controllerManager.registerController(type, ctrl);
+			}
 		}
 	}
 	

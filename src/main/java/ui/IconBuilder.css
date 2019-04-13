@@ -68,6 +68,10 @@
 	-fx-background-radius: 5;
 }
 
+.text-area {
+	-fx-background-color: transparent;
+}
+
 .bordered-pane {
 	-fx-border-width: 0;
 }
@@ -141,6 +145,16 @@
 	-fx-background-color: -fx-accent;
 	-fx-background-radius: 5;
 }
+
+.hyperlink {
+	-fx-border-width: 0;
+}
+
+.hyperlink:visited {
+	-fx-text-fill: -fx-accent;
+	-fx-underline: false;
+}
+
 
 .scroll-bar {
 	-fx-background-color: -fx-base;
