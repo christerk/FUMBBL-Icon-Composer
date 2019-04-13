@@ -35,7 +35,7 @@ sourceSets {
 	main {
 		resources {
 			srcDirs = ["src/main/java"]
-			includes = ["ui/*.fxml", "ui/*.css", "ui/LICENSE-3RD-PARTY"]
+			includes = ["ui/*.fxml", "ui/*.css", "ui/Icon*.png", "ui/LICENSE-3RD-PARTY"]
 		}
 	}
 }
