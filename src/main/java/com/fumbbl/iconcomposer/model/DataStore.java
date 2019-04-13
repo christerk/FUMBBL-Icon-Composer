@@ -152,6 +152,12 @@ public class DataStore {
 	public Collection<Slot> getSlots() {
 		return spine.slots;
 	}
+	
+	public void clearSlots() {
+		if (spine.slots != null) {
+			spine.slots.clear();
+		}
+	}
 
 	/*
 	 * Bone

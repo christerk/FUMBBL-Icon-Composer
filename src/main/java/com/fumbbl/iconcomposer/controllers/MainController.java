@@ -161,6 +161,7 @@ public class MainController extends BaseController implements Initializable {
 				if (newValue != null) {
 					diagramList.getItems().clear();
 					skinList.getItems().clear();
+					slotList.getItems().clear();
 					skeletonList.getItems().clear();
 					skeletonPane.setText("Skeletons");
 					
@@ -425,8 +426,14 @@ public class MainController extends BaseController implements Initializable {
 	}
 
 	public void onPositionsChanged(Collection<DtoPosition> positions) {
-		ObservableList<DtoPosition> items = positionList.getItems();
-		items.setAll(positions);
+		skinList.getItems().clear();
+		diagramList.getItems().clear();
+		slotList.getItems().clear();
+		skeletonList.getItems().clear();
+		skeletonPane.setText("Skeletons");
+		positionPane.setText("Positions");
+		
+		positionList.getItems().setAll(positions);
 		positionPane.setExpanded(true);
 	}
 

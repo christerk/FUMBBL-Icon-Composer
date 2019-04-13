@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <?import javafx.geometry.Insets?>
+<?import javafx.geometry.Rectangle2D?>
 <?import javafx.scene.control.Accordion?>
 <?import javafx.scene.control.ChoiceBox?>
 <?import javafx.scene.control.Label?>
@@ -74,7 +75,13 @@
                         <ImageView fx:id="imageView" fitHeight="480.0" fitWidth="480.0" onMouseClicked="#imageClicked" pickOnBounds="true" preserveRatio="true">
                            <effect>
                               <DropShadow color="#0000006a" height="43.74" radius="20.6275" spread="0.31" width="40.77" />
-                           </effect></ImageView>
+                           </effect>
+                           <VBox.margin>
+                              <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
+                           </VBox.margin>
+                           <viewport>
+                              <Rectangle2D height="480.0" width="480.0" />
+                           </viewport></ImageView>
                         <GridPane fx:id="colourPane" hgap="5.0" vgap="5.0">
                           <columnConstraints>
                             <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" prefWidth="100.0" />

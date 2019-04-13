@@ -118,6 +118,11 @@ public class Model {
 	}
 
 	public void loadRoster(int rosterId) {
+		dataStore.clearSkeletons();
+		dataStore.clearDiagrams();
+		dataStore.clearSkins();
+		dataStore.clearSlots();
+		
 		roster = dataLoader.getRoster(rosterId);
 		controller.onPositionsChanged(roster.positions);
 	}
