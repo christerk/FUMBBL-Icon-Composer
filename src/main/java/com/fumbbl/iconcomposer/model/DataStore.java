@@ -94,6 +94,10 @@ public class DataStore {
 		return diagrams.values();
 	}
 
+	public void clearDiagrams() {
+		diagrams.clear();
+	}
+	
 	/*
 	 * Skin
 	 */
@@ -139,6 +143,10 @@ public class DataStore {
 
 	public Slot getSlot(int slotId) {
 		return spine.getSlot(slotId);
+	}
+
+	public Slot getSlot(String slotName) {
+		return spine.getSlot(slotName);
 	}
 
 	public Collection<Slot> getSlots() {

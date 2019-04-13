@@ -5,11 +5,13 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
-public class Skeleton {
+import com.fumbbl.iconcomposer.controllers.NamedItem;
+
+public class Skeleton implements NamedItem {
 	public int id;
 	public String name;
 	public String owner;
-	
+
 	private Map<String,Bone> bones;
 	private Map<String,Slot> slots;
 	
@@ -83,5 +85,10 @@ public class Skeleton {
 		for (Bone b : this.bones.values()) {
 			updateTransform(b);
 		}
+	}
+
+	@Override
+	public String getName() {
+		return name;
 	}
 }

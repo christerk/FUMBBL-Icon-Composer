@@ -1,8 +1,9 @@
 package com.fumbbl.iconcomposer.model;
 
+import com.fumbbl.iconcomposer.controllers.NamedItem;
 import com.kitfox.svg.SVGDiagram;
 
-public class NamedSVG {
+public class NamedSVG implements NamedItem {
 	public int id;
 	public String name;
 	public SVGDiagram diagram;
@@ -15,5 +16,10 @@ public class NamedSVG {
 		this.id = id;
 		this.name = name;
 		this.diagram = svg;
+	}
+
+	@Override
+	public String getName() {
+		return name;
 	}
 }

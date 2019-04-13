@@ -42,6 +42,11 @@
                               <ListView fx:id="skeletonList" prefHeight="200.0" prefWidth="200.0" />
                            </content>
                         </TitledPane>
+                        <TitledPane fx:id="slotPane" prefHeight="200.0" prefWidth="200.0" text="Slots">
+                           <content>
+                              <ListView fx:id="slotList" prefHeight="200.0" prefWidth="200.0" />
+                           </content>
+                        </TitledPane>
                         <TitledPane fx:id="imagePane" prefHeight="200.0" prefWidth="200.0" text="Images">
                            <content>
                               <ListView fx:id="imageList" prefHeight="200.0" prefWidth="200.0" />

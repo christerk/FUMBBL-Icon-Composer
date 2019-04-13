@@ -216,9 +216,9 @@ public class Controller extends BaseController {
 		controllerManager.getMain().showColourPane();
 		renderer.renderDiagram(d);
 
-		String slotName = d.getSlot();
+		Slot slot = d.getSlot();
 		
-		controllerManager.getMain().setSlotInfo(slotName, d.x, d.y);
+		controllerManager.getMain().setSlotInfo(slot, d.x, d.y);
 
 		renderer.renderCursor(d.x, d.y);
 		onImageChanged();

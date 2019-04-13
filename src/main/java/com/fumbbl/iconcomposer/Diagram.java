@@ -1,7 +1,8 @@
 package com.fumbbl.iconcomposer;
 
 import com.fumbbl.iconcomposer.ColourTheme.ColourType;
-import com.google.gson.annotations.Expose;
+import com.fumbbl.iconcomposer.controllers.NamedItem;
+import com.fumbbl.iconcomposer.model.spine.Slot;
 import com.kitfox.svg.SVGDiagram;
 import com.kitfox.svg.SVGElement;
 import com.kitfox.svg.SVGElementException;
@@ -9,15 +10,12 @@ import com.kitfox.svg.SVGRoot;
 import com.kitfox.svg.animation.AnimationElement;
 import com.kitfox.svg.xml.StyleAttribute;
 
-public class Diagram {
+public class Diagram implements NamedItem {
 	public String svgName;
-	@Expose
+
 	public ColourTheme templateColours;
-	@Expose
-	private String slot;
-	@Expose
+	private Slot slot;
 	public double x;
-	@Expose
 	public double y;
 	
 	private static final String ATTR_COL = "fumbbl:colour";
@@ -85,11 +83,11 @@ public class Diagram {
 		}
 	}
 	
-	public void setSlot(String slot) {
+	public void setSlot(Slot slot) {
 		this.slot = slot;
 	}
 	
-	public String getSlot() {
+	public Slot getSlot() {
 		return this.slot;
 	}
 	
@@ -131,5 +129,10 @@ public class Diagram {
 				}
 			}
 		}
+	}
+
+	@Override
+	public String getName() {
+		return svgName;
 	}	
 }

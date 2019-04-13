@@ -93,7 +93,7 @@ public class Model {
 						svgName = a.name;
 					}
 					Diagram diagram = a.toDiagram();
-					diagram.setSlot(slotEntry.getKey());
+					diagram.setSlot(dataStore.getSlot(slotEntry.getKey()));
 					dataStore.addDiagram(a.getImage(), diagram);
 				}
 			}
@@ -123,6 +123,10 @@ public class Model {
 	}
 
 	public void loadPosition(int positionId) {
+		dataStore.clearSkeletons();
+		dataStore.clearDiagrams();
+		dataStore.clearSkins();
+		
 		dataStore.setPosition(dataLoader.getPosition(positionId));
 		
 		controller.onPositionChanged(dataStore.getPosition());
@@ -149,6 +153,7 @@ public class Model {
 	public void loadSkins(int positionId) {
 		Collection<Skin> skins = dataLoader.getSkins(positionId);
 		
+		dataStore.clearDiagrams();
 		for(Skin s : skins) {
 			int skinId = s.id;
 			
@@ -168,7 +173,6 @@ public class Model {
 					skeleton.setSlots(loadSlots(skeleton.id));
 				}
 			}
-			
 			for (Attachment a : attachments) {
 				int slotId = a.slotId;
 
@@ -179,7 +183,7 @@ public class Model {
 				s.put(slot.name, sd);
 
 				Diagram d = a.toDiagram();
-				d.setSlot(dataStore.getSlot(slotId).name);
+				d.setSlot(dataStore.getSlot(slotId));
 				dataStore.addDiagram(a.getImage(), d);
 			}
 		}

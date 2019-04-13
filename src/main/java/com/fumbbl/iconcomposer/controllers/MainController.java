@@ -30,7 +30,6 @@ import javafx.fxml.Initializable;
 import javafx.geometry.Point2D;
 import javafx.scene.control.ChoiceBox;
 import javafx.scene.control.Label;
-import javafx.scene.control.ListCell;
 import javafx.scene.control.ListView;
 import javafx.scene.control.Menu;
 import javafx.scene.control.MenuItem;
@@ -44,6 +43,7 @@ import javafx.scene.image.WritableImage;
 import javafx.scene.input.MouseButton;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.GridPane;
+import javafx.util.StringConverter;
 
 public class MainController extends BaseController implements Initializable {
 	public ImageView imageView;
@@ -62,7 +62,7 @@ public class MainController extends BaseController implements Initializable {
 	public ImageView skinMid;
 	public ImageView skinHi;
 	public GridPane colourPane;
-	public ChoiceBox<String> slotChoices;
+	public ChoiceBox<Slot> slotChoices;
 	public TextField diagramX;
 	public TextField diagramY;
 	public Label apiStatus;
@@ -72,17 +72,18 @@ public class MainController extends BaseController implements Initializable {
 	public ListView<NamedSVG> imageList;
 	public ListView<Diagram> diagramList;
 	public ListView<Skin> skinList;
+	public ListView<Slot> slotList;
 	
 	public TitledPane positionPane;
 	public TitledPane skeletonPane;
 	public TitledPane imagePane;
 	public TitledPane diagramPane;
 	public TitledPane skinPane;
+	public TitledPane slotPane;
 	
 	public TreeView<String> tree;
 	public TreeItem<String> root;
 	public TreeItem<String> bones;
-	public TreeItem<String> slots;
 	private TreeItem<String> rootBone;
 	
 	public Menu menuColourThemes;
@@ -94,14 +95,30 @@ public class MainController extends BaseController implements Initializable {
 	public void initialize(URL location, ResourceBundle resources) {
 		colourPane.setVisible(false);
 		bones = new TreeItem<String>("Bones");
-		slots = new TreeItem<String>("Slots");
 		
 		root = new TreeItem<String>("Root");
 		root.getChildren().add(bones);
-		root.getChildren().add(slots);
 		tree.setShowRoot(false);
 		tree.setRoot(root);
 		
+		positionList.setCellFactory(new CellFactory<DtoPosition>().create());
+		skeletonList.setCellFactory(new CellFactory<Skeleton>().create());
+		imageList.setCellFactory(new CellFactory<NamedSVG>().create());
+		diagramList.setCellFactory(new CellFactory<Diagram>().create());
+		skinList.setCellFactory(new CellFactory<Skin>().create());
+		slotList.setCellFactory(new CellFactory<Slot>().create());
+		
+		slotChoices.setConverter(new StringConverter<Slot>() {
+			@Override
+			public String toString(Slot object) {
+				return object.name;
+			}
+
+			@Override
+			public Slot fromString(String string) {
+				return null;
+			}
+		});		
 		tree.getSelectionModel().selectedItemProperty().addListener(new ChangeListener<TreeItem<String>>() {
 			@Override
 			public void changed(ObservableValue<? extends TreeItem<String>> observable, TreeItem<String> oldValue, TreeItem<String> newValue) {
@@ -127,86 +144,26 @@ public class MainController extends BaseController implements Initializable {
 				return current;
 			}
 		});
-		
-		slotChoices.getSelectionModel().selectedItemProperty().addListener(new ChangeListener<String>() {
+
+		slotChoices.getSelectionModel().selectedItemProperty().addListener(new ChangeListener<Slot>() {
 
 			@Override
-			public void changed(ObservableValue<? extends String> observable, String oldValue, String newValue) {
+			public void changed(ObservableValue<? extends Slot> observable, Slot oldValue, Slot newValue) {
 				Diagram d = controller.viewState.getActiveDiagram();
 				d.setSlot(newValue);
 			}
 			
 		});
 		
-		positionList.setCellFactory(p -> new ListCell<DtoPosition>() {
-			@Override
-			protected void updateItem(DtoPosition item, boolean empty) {
-				super.updateItem(item, empty);
-				
-				if (empty || item == null) {
-					setText(null);
-				} else {
-					setText(item.title);
-				}
-			}
-		});
-		
-		skeletonList.setCellFactory(p -> new ListCell<Skeleton>() {
-			@Override
-			protected void updateItem(Skeleton item, boolean empty) {
-				super.updateItem(item, empty);
-				
-				if (empty || item == null) {
-					setText(null);
-				} else {
-					setText(item.name);
-				}
-			}
-		});
-
-		imageList.setCellFactory(p -> new ListCell<NamedSVG>() {
-			@Override
-			protected void updateItem(NamedSVG item, boolean empty) {
-				super.updateItem(item, empty);
-				
-				if (empty || item == null) {
-					setText(null);
-				} else {
-					setText(item.name);
-				}
-			}
-		});
-
-		diagramList.setCellFactory(p -> new ListCell<Diagram>() {
-			@Override
-			protected void updateItem(Diagram item, boolean empty) {
-				super.updateItem(item, empty);
-				
-				if (empty || item == null) {
-					setText(null);
-				} else {
-					setText(item.svgName);
-				}
-			}
-		});
-
-		skinList.setCellFactory(p -> new ListCell<Skin>() {
-			@Override
-			protected void updateItem(Skin item, boolean empty) {
-				super.updateItem(item, empty);
-				
-				if (empty || item == null) {
-					setText(null);
-				} else {
-					setText(item.name);
-				}
-			}
-		});
-		
 		positionList.getSelectionModel().selectedItemProperty().addListener(new ChangeListener<DtoPosition>() {
 			@Override
 			public void changed(ObservableValue<? extends DtoPosition> observable, DtoPosition oldValue, DtoPosition newValue) {
 				if (newValue != null) {
+					diagramList.getItems().clear();
+					skinList.getItems().clear();
+					skeletonList.getItems().clear();
+					skeletonPane.setText("Skeletons");
+					
 					controller.loadPosition(newValue.id);
 					skeletonPane.setExpanded(true);
 					positionPane.setText("Positions - " + newValue.title);
@@ -382,8 +339,8 @@ public class MainController extends BaseController implements Initializable {
 		colourPane.setVisible(false);
 	}
 
-	public void setSlotInfo(String slotName, double x, double y) {
-		slotChoices.setValue(slotName);
+	public void setSlotInfo(Slot slot, double x, double y) {
+		slotChoices.setValue(slot);
 		diagramX.setText(Double.toString(x));
 		diagramY.setText(Double.toString(y));
 	}
@@ -425,16 +382,12 @@ public class MainController extends BaseController implements Initializable {
 	}
 
 	public void setSlots(Collection<Slot> slots) {
-		ObservableList<TreeItem<String>> children = this.slots.getChildren();
-		ObservableList<String> slotChoices = this.slotChoices.getItems();
-		children.clear();
-		slotChoices.clear();
-
 		if (slots != null) {
-			for (Slot s : slots) {
-				children.add(new TreeItem<String>(s.name));
-				slotChoices.add(s.name);
-			}
+			slotList.getItems().setAll(slots);
+			slotChoices.getItems().setAll(slots);
+		} else {
+			slotList.getItems().clear();
+			slotChoices.getItems().clear();
 		}
 	}
 	
