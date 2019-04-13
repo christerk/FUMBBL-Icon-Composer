@@ -34,8 +34,6 @@ public class BaseStage {
 	}
 	
 	protected void applyTheme() {
-		//scene.getStylesheets().add(getClass().getResource("/ui/modena_dark.css").toExternalForm());
-
 		stage.getIcons().add(new Image(getClass().getResourceAsStream("/ui/Icon16.png")));
 		stage.getIcons().add(new Image(getClass().getResourceAsStream("/ui/Icon32.png")));
 		stage.getIcons().add(new Image(getClass().getResourceAsStream("/ui/Icon64.png")));
