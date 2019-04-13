@@ -50,7 +50,7 @@
             <VBox alignment="TOP_CENTER" GridPane.columnIndex="1" GridPane.halignment="LEFT" GridPane.hgrow="ALWAYS" GridPane.valignment="TOP" GridPane.vgrow="ALWAYS">
                <children>
                   <Label alignment="TOP_LEFT" style="-fx-font-size: 250%;" text="FUMBBL Icon Composer" />
-                  <Hyperlink contentDisplay="CENTER" text="https://github.com/christerk/FUMBBL-Icon-Composer" />
+                  <Hyperlink contentDisplay="CENTER" onAction="#openProjectPage" text="https://github.com/christerk/FUMBBL-Icon-Composer" />
                </children>
             </VBox>
          </children>

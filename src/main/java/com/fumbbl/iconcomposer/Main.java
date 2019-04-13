@@ -8,6 +8,7 @@ import com.fumbbl.iconcomposer.ui.StageManager;
 import com.fumbbl.iconcomposer.ui.StageType;
 
 import javafx.application.Application;
+import javafx.application.HostServices;
 import javafx.stage.Stage;
 
 public class Main extends Application {
@@ -15,8 +16,11 @@ public class Main extends Application {
 		launch(args);
 	}
 	
+	private static HostServices hostServices;
+	
 	@Override
 	public void start(Stage stage) throws Exception {
+		
 		Model model = new Model();
 		Controller controller = new Controller(model);
 		ControllerManager controllerManager = new ControllerManager(model, controller);
@@ -32,5 +36,10 @@ public class Main extends Application {
     }
 	
 	public Main() {
+		hostServices = getHostServices();
+	}
+	
+	public static void showDocument(String url) {
+		hostServices.showDocument(url);
 	}
 }
