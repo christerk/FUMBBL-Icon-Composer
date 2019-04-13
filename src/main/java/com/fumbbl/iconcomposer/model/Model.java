@@ -15,17 +15,16 @@ import com.fumbbl.iconcomposer.ColourTheme.ColourType;
 import com.fumbbl.iconcomposer.Config;
 import com.fumbbl.iconcomposer.Diagram;
 import com.fumbbl.iconcomposer.controllers.Controller;
-import com.fumbbl.iconcomposer.dto.DtoPosition;
 import com.fumbbl.iconcomposer.dto.DtoRoster;
 import com.fumbbl.iconcomposer.dto.DtoRuleset;
-import com.fumbbl.iconcomposer.spine.Attachment;
-import com.fumbbl.iconcomposer.spine.Bone;
-import com.fumbbl.iconcomposer.spine.Skeleton;
-import com.fumbbl.iconcomposer.spine.Skin;
-import com.fumbbl.iconcomposer.spine.SkinCollection;
-import com.fumbbl.iconcomposer.spine.Slot;
-import com.fumbbl.iconcomposer.spine.SlotData;
-import com.fumbbl.iconcomposer.spine.Spine;
+import com.fumbbl.iconcomposer.model.spine.Attachment;
+import com.fumbbl.iconcomposer.model.spine.Bone;
+import com.fumbbl.iconcomposer.model.spine.Skeleton;
+import com.fumbbl.iconcomposer.model.spine.Skin;
+import com.fumbbl.iconcomposer.model.spine.SkinCollection;
+import com.fumbbl.iconcomposer.model.spine.Slot;
+import com.fumbbl.iconcomposer.model.spine.SlotData;
+import com.fumbbl.iconcomposer.model.spine.Spine;
 import com.fumbbl.iconcomposer.svg.SVGLoader;
 import com.google.gson.Gson;
 import com.kitfox.svg.SVGDiagram;
@@ -123,31 +122,31 @@ public class Model {
 		controller.onPositionsChanged(roster.positions);
 	}
 
-	public DtoPosition loadPosition(int positionId) {
-		DtoPosition position = dataLoader.getPosition(positionId);
-		return position;
+	public void loadPosition(int positionId) {
+		dataStore.setPosition(dataLoader.getPosition(positionId));
+		
+		controller.onPositionChanged(dataStore.getPosition());
 	}
 	
 	public DtoRuleset[] loadRulesets() {
 		return dataLoader.getRulesets();
 	}
 	
-	public DtoRuleset loadRuleset(int rulesetId) {
-		return dataLoader.getRuleset(rulesetId);
+	public void loadRuleset(int rulesetId) {
+		dataStore.setRuleset(dataLoader.getRuleset(rulesetId));
+		
+		controller.onRulesetLoaded(dataStore.getRuleset());
 	}
 	
-	public Collection<Skeleton> loadSkeletons(int positionId) {
+	public void loadSkeletons(int positionId) {
 		Collection<Skeleton> skeletons = dataLoader.getSkeletons(positionId);
 		
-		dataStore.clearSkeletons();
-		for(Skeleton s : skeletons) {
-			dataStore.addSkeleton(s);
-		}
-		
-		return skeletons;
+		dataStore.setSkeletons(skeletons);
+
+		controller.onSkeletonsChanged(dataStore.getSkeletons());
 	}
 	
-	public Collection<Skin> loadSkins(int positionId) {
+	public void loadSkins(int positionId) {
 		Collection<Skin> skins = dataLoader.getSkins(positionId);
 		
 		for(Skin s : skins) {
@@ -156,7 +155,9 @@ public class Model {
 			Collection<Slot> slots = dataLoader.getSlots(s.skeletonId);
 			
 			Collection<Attachment> attachments = dataLoader.getAttachments(skinId);
-			Collection<Skeleton> skeletons = loadSkeletons(positionId);
+			loadSkeletons(positionId);
+			
+			Collection<Skeleton> skeletons = dataStore.getSkeletons();
 
 			dataStore.setSlots(slots);
 			
@@ -187,8 +188,6 @@ public class Model {
 		controller.onSlotsChanged(dataStore.getSlots());
 		controller.onDiagramsChanged(dataStore.getDiagrams());
 		controller.onSkinsChanged(skins);
-		
-		return skins;
 	}
 	
 	public Collection<Bone> loadBones(int skeletonId) {

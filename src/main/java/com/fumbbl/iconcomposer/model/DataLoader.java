@@ -10,11 +10,11 @@ import com.fumbbl.iconcomposer.dto.DtoPosition;
 import com.fumbbl.iconcomposer.dto.DtoRoster;
 import com.fumbbl.iconcomposer.dto.DtoRuleset;
 import com.fumbbl.iconcomposer.dto.DtoSkin;
-import com.fumbbl.iconcomposer.spine.Attachment;
-import com.fumbbl.iconcomposer.spine.Bone;
-import com.fumbbl.iconcomposer.spine.Skeleton;
-import com.fumbbl.iconcomposer.spine.Skin;
-import com.fumbbl.iconcomposer.spine.Slot;
+import com.fumbbl.iconcomposer.model.spine.Attachment;
+import com.fumbbl.iconcomposer.model.spine.Bone;
+import com.fumbbl.iconcomposer.model.spine.Skeleton;
+import com.fumbbl.iconcomposer.model.spine.Skin;
+import com.fumbbl.iconcomposer.model.spine.Slot;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 

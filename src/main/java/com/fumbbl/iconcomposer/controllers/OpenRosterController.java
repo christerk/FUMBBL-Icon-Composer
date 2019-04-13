@@ -97,12 +97,11 @@ public class OpenRosterController extends BaseController implements Initializabl
 			return;
 		}
 		
-		ruleset = controller.loadRuleset(ruleset.id);;
-		
+		controller.loadRuleset(ruleset.id);
+	}
+
+	public void onRulesetLoaded(DtoRuleset ruleset) {
 		ObservableList<DtoRoster> items = rosterList.getItems();
-		items.clear();
-		for (DtoRoster r : ruleset.rosters) {
-			items.add(r);
-		}
+		items.setAll(ruleset.rosters);
 	}
 }

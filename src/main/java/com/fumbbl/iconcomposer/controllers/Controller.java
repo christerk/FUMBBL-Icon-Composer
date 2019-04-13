@@ -11,10 +11,10 @@ import com.fumbbl.iconcomposer.dto.DtoRoster;
 import com.fumbbl.iconcomposer.dto.DtoRuleset;
 import com.fumbbl.iconcomposer.model.Model;
 import com.fumbbl.iconcomposer.model.NamedSVG;
-import com.fumbbl.iconcomposer.spine.Bone;
-import com.fumbbl.iconcomposer.spine.Skeleton;
-import com.fumbbl.iconcomposer.spine.Skin;
-import com.fumbbl.iconcomposer.spine.Slot;
+import com.fumbbl.iconcomposer.model.spine.Bone;
+import com.fumbbl.iconcomposer.model.spine.Skeleton;
+import com.fumbbl.iconcomposer.model.spine.Skin;
+import com.fumbbl.iconcomposer.model.spine.Slot;
 import com.fumbbl.iconcomposer.svg.SVGRenderer;
 import com.fumbbl.iconcomposer.ui.StageManager;
 import com.fumbbl.iconcomposer.ui.StageType;
@@ -64,7 +64,7 @@ public class Controller extends BaseController {
 	}
 
 	public void onSkeletonsChanged(Collection<Skeleton> skeletons) {
-		controllerManager.getMain().setSkeletons(skeletons);
+		controllerManager.getMain().onSkeletonsChanged(skeletons);
 	}
 
 	public void onSkeletonChanged(Skeleton skeleton) {
@@ -88,8 +88,8 @@ public class Controller extends BaseController {
 		controllerManager.getMain().setApiStatus(success ? "Authorized" : "Not Authorized");
 	}
 	
-	public void onPositionsChanged(DtoPosition[] positions) {
-		controllerManager.getMain().setPositions(positions);
+	public void onPositionsChanged(Collection<DtoPosition> positions) {
+		controllerManager.getMain().onPositionsChanged(positions);
 	}
 	
 	public void onImagesChanged(Collection<NamedSVG> images) {
@@ -102,7 +102,7 @@ public class Controller extends BaseController {
 	}
 
 	public void onSkinsChanged(Collection<Skin> skins) {
-		controllerManager.getMain().setSkins(skins);
+		controllerManager.getMain().onSkinsChanged(skins);
 	}
 	
 	/*
@@ -133,24 +133,24 @@ public class Controller extends BaseController {
 		model.setSlots(slots);
 	}
 
-	public DtoPosition loadPosition(int id) {
-		return model.loadPosition(id);
+	public void loadPosition(int id) {
+		model.loadPosition(id);
 	}
 
 	public DtoRuleset[] loadRulesets() {
 		return model.loadRulesets();
 	}
 
-	public DtoRuleset loadRuleset(int id) {
-		return model.loadRuleset(id);
+	public void loadRuleset(int id) {
+		model.loadRuleset(id);
 	}
 	
-	public Collection<Skin> loadSkins(int positionId) {
-		return model.loadSkins(positionId);
+	public void loadSkins(int positionId) {
+		model.loadSkins(positionId);
 	}
 
-	public Collection<Skeleton> loadSkeletons(int positionId) {
-		return model.loadSkeletons(positionId);
+	public void loadSkeletons(int positionId) {
+		model.loadSkeletons(positionId);
 	}
 	
 	public boolean isAuthorized() {
@@ -232,5 +232,13 @@ public class Controller extends BaseController {
 
 	public SVGDiagram getSvg(String svgName) {
 		return model.getSvg(svgName);
+	}
+
+	public void onRulesetLoaded(DtoRuleset ruleset) {
+		((OpenRosterController)controllerManager.get(StageType.openRoster)).onRulesetLoaded(ruleset);
+	}
+
+	public void onPositionChanged(DtoPosition position) {
+		controllerManager.getMain().onPositionChanged(position);
 	}
 }

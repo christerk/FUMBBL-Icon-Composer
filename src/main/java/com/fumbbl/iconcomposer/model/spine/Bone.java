@@ -1,4 +1,4 @@
-package com.fumbbl.iconcomposer.spine;
+package com.fumbbl.iconcomposer.model.spine;
 
 public class Bone {
 	public int id;

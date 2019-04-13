@@ -14,10 +14,10 @@ import com.fumbbl.iconcomposer.ColourTheme.ColourType;
 import com.fumbbl.iconcomposer.Diagram;
 import com.fumbbl.iconcomposer.dto.DtoPosition;
 import com.fumbbl.iconcomposer.model.NamedSVG;
-import com.fumbbl.iconcomposer.spine.Bone;
-import com.fumbbl.iconcomposer.spine.Skeleton;
-import com.fumbbl.iconcomposer.spine.Skin;
-import com.fumbbl.iconcomposer.spine.Slot;
+import com.fumbbl.iconcomposer.model.spine.Bone;
+import com.fumbbl.iconcomposer.model.spine.Skeleton;
+import com.fumbbl.iconcomposer.model.spine.Skin;
+import com.fumbbl.iconcomposer.model.spine.Slot;
 import com.fumbbl.iconcomposer.ui.StageType;
 
 import javafx.beans.value.ChangeListener;
@@ -207,15 +207,9 @@ public class MainController extends BaseController implements Initializable {
 			@Override
 			public void changed(ObservableValue<? extends DtoPosition> observable, DtoPosition oldValue, DtoPosition newValue) {
 				if (newValue != null) {
-					DtoPosition p = controller.loadPosition(newValue.id);
-
-					Collection<Skeleton> skeletons = controller.loadSkeletons(p.id);
-					setSkeletons(skeletons);
-					
-					Collection<Skin> skins = controller.loadSkins(p.id);
-					
-					setSkins(skins);
-					positionPane.setText("Positions - " + p.title);
+					controller.loadPosition(newValue.id);
+					skeletonPane.setExpanded(true);
+					positionPane.setText("Positions - " + newValue.title);
 				} else {
 					positionPane.setText("Positions");
 				}
@@ -428,7 +422,6 @@ public class MainController extends BaseController implements Initializable {
 	public void setImages(Collection<NamedSVG> images) {
 		ObservableList<NamedSVG> list = imageList.getItems();
 		list.setAll(images);
-		imagePane.setExpanded(true);
 	}
 
 	public void setSlots(Collection<Slot> slots) {
@@ -448,7 +441,6 @@ public class MainController extends BaseController implements Initializable {
 	public void setDiagrams(Collection<Diagram> diagrams) {
 		ObservableList<Diagram> children = diagramList.getItems();
 		children.setAll(diagrams);
-		diagramPane.setExpanded(true);
 	}
 	
 	public void setBones(Collection<Bone> bones) {
@@ -479,12 +471,22 @@ public class MainController extends BaseController implements Initializable {
 		}
 	}
 
-	public void setPositions(DtoPosition[] positions) {
+	public void onPositionsChanged(Collection<DtoPosition> positions) {
 		ObservableList<DtoPosition> items = positionList.getItems();
-		items.clear();
-		for (DtoPosition p : positions) {
-			items.add(p);
-		}
+		items.setAll(positions);
 		positionPane.setExpanded(true);
+	}
+
+	public void onPositionChanged(DtoPosition position) {
+		controller.loadSkeletons(position.id);
+		controller.loadSkins(position.id);
+	}
+	
+	public void onSkeletonsChanged(Collection<Skeleton> skeletons) {
+		setSkeletons(skeletons);
+	}
+	
+	public void onSkinsChanged(Collection<Skin> skins) {
+		setSkins(skins);
 	}
 }

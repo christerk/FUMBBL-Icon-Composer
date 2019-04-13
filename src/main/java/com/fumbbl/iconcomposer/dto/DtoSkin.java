@@ -1,6 +1,6 @@
 package com.fumbbl.iconcomposer.dto;
 
-import com.fumbbl.iconcomposer.spine.Skin;
+import com.fumbbl.iconcomposer.model.spine.Skin;
 
 public class DtoSkin {
 	public int id;

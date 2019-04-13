@@ -1,4 +1,4 @@
-package com.fumbbl.iconcomposer.spine;
+package com.fumbbl.iconcomposer.model.spine;
 
 import com.fumbbl.iconcomposer.Diagram;
 

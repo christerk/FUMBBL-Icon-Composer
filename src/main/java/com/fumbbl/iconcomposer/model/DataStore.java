@@ -8,11 +8,13 @@ import java.util.Map;
 
 import com.fumbbl.iconcomposer.ColourTheme;
 import com.fumbbl.iconcomposer.Diagram;
-import com.fumbbl.iconcomposer.spine.Bone;
-import com.fumbbl.iconcomposer.spine.Skeleton;
-import com.fumbbl.iconcomposer.spine.Skin;
-import com.fumbbl.iconcomposer.spine.Slot;
-import com.fumbbl.iconcomposer.spine.Spine;
+import com.fumbbl.iconcomposer.dto.DtoPosition;
+import com.fumbbl.iconcomposer.dto.DtoRuleset;
+import com.fumbbl.iconcomposer.model.spine.Bone;
+import com.fumbbl.iconcomposer.model.spine.Skeleton;
+import com.fumbbl.iconcomposer.model.spine.Skin;
+import com.fumbbl.iconcomposer.model.spine.Slot;
+import com.fumbbl.iconcomposer.model.spine.Spine;
 import com.google.gson.annotations.Expose;
 
 public class DataStore {
@@ -25,6 +27,8 @@ public class DataStore {
 	private Map<String,ColourTheme> colourThemes;
 	
 	private Map<String,NamedSVG> svgs;
+	private DtoRuleset ruleset;
+	private DtoPosition position;
 	
 	public DataStore() {
 		spine = new Spine();
@@ -171,5 +175,34 @@ public class DataStore {
 
 	public Collection<Skeleton> getSkeletons() {
 		return skeletons;
+	}
+	
+	public void setSkeletons(Collection<Skeleton> skeletons) {
+		this.skeletons.clear();
+		this.skeletons.addAll(skeletons);
+	}
+
+	/*
+	 * Ruleset 
+	 */
+	
+	public void setRuleset(DtoRuleset ruleset) {
+		this.ruleset = ruleset;
+	}
+	
+	public DtoRuleset getRuleset() {
+		return ruleset;
+	}
+
+	/*
+	 * Position
+	 */
+	
+	public void setPosition(DtoPosition position) {
+		this.position = position;
+	}
+	
+	public DtoPosition getPosition() {
+		return this.position;
 	}
 }
