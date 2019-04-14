@@ -3,7 +3,6 @@ package com.fumbbl.iconcomposer.ui;
 import java.io.File;
 import java.io.IOException;
 
-import javafx.application.Platform;
 import javafx.event.EventHandler;
 import javafx.scene.input.DragEvent;
 import javafx.scene.input.Dragboard;

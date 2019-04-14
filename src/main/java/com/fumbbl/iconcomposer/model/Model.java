@@ -191,6 +191,7 @@ public class Model {
 	public void loadDiagrams(int skeletonId) {
 		Collection<Diagram> diagrams = dataLoader.getDiagrams(skeletonId);
 		for (Diagram d : diagrams) {
+			d.templateColours = new ColourTheme("template");
 			d.setSlot(dataStore.getSlot(d.slotId));
 			d.attachmentName = d.name;
 		}

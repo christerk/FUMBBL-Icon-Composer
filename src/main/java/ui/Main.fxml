@@ -48,7 +48,7 @@
                               <ListView fx:id="slotList" prefHeight="200.0" prefWidth="200.0" />
                            </content>
                         </TitledPane>
-                        <TitledPane fx:id="attachmentPane" prefHeight="200.0" prefWidth="200.0" text="Attachments">
+                        <TitledPane fx:id="attachmentPane" prefHeight="200.0" prefWidth="200.0" text="Diagrams">
                            <content>
                               <ListView fx:id="attachmentList" prefHeight="200.0" prefWidth="200.0" />
                            </content>
