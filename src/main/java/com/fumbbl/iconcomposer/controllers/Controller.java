@@ -22,6 +22,7 @@ import com.fumbbl.iconcomposer.ui.StageManager;
 import com.fumbbl.iconcomposer.ui.StageType;
 import com.kitfox.svg.SVGDiagram;
 
+import javafx.application.Platform;
 import javafx.scene.image.WritableImage;
 
 public class Controller extends BaseController {
@@ -57,6 +58,11 @@ public class Controller extends BaseController {
 	
 	public void runInBackground(Runnable task) {
 		threadPool.execute(task);
+	}
+	
+	public void shutdown() {
+		threadPool.shutdownNow();
+		Platform.exit();
 	}
 	
 	/*

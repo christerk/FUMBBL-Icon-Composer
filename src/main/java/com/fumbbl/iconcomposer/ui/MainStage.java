@@ -3,10 +3,12 @@ package com.fumbbl.iconcomposer.ui;
 import java.io.File;
 import java.io.IOException;
 
+import javafx.application.Platform;
 import javafx.event.EventHandler;
 import javafx.scene.input.DragEvent;
 import javafx.scene.input.Dragboard;
 import javafx.scene.input.TransferMode;
+import javafx.stage.WindowEvent;
 
 public class MainStage extends BaseStage {
 	public MainStage() throws IOException {
@@ -41,6 +43,13 @@ public class MainStage extends BaseStage {
 				event.setDropCompleted(success);
 				event.consume();
 			}
-		});		
+		});
+		
+		stage.setOnCloseRequest(new EventHandler<WindowEvent>() {
+			@Override
+			public void handle(WindowEvent e) {
+				mainController.shutdown();
+			}
+		});
 	}
 }

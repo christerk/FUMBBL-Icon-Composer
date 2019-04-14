@@ -36,7 +36,6 @@ public class APIClient {
 	
 			String content = getResult(con);
 			
-			System.out.println("GET result:\n"+content+"\n");
 			return content;
 		} catch (IOException ioe) {
 			
@@ -63,7 +62,6 @@ public class APIClient {
 			}
 			
 			String content = getResult(con);
-			System.out.println("POST result:\n"+content+"\n");
 			return content;
 		} catch (IOException ioe) {
 			

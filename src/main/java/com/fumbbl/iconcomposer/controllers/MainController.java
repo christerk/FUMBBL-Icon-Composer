@@ -217,7 +217,7 @@ public class MainController extends BaseController implements Initializable {
 	}
 	
 	public void quit() {
-		System.exit(0);
+		controller.shutdown();
 	}
 	
 	public void showPreferences() {
