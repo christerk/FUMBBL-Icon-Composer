@@ -12,7 +12,6 @@
 <?import javafx.scene.control.SplitPane?>
 <?import javafx.scene.control.TextField?>
 <?import javafx.scene.control.TitledPane?>
-<?import javafx.scene.control.TreeView?>
 <?import javafx.scene.effect.DropShadow?>
 <?import javafx.scene.image.ImageView?>
 <?import javafx.scene.input.KeyCodeCombination?>
@@ -49,14 +48,14 @@
                               <ListView fx:id="slotList" prefHeight="200.0" prefWidth="200.0" />
                            </content>
                         </TitledPane>
+                        <TitledPane fx:id="attachmentPane" prefHeight="200.0" prefWidth="200.0" text="Attachments">
+                           <content>
+                              <ListView fx:id="attachmentList" prefHeight="200.0" prefWidth="200.0" />
+                           </content>
+                        </TitledPane>
                         <TitledPane fx:id="imagePane" prefHeight="200.0" prefWidth="200.0" text="Images">
                            <content>
                               <ListView fx:id="imageList" prefHeight="200.0" prefWidth="200.0" />
-                           </content>
-                        </TitledPane>
-                        <TitledPane fx:id="diagramPane" prefHeight="200.0" prefWidth="200.0" text="Diagrams">
-                           <content>
-                              <ListView fx:id="diagramList" prefHeight="200.0" prefWidth="200.0" />
                            </content>
                         </TitledPane>
                         <TitledPane fx:id="skinPane" prefHeight="200.0" prefWidth="200.0" text="Skins">
@@ -64,11 +63,6 @@
                               <ListView fx:id="skinList" prefHeight="200.0" prefWidth="200.0" />
                            </content>
                         </TitledPane>
-                      <TitledPane expanded="false" text="Debug Data">
-                        <content>
-                              <TreeView fx:id="tree" minWidth="200.0" />
-                        </content>
-                      </TitledPane>
                     </panes>
                   </Accordion>
                   <VBox alignment="CENTER" spacing="8.0" style="-fx-background-color: rgb(60,63,69);">

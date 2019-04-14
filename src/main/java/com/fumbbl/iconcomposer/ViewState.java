@@ -5,8 +5,9 @@ import java.awt.Graphics2D;
 import java.awt.image.BufferedImage;
 
 import com.fumbbl.iconcomposer.ColourTheme.ColourType;
-import com.fumbbl.iconcomposer.model.spine.Skeleton;
-import com.fumbbl.iconcomposer.model.spine.Skin;
+import com.fumbbl.iconcomposer.model.types.Diagram;
+import com.fumbbl.iconcomposer.model.types.Skeleton;
+import com.fumbbl.iconcomposer.model.types.Skin;
 
 import javafx.embed.swing.SwingFXUtils;
 import javafx.scene.image.WritableImage;

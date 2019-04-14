@@ -1,4 +1,6 @@
-package com.fumbbl.iconcomposer.model.spine;
+package com.fumbbl.iconcomposer.model.types;
+
+import java.util.Comparator;
 
 import com.fumbbl.iconcomposer.controllers.NamedItem;
 
@@ -11,6 +13,17 @@ public class Slot implements NamedItem {
 	public String attachment;
 	
 	private Skeleton skeleton;
+	
+	public static Comparator<Slot> Comparator = new Comparator<Slot>() {
+		@Override
+		public int compare(Slot o1, Slot o2) {
+			int r = o2.order-o1.order;
+			if (r == 0) {
+				r = o1.getName().compareTo(o2.getName());
+			}
+			return r;
+		}
+	};
 	
 	@Override
 	public String getName() {

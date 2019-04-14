@@ -1,8 +1,8 @@
-package com.fumbbl.iconcomposer;
+package com.fumbbl.iconcomposer.model.types;
 
+import com.fumbbl.iconcomposer.ColourTheme;
 import com.fumbbl.iconcomposer.ColourTheme.ColourType;
 import com.fumbbl.iconcomposer.controllers.NamedItem;
-import com.fumbbl.iconcomposer.model.spine.Slot;
 import com.kitfox.svg.SVGDiagram;
 import com.kitfox.svg.SVGElement;
 import com.kitfox.svg.SVGElementException;

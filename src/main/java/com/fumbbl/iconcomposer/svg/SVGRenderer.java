@@ -7,16 +7,16 @@ import java.awt.RenderingHints;
 import java.awt.geom.AffineTransform;
 
 import com.fumbbl.iconcomposer.ColourTheme;
-import com.fumbbl.iconcomposer.Diagram;
 import com.fumbbl.iconcomposer.controllers.Controller;
 import com.fumbbl.iconcomposer.model.Model;
-import com.fumbbl.iconcomposer.model.spine.Attachment;
-import com.fumbbl.iconcomposer.model.spine.Bone;
-import com.fumbbl.iconcomposer.model.spine.Skeleton;
-import com.fumbbl.iconcomposer.model.spine.Skin;
-import com.fumbbl.iconcomposer.model.spine.Slot;
-import com.fumbbl.iconcomposer.model.spine.SlotData;
-import com.fumbbl.iconcomposer.model.spine.Spine;
+import com.fumbbl.iconcomposer.model.types.Attachment;
+import com.fumbbl.iconcomposer.model.types.Bone;
+import com.fumbbl.iconcomposer.model.types.Diagram;
+import com.fumbbl.iconcomposer.model.types.Skeleton;
+import com.fumbbl.iconcomposer.model.types.Skin;
+import com.fumbbl.iconcomposer.model.types.Slot;
+import com.fumbbl.iconcomposer.model.types.SlotData;
+import com.fumbbl.iconcomposer.model.types.Spine;
 import com.kitfox.svg.SVGDiagram;
 import com.kitfox.svg.SVGException;
 

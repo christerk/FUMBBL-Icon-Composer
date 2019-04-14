@@ -11,13 +11,13 @@ import java.util.ResourceBundle;
 
 import com.fumbbl.iconcomposer.ColourTheme;
 import com.fumbbl.iconcomposer.ColourTheme.ColourType;
-import com.fumbbl.iconcomposer.Diagram;
 import com.fumbbl.iconcomposer.dto.DtoPosition;
 import com.fumbbl.iconcomposer.model.NamedSVG;
-import com.fumbbl.iconcomposer.model.spine.Bone;
-import com.fumbbl.iconcomposer.model.spine.Skeleton;
-import com.fumbbl.iconcomposer.model.spine.Skin;
-import com.fumbbl.iconcomposer.model.spine.Slot;
+import com.fumbbl.iconcomposer.model.types.Bone;
+import com.fumbbl.iconcomposer.model.types.Diagram;
+import com.fumbbl.iconcomposer.model.types.Skeleton;
+import com.fumbbl.iconcomposer.model.types.Skin;
+import com.fumbbl.iconcomposer.model.types.Slot;
 import com.fumbbl.iconcomposer.ui.StageType;
 
 import javafx.beans.value.ChangeListener;
@@ -36,7 +36,6 @@ import javafx.scene.control.MenuItem;
 import javafx.scene.control.TextField;
 import javafx.scene.control.TitledPane;
 import javafx.scene.control.TreeItem;
-import javafx.scene.control.TreeView;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.image.WritableImage;
@@ -71,21 +70,16 @@ public class MainController extends BaseController implements Initializable {
 	
 	public ListView<Skeleton> skeletonList;
 	public ListView<NamedSVG> imageList;
-	public ListView<Diagram> diagramList;
+	public ListView<Diagram> attachmentList;
 	public ListView<Skin> skinList;
 	public ListView<Slot> slotList;
 	
 	public TitledPane positionPane;
 	public TitledPane skeletonPane;
 	public TitledPane imagePane;
-	public TitledPane diagramPane;
+	public TitledPane attachmentPane;
 	public TitledPane skinPane;
 	public TitledPane slotPane;
-	
-	public TreeView<String> tree;
-	public TreeItem<String> root;
-	public TreeItem<String> bones;
-	private TreeItem<String> rootBone;
 	
 	public Menu menuColourThemes;
 	
@@ -95,17 +89,11 @@ public class MainController extends BaseController implements Initializable {
 	@Override
 	public void initialize(URL location, ResourceBundle resources) {
 		colourPane.setVisible(false);
-		bones = new TreeItem<String>("Bones");
-		
-		root = new TreeItem<String>("Root");
-		root.getChildren().add(bones);
-		tree.setShowRoot(false);
-		tree.setRoot(root);
-		
+
 		positionList.setCellFactory(new CellFactory<DtoPosition>().create());
 		skeletonList.setCellFactory(new CellFactory<Skeleton>().create());
 		imageList.setCellFactory(new CellFactory<NamedSVG>().create());
-		diagramList.setCellFactory(new CellFactory<Diagram>().create());
+		attachmentList.setCellFactory(new CellFactory<Diagram>().create());
 		skinList.setCellFactory(new CellFactory<Skin>().create());
 		slotList.setCellFactory(new CellFactory<Slot>().create());
 		
@@ -118,31 +106,6 @@ public class MainController extends BaseController implements Initializable {
 			@Override
 			public Slot fromString(String string) {
 				return null;
-			}
-		});		
-		tree.getSelectionModel().selectedItemProperty().addListener(new ChangeListener<TreeItem<String>>() {
-			@Override
-			public void changed(ObservableValue<? extends TreeItem<String>> observable, TreeItem<String> oldValue, TreeItem<String> newValue) {
-				if (newValue != null) {
-					TreeItem<String> section = getTreeSection(newValue);
-
-					String value = (String)newValue.getValue();
-					if (section == bones) {
-						if (rootBone != null && value.equals(bones.getValue())) {
-							controller.displayBones(rootBone.getValue());
-						} else {
-							controller.displayBones(value);
-						}
-					}
-				}
-			}
-
-			private TreeItem<String> getTreeSection(TreeItem<String> treeItem) {
-				TreeItem<String> current = treeItem;
-				while (current.getParent() != root) {
-					current = current.getParent();
-				}
-				return current;
 			}
 		});
 
@@ -160,7 +123,7 @@ public class MainController extends BaseController implements Initializable {
 			@Override
 			public void changed(ObservableValue<? extends DtoPosition> observable, DtoPosition oldValue, DtoPosition newValue) {
 				if (newValue != null) {
-					diagramList.getItems().clear();
+					attachmentList.getItems().clear();
 					skinList.getItems().clear();
 					slotList.getItems().clear();
 					skeletonList.getItems().clear();
@@ -196,7 +159,7 @@ public class MainController extends BaseController implements Initializable {
 			}
 		});
 
-		diagramList.getSelectionModel().selectedItemProperty().addListener(new ChangeListener<Diagram>() {
+		attachmentList.getSelectionModel().selectedItemProperty().addListener(new ChangeListener<Diagram>() {
 			@Override
 			public void changed(ObservableValue<? extends Diagram> observable, Diagram oldValue, Diagram newValue) {
 				if (newValue != null) {
@@ -392,12 +355,16 @@ public class MainController extends BaseController implements Initializable {
 	public void setImages(Collection<NamedSVG> images) {
 		ObservableList<NamedSVG> list = imageList.getItems();
 		list.setAll(images);
+		list.sort(NamedItem.Comparator);
 	}
 
 	public void setSlots(Collection<Slot> slots) {
 		if (slots != null) {
 			slotList.getItems().setAll(slots);
 			slotChoices.getItems().setAll(slots);
+			
+			slotList.getItems().sort(Slot.Comparator);
+			slotChoices.getItems().sort(Slot.Comparator);
 		} else {
 			slotList.getItems().clear();
 			slotChoices.getItems().clear();
@@ -405,8 +372,9 @@ public class MainController extends BaseController implements Initializable {
 	}
 	
 	public void setDiagrams(Collection<Diagram> diagrams) {
-		ObservableList<Diagram> children = diagramList.getItems();
+		ObservableList<Diagram> children = attachmentList.getItems();
 		children.setAll(diagrams);
+		children.sort(NamedItem.Comparator);
 	}
 	
 	public void setBones(Collection<Bone> bones) {
@@ -417,29 +385,11 @@ public class MainController extends BaseController implements Initializable {
 			boneMap.put(b.name, b);
 			itemMap.put(b.name, new TreeItem<String>(b.name));
 		}
-
-		rootBone = null;
-		for (Bone b : boneMap.values()) {
-			if (b.parent != null) {
-				TreeItem<String> item = itemMap.get(b.name);
-				TreeItem<String> parent = itemMap.get(b.parent);
-				parent.getChildren().add(item);
-			} else {
-				rootBone = itemMap.get(b.name);
-			}
-		}
-		
-		this.bones.getChildren().clear();
-		if (rootBone != null) {
-			for (TreeItem<String> item : rootBone.getChildren()) {
-				this.bones.getChildren().add(item);
-			}
-		}
 	}
 
 	public void onPositionsChanged(Collection<DtoPosition> positions) {
 		skinList.getItems().clear();
-		diagramList.getItems().clear();
+		attachmentList.getItems().clear();
 		slotList.getItems().clear();
 		skeletonList.getItems().clear();
 		skeletonPane.setText("Skeletons");

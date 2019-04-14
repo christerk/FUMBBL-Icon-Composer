@@ -1,6 +1,4 @@
-package com.fumbbl.iconcomposer.model.spine;
-
-import com.fumbbl.iconcomposer.Diagram;
+package com.fumbbl.iconcomposer.model.types;
 
 public class Attachment {
 	public String name;
@@ -79,9 +77,5 @@ public class Attachment {
 		d.x = this.x;
 		d.y = this.y;
 		return d;
-	}
-	
-	public void dumpRegion() {
-		System.out.println(name + " (" + topLeftX+","+topLeftY + ") ("+bottomRightX+","+bottomRightY+")");
 	}
 }

@@ -7,14 +7,14 @@ import java.util.List;
 import java.util.Map;
 
 import com.fumbbl.iconcomposer.ColourTheme;
-import com.fumbbl.iconcomposer.Diagram;
 import com.fumbbl.iconcomposer.dto.DtoPosition;
 import com.fumbbl.iconcomposer.dto.DtoRuleset;
-import com.fumbbl.iconcomposer.model.spine.Bone;
-import com.fumbbl.iconcomposer.model.spine.Skeleton;
-import com.fumbbl.iconcomposer.model.spine.Skin;
-import com.fumbbl.iconcomposer.model.spine.Slot;
-import com.fumbbl.iconcomposer.model.spine.Spine;
+import com.fumbbl.iconcomposer.model.types.Bone;
+import com.fumbbl.iconcomposer.model.types.Diagram;
+import com.fumbbl.iconcomposer.model.types.Skeleton;
+import com.fumbbl.iconcomposer.model.types.Skin;
+import com.fumbbl.iconcomposer.model.types.Slot;
+import com.fumbbl.iconcomposer.model.types.Spine;
 import com.google.gson.annotations.Expose;
 
 public class DataStore {

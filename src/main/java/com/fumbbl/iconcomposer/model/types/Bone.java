@@ -1,4 +1,4 @@
-package com.fumbbl.iconcomposer.model.spine;
+package com.fumbbl.iconcomposer.model.types;
 
 import java.util.Collection;
 import java.util.HashSet;
