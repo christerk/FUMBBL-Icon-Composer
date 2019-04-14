@@ -67,6 +67,7 @@ public class Model {
 		if (position != null) {
 			skeleton.id = dataLoader.saveSkeleton(position.id, skeleton);
 			dataLoader.saveBones(skeleton);
+			skeleton.updateSlots();
 			dataLoader.saveSlots(skeleton);
 		}
 

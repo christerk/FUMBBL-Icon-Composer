@@ -36,6 +36,15 @@ public class Skeleton implements NamedItem {
 		return bones.get(boneName);
 	}
 	
+	public Bone getBone(int boneId) {
+		for (Bone b : bones.values()) {
+			if (b.id == boneId) {
+				return b;
+			}
+		}
+		return null;
+	}
+	
 	public Collection<Bone> getBones() {
 		return new ArrayList<Bone>(bones.values());
 	}
@@ -43,9 +52,11 @@ public class Skeleton implements NamedItem {
 	public void setSlots(Collection<Slot> slots) {
 		this.slots.clear();
 		
+		int order = 1;
 		for (Slot s : slots) {
 			this.slots.put(s.name, s);
 			s.setSkeleton(this);
+			s.order = order++;
 		}
 	}
 	
@@ -91,5 +102,15 @@ public class Skeleton implements NamedItem {
 	@Override
 	public String getName() {
 		return name;
+	}
+
+	public void updateSlots() {
+		for (Slot s : getSlots()) {
+			if (s.boneId <= 0) {
+				s.boneId = getBone(s.bone).id;
+			} else if (s.bone == null) {
+				s.bone = getBone(s.boneId).name;
+			}
+		}
 	}
 }

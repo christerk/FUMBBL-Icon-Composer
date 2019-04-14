@@ -5,6 +5,7 @@ import com.fumbbl.iconcomposer.controllers.NamedItem;
 public class Slot implements NamedItem {
 	public int id;
 	public int boneId;
+	public int order;
 	public String name;
 	public String bone;
 	public String attachment;

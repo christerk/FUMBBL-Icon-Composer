@@ -136,7 +136,22 @@ public class DataLoader {
 	}
 	
 	public void saveSlots(Skeleton skeleton) {
-		// TODO Auto-generated method stub
+		Collection<Slot> slots = skeleton.getSlots();
 		
+		for (Slot slot : slots) {
+			saveSlot(slot);
+		}
+	}
+	
+	public void saveSlot(Slot slot) {
+		Map<String,String> params = new HashMap<String,String>();
+		params.put("slotId", Integer.toString(slot.id));
+		params.put("skeletonId", Integer.toString(slot.getSkeleton().id));
+		params.put("name", slot.name);
+		params.put("boneId", Integer.toString(slot.boneId));
+		params.put("attachment", slot.attachment);
+		params.put("order", Integer.toString(slot.order));
+		String content = apiClient.post("/iconskeleton/setSlot", params, true);
+		slot.id = gson.fromJson(content,  Integer.class);
 	}
 }
