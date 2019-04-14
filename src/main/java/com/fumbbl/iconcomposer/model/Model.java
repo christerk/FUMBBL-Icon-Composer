@@ -8,9 +8,11 @@ import java.nio.file.Path;
 import java.nio.file.PathMatcher;
 import java.nio.file.Paths;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map.Entry;
+import java.util.Set;
 
 import com.fumbbl.iconcomposer.ColourTheme;
 import com.fumbbl.iconcomposer.ColourTheme.ColourType;
@@ -94,6 +96,7 @@ public class Model {
 	}
 	
 	private void importSkins(SkinCollection skins, Skeleton skeleton) {
+		Set<String> storedDiagrams = new HashSet<String>();
 		for (Entry<String, Skin>entry : skins.entrySet()) {
 			Skin s = entry.getValue();
 			s.skeleton = skeleton;
@@ -103,6 +106,7 @@ public class Model {
 				dataStore.addSkin(-1, s);
 			}
 			
+			DtoPosition position = dataStore.getPosition();
 			for(Entry<String,SlotData> slotEntry : s.entrySet()) {
 				SlotData d = slotEntry.getValue();
 				for (Entry<String,Attachment> attachmentEntry : d.entrySet()) {
@@ -112,7 +116,12 @@ public class Model {
 						svgName = a.name;
 					}
 					Diagram diagram = a.toDiagram();
+					diagram.attachmentName = attachmentEntry.getKey();
 					diagram.setSlot(dataStore.getSlot(slotEntry.getKey()));
+					if (position != null && !storedDiagrams.contains(diagram.attachmentName)) {
+						storedDiagrams.add(diagram.attachmentName);
+						dataLoader.saveDiagram(diagram);
+					}
 					dataStore.addDiagram(a.getImage(), diagram);
 				}
 			}
@@ -179,6 +188,16 @@ public class Model {
 		controller.onSkeletonsChanged(dataStore.getSkeletons());
 	}
 	
+	public void loadDiagrams(int skeletonId) {
+		Collection<Diagram> diagrams = dataLoader.getDiagrams(skeletonId);
+		for (Diagram d : diagrams) {
+			d.setSlot(dataStore.getSlot(d.slotId));
+			d.attachmentName = d.name;
+		}
+		dataStore.setDiagrams(diagrams);
+		controller.onDiagramsChanged(diagrams);
+	}
+	
 	public void loadSkins(int positionId) {
 		Collection<Skin> skins = dataLoader.getSkins(positionId);
 		
@@ -222,7 +241,7 @@ public class Model {
 		controller.onDiagramsChanged(dataStore.getDiagrams());
 		controller.onSkinsChanged(skins);
 	}
-	
+
 	public Collection<Bone> loadBones(int skeletonId) {
 		Collection<Bone> bones = dataLoader.getBones(skeletonId);
 		

@@ -44,5 +44,6 @@ public class NewDiagramController extends BaseController implements Initializabl
 	public void setImages(Collection<NamedSVG> images) {
 		ObservableList<NamedSVG> list = imageChoiceBox.getItems();
 		list.setAll(images);
+		list.sort(NamedItem.Comparator);
 	}
 }

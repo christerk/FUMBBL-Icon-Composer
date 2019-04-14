@@ -11,12 +11,19 @@ import com.kitfox.svg.animation.AnimationElement;
 import com.kitfox.svg.xml.StyleAttribute;
 
 public class Diagram implements NamedItem {
+	public int id;
+	public String name;
 	public String svgName;
+	public String attachmentName;
 
 	public ColourTheme templateColours;
+	public int slotId;
 	private Slot slot;
 	public double x;
 	public double y;
+	
+	public double width;
+	public double height;
 	
 	private static final String ATTR_COL = "fumbbl:colour";
 	private static final String ATTR_ORIGFILL = "fumbbl:origFill";

@@ -176,12 +176,10 @@ public class SVGRenderer {
 		ColourTheme theme = controller.getColourTheme();
 		
 		for (Slot slot : spine.slots) {
-			String attachment = slot.attachment;
-			
 			SlotData slotData = skin.get(slot.name);
 
 			if (slotData != null) {
-				Attachment a = slotData.get(attachment);
+				Attachment a = slotData.get(slot.attachment);
 				Diagram diagram = model.getDiagram(a.getImage());
 				if (diagram != null) {
 					diagram.setColour(controller.getSvg(diagram.svgName), theme);

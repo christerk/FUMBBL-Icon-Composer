@@ -97,6 +97,13 @@ public class DataStore {
 	public void clearDiagrams() {
 		diagrams.clear();
 	}
+
+	public void setDiagrams(Collection<Diagram> diagrams) {
+		this.diagrams.clear();
+		for (Diagram d : diagrams) {
+			this.diagrams.put(d.getName(), d);
+		}
+	}
 	
 	/*
 	 * Skin

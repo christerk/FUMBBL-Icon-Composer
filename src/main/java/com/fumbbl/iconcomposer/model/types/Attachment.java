@@ -3,7 +3,6 @@ package com.fumbbl.iconcomposer.model.types;
 public class Attachment {
 	public String name;
 	public String path;
-	public int skinId;
 	public int slotId;
 	public double x = 0;
 	public double y = 0;
@@ -76,6 +75,8 @@ public class Attachment {
 		Diagram d = new Diagram(getImage());
 		d.x = this.x;
 		d.y = this.y;
+		d.width = this.width;
+		d.height = this.height;
 		return d;
 	}
 }

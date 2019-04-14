@@ -160,6 +160,10 @@ public class Controller extends BaseController {
 	public void loadSkeletons(int positionId) {
 		model.loadSkeletons(positionId);
 	}
+
+	public void loadDiagrams(int id) {
+		model.loadDiagrams(id);
+	}
 	
 	public boolean isAuthorized() {
 		return model.isAuthorized();
@@ -211,6 +215,7 @@ public class Controller extends BaseController {
 	}
 
 	public void displayImage(NamedSVG image) {
+		controllerManager.getMain().hideColourPane();
 		renderer.renderSvg(image.diagram);
 		onImageChanged();
 	}
@@ -261,5 +266,4 @@ public class Controller extends BaseController {
 	public void onImportComplete() {
 		controllerManager.getMain().onImportComplete();
 	}
-
 }

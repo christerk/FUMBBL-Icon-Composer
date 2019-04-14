@@ -272,10 +272,15 @@ public class MainController extends BaseController implements Initializable {
 		setBones(bones);
 		setSlots(slots);
 		
+		controller.loadDiagrams(newValue.id);
+		
 		controller.displayBones(null);
 	}
 	
 	public void setColourTheme(ColourTheme t) {
+		if (t == null) {
+			return;
+		}
 		setImageColour(primaryLo, t, ColourType.PRIMARYLO);
 		setImageColour(primaryMid, t, ColourType.PRIMARY);
 		setImageColour(primaryHi, t, ColourType.PRIMARYHI);
