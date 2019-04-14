@@ -383,9 +383,11 @@ public class Model {
 	}
 	
 	public void deleteSkeleton(Skeleton skeleton) {
-		dataStore.removeSkeleton(skeleton);
-		dataLoader.deleteSkeleton(skeleton);
-		controller.onSkeletonChanged(null);
-		controller.onSkeletonsChanged(dataStore.getSkeletons());
+		if (skeleton != null) {
+			dataStore.removeSkeleton(skeleton);
+			dataLoader.deleteSkeleton(skeleton);
+			controller.onSkeletonChanged(null);
+			controller.onSkeletonsChanged(dataStore.getSkeletons());
+		}
 	}
 }

@@ -56,7 +56,6 @@ public class Controller extends BaseController {
 	}
 	
 	public void runInBackground(Runnable task) {
-		System.out.println("Executing Task");
 		threadPool.execute(task);
 	}
 	
