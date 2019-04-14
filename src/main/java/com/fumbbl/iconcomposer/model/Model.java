@@ -15,6 +15,7 @@ import com.fumbbl.iconcomposer.ColourTheme.ColourType;
 import com.fumbbl.iconcomposer.Config;
 import com.fumbbl.iconcomposer.Diagram;
 import com.fumbbl.iconcomposer.controllers.Controller;
+import com.fumbbl.iconcomposer.dto.DtoPosition;
 import com.fumbbl.iconcomposer.dto.DtoRoster;
 import com.fumbbl.iconcomposer.dto.DtoRuleset;
 import com.fumbbl.iconcomposer.model.spine.Attachment;
@@ -60,8 +61,14 @@ public class Model {
 		
 		skeleton.setBones(data.bones);
 		skeleton.setSlots(data.slots);
-		skeleton.id = -1;
 		skeleton.name = "Imported";
+		
+		DtoPosition position = dataStore.getPosition();
+		if (position != null) {
+			skeleton.id = dataLoader.saveSkeleton(position.id, skeleton);
+			dataLoader.saveBones(skeleton);
+			dataLoader.saveSlots(skeleton);
+		}
 
 		dataStore.addSkeleton(skeleton);
 		dataStore.setSlots(data.slots);
@@ -122,6 +129,7 @@ public class Model {
 		dataStore.clearDiagrams();
 		dataStore.clearSkins();
 		dataStore.clearSlots();
+		dataStore.clearPosition();
 		
 		roster = dataLoader.getRoster(rosterId);
 		controller.onPositionsChanged(roster.positions);
@@ -211,12 +219,15 @@ public class Model {
 		dataStore.setBones(bones);
 		
 		for (Bone b : bones) {
-			if (b.parentId != 0) {
+			if (b.parentId > 0) {
 				Bone parentBone = dataStore.getBone(b.parentId);
 				b.parent = parentBone.name;
 				b.parentBone = parentBone;
 			} else if (b.parent != null) {
 				b.parentBone = dataStore.getBone(b.parent);
+			}
+			if (b.parentBone != null) {
+				b.parentBone.addChildBone(b);
 			}
 		}
 	}

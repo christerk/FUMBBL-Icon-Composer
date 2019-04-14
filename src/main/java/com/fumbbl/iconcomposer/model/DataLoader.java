@@ -3,7 +3,10 @@ package com.fumbbl.iconcomposer.model;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 
 import com.fumbbl.iconcomposer.Config;
 import com.fumbbl.iconcomposer.dto.DtoPosition;
@@ -91,5 +94,49 @@ public class DataLoader {
 	public Collection<Skeleton> getSkeletons(int positionId) {
 		String content = apiClient.get("/iconskeleton/list/" + positionId);
 		return gson.fromJson(content, skeletonListType);
+	}
+
+	public int saveSkeleton(int positionId, Skeleton skeleton) {
+		Map<String,String> params = new HashMap<String,String>();
+		params.put("name", skeleton.name);
+		params.put("positionId", Integer.toString(positionId));
+		String content = apiClient.post("/iconskeleton/create", params, true);
+		int skeletonId = gson.fromJson(content,  Integer.class);
+		return skeletonId;
+	}
+
+	public void saveBones(Skeleton skeleton) {
+		Collection<Bone> bones = skeleton.getBones();
+		if (bones == null || bones.isEmpty()) {
+			return;
+		}
+		
+		Bone root = bones.iterator().next();
+		while (root.parentBone != null) {
+			root = root.parentBone;
+		}
+		
+		List<Bone> list = root.getFlattenedChildBones(new LinkedList<Bone>());
+		
+		for (Bone b : list) {
+			saveBone(b);
+		}
+	}
+
+	private void saveBone(Bone bone) {
+		Map<String,String> params = new HashMap<String,String>();
+		params.put("boneID", Integer.toString(bone.id));
+		params.put("skeletonId", Integer.toString(bone.getSkeleton().id));
+		params.put("name", bone.name);
+		params.put("parentId", Integer.toString(bone.parentBone != null ? bone.parentBone.id : -1));
+		params.put("x", Double.toString(bone.x));
+		params.put("y", Double.toString(bone.y));
+		String content = apiClient.post("/iconskeleton/setBone", params, true);
+		bone.id = gson.fromJson(content,  Integer.class);
+	}
+	
+	public void saveSlots(Skeleton skeleton) {
+		// TODO Auto-generated method stub
+		
 	}
 }

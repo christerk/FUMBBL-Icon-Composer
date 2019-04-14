@@ -193,7 +193,9 @@ public class DataStore {
 	
 	public void setSkeletons(Collection<Skeleton> skeletons) {
 		this.skeletons.clear();
-		this.skeletons.addAll(skeletons);
+		if (skeletons != null) {
+			this.skeletons.addAll(skeletons);
+		}
 	}
 
 	/*
@@ -218,5 +220,9 @@ public class DataStore {
 	
 	public DtoPosition getPosition() {
 		return this.position;
+	}
+
+	public void clearPosition() {
+		this.position = null;
 	}
 }

@@ -10,7 +10,6 @@ import com.fumbbl.iconcomposer.controllers.NamedItem;
 public class Skeleton implements NamedItem {
 	public int id;
 	public String name;
-	public String owner;
 
 	private Map<String,Bone> bones;
 	private Map<String,Slot> slots;
@@ -21,6 +20,7 @@ public class Skeleton implements NamedItem {
 	public Skeleton() {
 		bones = new HashMap<String,Bone>();
 		slots = new HashMap<String,Slot>();
+		id = -1;
 	}
 	
 	public void setBones(Collection<Bone> bones) {
@@ -45,6 +45,7 @@ public class Skeleton implements NamedItem {
 		
 		for (Slot s : slots) {
 			this.slots.put(s.name, s);
+			s.setSkeleton(this);
 		}
 	}
 	

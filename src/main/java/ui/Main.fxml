@@ -244,6 +244,12 @@
                   </MenuItem>
               </items>
             </Menu>
+            <Menu text="_Skeleton">
+              <items>
+                <MenuItem text="_Rename" />
+                  <MenuItem text="_Delete" />
+              </items>
+            </Menu>
             <Menu mnemonicParsing="false" text="Diagram">
               <items>
                 <MenuItem mnemonicParsing="false" onAction="#createDiagram" text="Create Diagram" />

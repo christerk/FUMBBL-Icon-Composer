@@ -1,5 +1,10 @@
 package com.fumbbl.iconcomposer.model.spine;
 
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+
 public class Bone {
 	public int id;
 	public String name;
@@ -21,7 +26,12 @@ public class Bone {
 	private Skeleton skeleton;
 	
 	private boolean dirty;
+	private Set<Bone> childBones;
 
+	public Bone() {
+		childBones = new HashSet<Bone>();
+	}
+	
 	public void setSkeleton(Skeleton skeleton) {
 		this.skeleton = skeleton;
 	}
@@ -66,5 +76,44 @@ public class Bone {
 	
 	public boolean isDirty() {
 		return dirty;
+	}
+
+	public void addChildBone(Bone child) {
+		childBones.add(child);
+	}
+	
+	public Collection<Bone> getChildBones() {
+		return childBones;
+	}
+	
+	public List<Bone> getFlattenedChildBones(List<Bone> list) {
+		list.add(this);
+		
+		for (Bone child : childBones) {
+			child.getFlattenedChildBones(list);
+		}
+		return list;
+	}
+	
+	@Override
+	public boolean equals(Object o) {
+		if (o == this) {
+			return true;
+		}
+		if (!(o instanceof Bone)) {
+			return false;
+		}
+		Bone other = (Bone)o;
+		
+		return other.id == this.id;
+	}
+	
+	@Override
+	public final int hashCode() {
+		return this.id + (name != null ? name.hashCode() : 0);
+	}
+
+	public Skeleton getSkeleton() {
+		return skeleton;
 	}
 }
