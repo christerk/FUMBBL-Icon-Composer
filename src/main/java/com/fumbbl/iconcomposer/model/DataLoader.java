@@ -154,4 +154,9 @@ public class DataLoader {
 		String content = apiClient.post("/iconskeleton/setSlot", params, true);
 		slot.id = gson.fromJson(content,  Integer.class);
 	}
+
+	public void deleteSkeleton(Skeleton skeleton) {
+		apiClient.post("/iconskeleton/delete/" + skeleton.id, null, true);
+		return;
+	}
 }

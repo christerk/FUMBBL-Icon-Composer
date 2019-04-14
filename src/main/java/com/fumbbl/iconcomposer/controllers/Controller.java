@@ -1,6 +1,8 @@
 package com.fumbbl.iconcomposer.controllers;
 
 import java.util.Collection;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 import com.fumbbl.iconcomposer.ColourTheme;
 import com.fumbbl.iconcomposer.Config;
@@ -28,11 +30,13 @@ public class Controller extends BaseController {
 	private StageManager stageManager;
 	private ControllerManager controllerManager;
 	public ViewState viewState;
+	ExecutorService threadPool;
 	
 	public Controller(Model model) {
 		this.model = model;
 		renderer = new SVGRenderer(model, this);
 		viewState = new ViewState();
+		threadPool = Executors.newSingleThreadExecutor();
 	}
 
 	public void setStageManager(StageManager stageManager) {
@@ -49,6 +53,11 @@ public class Controller extends BaseController {
 
 	public StageManager getStageManager() {
 		return stageManager;
+	}
+	
+	public void runInBackground(Runnable task) {
+		System.out.println("Executing Task");
+		threadPool.execute(task);
 	}
 	
 	/*
@@ -113,6 +122,10 @@ public class Controller extends BaseController {
 		viewState.getActiveSkeleton().setBones(bones);
 	}
 
+	public void setSlots(Collection<Slot> slots) {
+		viewState.getActiveSkeleton().setSlots(slots);
+	}
+
 	public void setColourTheme(String theme) {
 		viewState.setActiveColourTheme(model.getColourTheme(theme));
 	}
@@ -128,10 +141,6 @@ public class Controller extends BaseController {
 	/*
 	 * Model
 	 */
-
-	public void setSlots(Collection<Slot> slots) {
-		model.setSlots(slots);
-	}
 
 	public void loadPosition(int id) {
 		model.loadPosition(id);
@@ -185,6 +194,14 @@ public class Controller extends BaseController {
 		model.addDiagram(svg);
 	}
 	
+	public SVGDiagram getSvg(String svgName) {
+		return model.getSvg(svgName);
+	}
+
+	public void deleteSkeleton(Skeleton skeleton) {
+		model.deleteSkeleton(skeleton);
+	}
+	
 	/*
 	 * Renderer
 	 */
@@ -229,11 +246,7 @@ public class Controller extends BaseController {
 		renderer.renderSkeleton(viewState.getActiveSkeleton(), value);
 		onImageChanged();
 	}
-
-	public SVGDiagram getSvg(String svgName) {
-		return model.getSvg(svgName);
-	}
-
+	
 	public void onRulesetLoaded(DtoRuleset ruleset) {
 		((OpenRosterController)controllerManager.get(StageType.openRoster)).onRulesetLoaded(ruleset);
 	}
@@ -241,4 +254,13 @@ public class Controller extends BaseController {
 	public void onPositionChanged(DtoPosition position) {
 		controllerManager.getMain().onPositionChanged(position);
 	}
+
+	public void onImportStart() {
+		controllerManager.getMain().onImportStart();
+	}
+
+	public void onImportComplete() {
+		controllerManager.getMain().onImportComplete();
+	}
+
 }

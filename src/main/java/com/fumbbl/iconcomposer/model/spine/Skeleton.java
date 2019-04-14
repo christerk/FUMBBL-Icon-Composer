@@ -26,9 +26,11 @@ public class Skeleton implements NamedItem {
 	public void setBones(Collection<Bone> bones) {
 		this.bones.clear();
 		
-		for (Bone b : bones) {
-			this.bones.put(b.name, b);
-			b.setSkeleton(this);
+		if (bones != null) {
+			for (Bone b : bones) {
+				this.bones.put(b.name, b);
+				b.setSkeleton(this);
+			}
 		}
 	}
 	
@@ -52,11 +54,13 @@ public class Skeleton implements NamedItem {
 	public void setSlots(Collection<Slot> slots) {
 		this.slots.clear();
 		
-		int order = 1;
-		for (Slot s : slots) {
-			this.slots.put(s.name, s);
-			s.setSkeleton(this);
-			s.order = order++;
+		if (slots != null) {
+			int order = 1;
+			for (Slot s : slots) {
+				this.slots.put(s.name, s);
+				s.setSkeleton(this);
+				s.order = order++;
+			}
 		}
 	}
 	

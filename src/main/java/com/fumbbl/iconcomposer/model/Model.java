@@ -8,6 +8,8 @@ import java.nio.file.Path;
 import java.nio.file.PathMatcher;
 import java.nio.file.Paths;
 import java.util.Collection;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.Map.Entry;
 
 import com.fumbbl.iconcomposer.ColourTheme;
@@ -29,6 +31,8 @@ import com.fumbbl.iconcomposer.model.spine.Spine;
 import com.fumbbl.iconcomposer.svg.SVGLoader;
 import com.google.gson.Gson;
 import com.kitfox.svg.SVGDiagram;
+
+import javafx.application.Platform;
 
 public class Model {
 	private DataStore dataStore;
@@ -52,7 +56,7 @@ public class Model {
 		return cfg;
 	}
 	
-	private void importSkeleton(String json) {
+	private Runnable importSkeleton(String json) {
 		Gson gson = new Gson();
 		Spine data = gson.fromJson(json,  Spine.class);
 		Skeleton skeleton = new Skeleton();
@@ -75,11 +79,18 @@ public class Model {
 		dataStore.setSlots(data.slots);
 
 		importSkins(data.skins, skeleton);
-		
-		controller.onBonesChanged(data.bones);
-		controller.onSlotsChanged(data.slots);
-		controller.onSkeletonsChanged(dataStore.getSkeletons());
-		controller.onSkeletonChanged(skeleton);
+
+		return new Runnable() {
+			@Override
+			public void run() {
+				controller.onDiagramsChanged(dataStore.getDiagrams());
+				controller.onSkinsChanged(dataStore.getSkins());
+				controller.onBonesChanged(data.bones);
+				controller.onSlotsChanged(data.slots);
+				controller.onSkeletonsChanged(dataStore.getSkeletons());
+				controller.onSkeletonChanged(skeleton);
+			}
+		};
 	}
 	
 	private void importSkins(SkinCollection skins, Skeleton skeleton) {
@@ -106,17 +117,21 @@ public class Model {
 				}
 			}
 		}
-		controller.onDiagramsChanged(dataStore.getDiagrams());
-		controller.onSkinsChanged(dataStore.getSkins());
 	}
 
-	private void importSvg(Path path) throws FileNotFoundException, IOException {
+	private Runnable importSvg(Path path) throws FileNotFoundException, IOException {
 		String fileId = stripExtension(path.getFileName());
 
 		SVGDiagram svg = svgLoader.loadSVG(path);
 		
 		dataStore.addSvg(new NamedSVG(fileId, svg));
-		controller.onImagesChanged(dataStore.getSvgs());
+		return new Runnable() {
+
+			@Override
+			public void run() {
+				controller.onImagesChanged(dataStore.getSvgs());
+			}
+		};
 	}
 	
 	private String stripExtension(Path filename) {
@@ -314,33 +329,49 @@ public class Model {
 		return dataLoader.isAuthenticated();
 	}
 
-	public void setSlots(Collection<Slot> slots) {
-	}
-
 	public void handleDroppedFile(String path) {
-		try {
-			Path p = Paths.get(path);
-			PathMatcher jsonMatcher = FileSystems.getDefault().getPathMatcher("glob:**.json");
-			PathMatcher svgMatcher = FileSystems.getDefault().getPathMatcher("glob:**.svg");
+		controller.onImportStart();
+		Runnable task = new Runnable() {
+			@Override
+			public void run() {
+				try {
+					Path p = Paths.get(path);
+					PathMatcher jsonMatcher = FileSystems.getDefault().getPathMatcher("glob:**.json");
+					PathMatcher svgMatcher = FileSystems.getDefault().getPathMatcher("glob:**.svg");
 
-			if (!Files.isReadable(p)) {
-				return;
-			}
-			
-			long size = Files.size(p);
-			if (size > 0 && size < 1024*1024*10) {
-				byte[] bytes = Files.readAllBytes(p);
-				
-				if (jsonMatcher.matches(p)) {
-					importSkeleton(new String(bytes));
-				} else if (svgMatcher.matches(p)) {
-					importSvg(p);
+					if (!Files.isReadable(p)) {
+						return;
+					}
+					
+					List<Runnable> delayedTasks = new LinkedList<Runnable>();
+					
+					long size = Files.size(p);
+					if (size > 0 && size < 1024*1024*10) {
+						byte[] bytes = Files.readAllBytes(p);
+						
+						if (jsonMatcher.matches(p)) {
+							delayedTasks.add(importSkeleton(new String(bytes)));
+						} else if (svgMatcher.matches(p)) {
+							delayedTasks.add(importSvg(p));
+						}
+					}
+					
+					Platform.runLater(new Runnable() {
+						@Override
+						public void run() {
+							for (Runnable task : delayedTasks) {
+								task.run();
+							}
+							controller.onImportComplete();
+						}						
+					});
+				} catch (IOException e) {
+					controller.onImportComplete();
 				}
 			}
-			
-		} catch (IOException e) {
-			
-		}
+		};
+		
+		controller.runInBackground(task);
 	}
 
 	public SVGDiagram getSvg(String svgName) {
@@ -349,5 +380,12 @@ public class Model {
 			return svg.diagram;
 		}
 		return null;
+	}
+	
+	public void deleteSkeleton(Skeleton skeleton) {
+		dataStore.removeSkeleton(skeleton);
+		dataLoader.deleteSkeleton(skeleton);
+		controller.onSkeletonChanged(null);
+		controller.onSkeletonsChanged(dataStore.getSkeletons());
 	}
 }

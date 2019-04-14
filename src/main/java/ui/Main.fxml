@@ -23,6 +23,7 @@
 <?import javafx.scene.layout.GridPane?>
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.RowConstraints?>
+<?import javafx.scene.layout.StackPane?>
 <?import javafx.scene.layout.VBox?>
 
 <BorderPane xmlns="http://javafx.com/javafx/8.0.171" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.fumbbl.iconcomposer.controllers.MainController">
@@ -247,7 +248,7 @@
             <Menu text="_Skeleton">
               <items>
                 <MenuItem text="_Rename" />
-                  <MenuItem text="_Delete" />
+                  <MenuItem onAction="#deleteSkeleton" text="_Delete" />
               </items>
             </Menu>
             <Menu mnemonicParsing="false" text="Diagram">
@@ -265,14 +266,26 @@
       </MenuBar>
    </top>
    <bottom>
-      <HBox spacing="5.0" BorderPane.alignment="CENTER">
-         <children>
-            <Label text="API:" />
-            <Label fx:id="apiStatus" text="Not Authorized" />
-         </children>
+      <StackPane BorderPane.alignment="CENTER">
          <BorderPane.margin>
             <Insets left="10.0" />
          </BorderPane.margin>
-      </HBox>
+         <children>
+            <HBox spacing="5.0">
+               <children>
+                  <Label text="API:" />
+                  <Label fx:id="apiStatus" text="Not Authorized" />
+               </children>
+               <StackPane.margin>
+                  <Insets left="20.0" />
+               </StackPane.margin>
+            </HBox>
+            <Label fx:id="labelImporting" text="Importing..." visible="false" StackPane.alignment="CENTER_RIGHT">
+               <StackPane.margin>
+                  <Insets right="20.0" />
+               </StackPane.margin>
+            </Label>
+         </children>
+      </StackPane>
    </bottom>
 </BorderPane>

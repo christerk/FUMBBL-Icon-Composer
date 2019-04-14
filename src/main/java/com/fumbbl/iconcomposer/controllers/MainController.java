@@ -67,6 +67,7 @@ public class MainController extends BaseController implements Initializable {
 	public TextField diagramY;
 	public Label apiStatus;
 	public ListView<DtoPosition> positionList;
+	public Label labelImporting;
 	
 	public ListView<Skeleton> skeletonList;
 	public ListView<NamedSVG> imageList;
@@ -272,11 +273,22 @@ public class MainController extends BaseController implements Initializable {
 		controller.getStageManager().show(StageType.about);
 	}
 	
+	public void deleteSkeleton() {
+		controller.deleteSkeleton(controller.viewState.getActiveSkeleton());
+	}
+	
 	/*
 	 *   Update Methods
 	 */
 	
 	public void setSkeleton(Skeleton newValue) {
+		if (newValue == null) {
+			skeletonPane.setText("Skeletons");
+			controller.setSkeleton(null);
+			controller.displayBones(null);
+			return;
+			
+		}
 		skeletonPane.setText("Skeletons - " + newValue.name);
 		
 		Collection<Bone> bones = null;
@@ -448,5 +460,13 @@ public class MainController extends BaseController implements Initializable {
 	
 	public void onSkinsChanged(Collection<Skin> skins) {
 		setSkins(skins);
+	}
+
+	public void onImportStart() {
+		labelImporting.setVisible(true);
+	}
+
+	public void onImportComplete() {
+		labelImporting.setVisible(false);
 	}
 }

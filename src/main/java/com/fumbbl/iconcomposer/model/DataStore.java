@@ -197,6 +197,10 @@ public class DataStore {
 			this.skeletons.addAll(skeletons);
 		}
 	}
+	
+	public void removeSkeleton(Skeleton skeleton) {
+		skeletons.remove(skeleton);
+	}
 
 	/*
 	 * Ruleset 
