@@ -208,6 +208,15 @@ public class DataStore {
 	public void removeSkeleton(Skeleton skeleton) {
 		skeletons.remove(skeleton);
 	}
+	
+	public Skeleton getSkeleton(int skeletonId) {
+		for (Skeleton s : skeletons) {
+			if (s.id == skeletonId) {
+				return s;
+			}
+		}
+		return null;
+	}
 
 	/*
 	 * Ruleset 

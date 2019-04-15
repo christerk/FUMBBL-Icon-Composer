@@ -167,8 +167,8 @@ public class Controller extends BaseController {
 		model.loadSkeletons(positionId);
 	}
 
-	public void loadDiagrams(int id) {
-		model.loadDiagrams(id);
+	public void loadDiagrams(int skeletonId) {
+		model.loadDiagrams(skeletonId);
 	}
 	
 	public boolean isAuthorized() {
@@ -209,6 +209,14 @@ public class Controller extends BaseController {
 
 	public void deleteSkeleton(Skeleton skeleton) {
 		model.deleteSkeleton(skeleton);
+	}
+	
+	public void createSkin(Skeleton skeleton) {
+		model.createSkin(skeleton);
+	}
+	
+	public void setSkinDiagram(Skin skin, Slot slot, Diagram diagram) {
+		model.setSkinDiagram(skin, slot, diagram);
 	}
 	
 	/*

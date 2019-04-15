@@ -20,9 +20,10 @@ import com.fumbbl.iconcomposer.model.types.Skin;
 import com.fumbbl.iconcomposer.model.types.Slot;
 import com.fumbbl.iconcomposer.ui.StageType;
 
-import javafx.beans.value.ChangeListener;
-import javafx.beans.value.ObservableValue;
+import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
+import javafx.collections.transformation.FilteredList;
+import javafx.collections.transformation.SortedList;
 import javafx.embed.swing.SwingFXUtils;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
@@ -41,6 +42,7 @@ import javafx.scene.image.ImageView;
 import javafx.scene.image.WritableImage;
 import javafx.scene.input.MouseButton;
 import javafx.scene.input.MouseEvent;
+import javafx.scene.layout.FlowPane;
 import javafx.scene.layout.GridPane;
 import javafx.util.StringConverter;
 
@@ -81,14 +83,21 @@ public class MainController extends BaseController implements Initializable {
 	public TitledPane skinPane;
 	public TitledPane slotPane;
 	
+	public FlowPane diagramChoicePane;
+	public ChoiceBox<Diagram> diagramChoices;
+	
 	public Menu menuColourThemes;
 	
+	private ObservableList<Diagram> masterDiagrams;
+	
 	public MainController() {
+		masterDiagrams = FXCollections.observableArrayList();
 	}
 	
 	@Override
 	public void initialize(URL location, ResourceBundle resources) {
 		colourPane.setVisible(false);
+		diagramChoicePane.setVisible(false);
 
 		positionList.setCellFactory(new CellFactory<DtoPosition>().create());
 		skeletonList.setCellFactory(new CellFactory<Skeleton>().create());
@@ -109,71 +118,87 @@ public class MainController extends BaseController implements Initializable {
 			}
 		});
 
-		slotChoices.getSelectionModel().selectedItemProperty().addListener(new ChangeListener<Slot>() {
+		diagramChoices.setConverter(new StringConverter<Diagram>() {
+			@Override
+			public String toString(Diagram object) {
+				return object.getImage();
+			}
 
 			@Override
-			public void changed(ObservableValue<? extends Slot> observable, Slot oldValue, Slot newValue) {
-				Diagram d = controller.viewState.getActiveDiagram();
-				d.setSlot(newValue);
+			public Diagram fromString(String string) {
+				return null;
 			}
-			
 		});
 		
-		positionList.getSelectionModel().selectedItemProperty().addListener(new ChangeListener<DtoPosition>() {
-			@Override
-			public void changed(ObservableValue<? extends DtoPosition> observable, DtoPosition oldValue, DtoPosition newValue) {
-				if (newValue != null) {
-					attachmentList.getItems().clear();
-					skinList.getItems().clear();
-					slotList.getItems().clear();
-					skeletonList.getItems().clear();
-					skeletonPane.setText("Skeletons");
-					
-					controller.loadPosition(newValue.id);
-					skeletonPane.setExpanded(true);
-					positionPane.setText("Positions - " + newValue.title);
-				} else {
-					positionPane.setText("Positions");
-				}
+		diagramChoices.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> {
+			Slot slot = slotList.getSelectionModel().getSelectedItem();
+			Skin skin = controller.viewState.getActiveSkin();
+
+			if (slot != null && skin != null) {
+				controller.setSkinDiagram(skin, slot, newValue);
+				controller.displaySkin(controller.viewState.getActiveSkin());
 			}
 		});
 
-		skeletonList.getSelectionModel().selectedItemProperty().addListener(new ChangeListener<Skeleton>() {
-			@Override
-			public void changed(ObservableValue<? extends Skeleton> observable, Skeleton oldValue, Skeleton newValue) {
-				if (newValue != null) {
-					setSkeleton(newValue);
-				} else {
-					skeletonPane.setText("Skeletons");
-					controller.setSkeleton(null);
-				}
+		slotChoices.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> {
+			Diagram d = controller.viewState.getActiveDiagram();
+			d.setSlot(newValue);
+		});
+		
+		positionList.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> {
+			if (newValue != null) {
+				attachmentList.getItems().clear();
+				skinList.getItems().clear();
+				slotList.getItems().clear();
+				skeletonList.getItems().clear();
+				skeletonPane.setText("Skeletons");
+				
+				controller.loadPosition(newValue.id);
+				skeletonPane.setExpanded(true);
+				positionPane.setText("Positions - " + newValue.title);
+			} else {
+				positionPane.setText("Positions");
 			}
 		});
 
-		imageList.getSelectionModel().selectedItemProperty().addListener(new ChangeListener<NamedSVG>() {
-			@Override
-			public void changed(ObservableValue<? extends NamedSVG> observable, NamedSVG oldValue, NamedSVG newValue) {
-				if (newValue != null) {
-					controller.displayImage(newValue);
-				}
+		skeletonList.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> {
+			if (newValue != null) {
+				setSkeleton(newValue);
+				controller.loadDiagrams(newValue.id);
+			} else {
+				skeletonPane.setText("Skeletons");
+				controller.setSkeleton(null);
 			}
 		});
 
-		attachmentList.getSelectionModel().selectedItemProperty().addListener(new ChangeListener<Diagram>() {
-			@Override
-			public void changed(ObservableValue<? extends Diagram> observable, Diagram oldValue, Diagram newValue) {
-				if (newValue != null) {
-					controller.displayDiagram(newValue);
-				}
+		imageList.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> {
+			if (newValue != null) {
+				controller.displayImage(newValue);
 			}
 		});
 
-		skinList.getSelectionModel().selectedItemProperty().addListener(new ChangeListener<Skin>() {
-			@Override
-			public void changed(ObservableValue<? extends Skin> observable, Skin oldValue, Skin newValue) {
-				if (newValue != null) {
-					controller.displaySkin(newValue);
-				}
+		attachmentList.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> {
+			if (newValue != null) {
+				controller.displayDiagram(newValue);
+			}
+		});
+
+		skinList.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> {
+			if (newValue != null) {
+				controller.displaySkin(newValue);
+			}
+		});
+
+		slotList.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> {
+			if (newValue != null) {
+				showDiagramPane();
+				
+				FilteredList<Diagram> filteredDiagrams = new FilteredList<Diagram>(masterDiagrams, diagram -> {
+					return diagram.getSlot() == newValue;
+				});
+
+				diagramChoices.setItems(new SortedList<Diagram>(filteredDiagrams, NamedItem.Comparator));
+				controller.displaySkin(controller.viewState.getActiveSkin());
 			}
 		});
 		
@@ -195,7 +220,7 @@ public class MainController extends BaseController implements Initializable {
 			Color c = controller.viewState.getPixelRGB((int)x, (int)y);
 			
 			d.templateColours.setColour(type, c);
-			d.refreshColours(controller.getSvg(d.svgName));
+			d.refreshColours(controller.getSvg(d.getImage()));
 			controller.onColourThemeChanged(d.templateColours);
 		} else if (button == MouseButton.SECONDARY) {
 			Point2D point = controller.getRenderer().getImageOffset(x, y);
@@ -211,7 +236,7 @@ public class MainController extends BaseController implements Initializable {
 			Diagram d = controller.viewState.getActiveDiagram();
 			ColourType type = controller.viewState.getActiveColourType();
 			d.templateColours.resetColour(type);
-			d.refreshColours(controller.getSvg(d.svgName));
+			d.refreshColours(controller.getSvg(d.getImage()));
 			controller.onColourThemeChanged(d.templateColours);
 		}
 	}
@@ -238,6 +263,10 @@ public class MainController extends BaseController implements Initializable {
 	
 	public void deleteSkeleton() {
 		controller.deleteSkeleton(controller.viewState.getActiveSkeleton());
+	}
+	
+	public void createSkin() {
+		controller.createSkin(controller.viewState.getActiveSkeleton());
 	}
 	
 	/*
@@ -314,10 +343,20 @@ public class MainController extends BaseController implements Initializable {
 
 	public void showColourPane() {
 		colourPane.setVisible(true);
+		diagramChoicePane.setVisible(false);
 	}
 
+	public void showDiagramPane() {
+		diagramChoicePane.setVisible(true);
+		colourPane.setVisible(false);
+	}
+	
 	public void hideColourPane() {
 		colourPane.setVisible(false);
+	}
+	
+	public void hideDiagramPane() {
+		diagramChoicePane.setVisible(false);
 	}
 
 	public void setSlotInfo(Slot slot, double x, double y) {
@@ -379,6 +418,9 @@ public class MainController extends BaseController implements Initializable {
 	public void setDiagrams(Collection<Diagram> diagrams) {
 		ObservableList<Diagram> children = attachmentList.getItems();
 		children.setAll(diagrams);
+		children.sort(NamedItem.Comparator);
+
+		masterDiagrams.setAll(diagrams);
 		children.sort(NamedItem.Comparator);
 	}
 	

@@ -72,10 +72,10 @@ public class Skeleton implements NamedItem {
 		return slots.values();
 	}
 	
-	public void getTransform(String bone, Attachment a) {
+	public void getTransform(String bone, Diagram d) {
 		Bone b = getBone(bone);
 		updateTransform(b);
-		a.updateTransform(b);
+		d.updateTransform(b);
 	}
 	
 	public void updateTransform(Bone bone) {

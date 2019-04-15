@@ -1,8 +1,12 @@
 package com.fumbbl.iconcomposer.model.types;
 
+import java.awt.geom.Rectangle2D;
+
 import com.fumbbl.iconcomposer.ColourTheme;
 import com.fumbbl.iconcomposer.ColourTheme.ColourType;
 import com.fumbbl.iconcomposer.controllers.NamedItem;
+import com.fumbbl.iconcomposer.model.NamedSVG;
+import com.fumbbl.iconcomposer.svg.SVGUtil;
 import com.kitfox.svg.SVGDiagram;
 import com.kitfox.svg.SVGElement;
 import com.kitfox.svg.SVGElementException;
@@ -13,17 +17,30 @@ import com.kitfox.svg.xml.StyleAttribute;
 public class Diagram implements NamedItem {
 	public int id;
 	public String name;
-	public String svgName;
+	public String path;
 	public String attachmentName;
 
 	public ColourTheme templateColours;
 	public int slotId;
 	private Slot slot;
+
 	public double x;
 	public double y;
-	
+	public double rotation = 0;
 	public double width;
 	public double height;
+	
+	public double topLeftX;
+	public double topLeftY;
+	public double topRightX;
+	public double topRightY;
+	public double bottomLeftX;
+	public double bottomLeftY;
+	public double bottomRightX;
+	public double bottomRightY;
+	
+	public double worldX;
+	public double worldY;
 	
 	private static final String ATTR_COL = "fumbbl:colour";
 	private static final String ATTR_ORIGFILL = "fumbbl:origFill";
@@ -31,15 +48,26 @@ public class Diagram implements NamedItem {
 			"fill-opacity"
 	};
 	
-	public Diagram(String svgName) {
-		this(svgName, new ColourTheme("template"));
+	public Diagram(NamedSVG svg) {
+		this(svg.name, new ColourTheme("template"));
+		
+		Rectangle2D.Double viewbox = SVGUtil.getViewbox(svg.diagram);
+		this.width = viewbox.width;
+		this.height = viewbox.height;
 	}
 	
 	public Diagram(String svgName, ColourTheme template) {
-		this.svgName = svgName;
+		this.path = svgName;
 		this.templateColours = template;
 	}
 
+	public String getImage() {
+		if (path != null) {
+			return path;
+		}
+		return name;
+	}
+	
 	public ColourTheme getTheme() {
 		return templateColours;
 	}
@@ -138,8 +166,50 @@ public class Diagram implements NamedItem {
 		}
 	}
 
+	public void updateTransform(Bone bone) {
+		if (bone == null) {
+			return;
+		}
+		
+		double localX2 = width / 2;
+		double localY2 = height / 2;
+		
+		double localX = -localX2;
+		double localY = -localY2;
+		
+		double sin = Math.sin(Math.toRadians(rotation));
+		double cos = Math.cos(Math.toRadians(rotation));
+		
+		double localXCos = localX * cos + x;
+		double localXSin = localX * sin;
+		double localYCos = localY * cos + y;
+		double localYSin = localY * sin;
+		double localX2Cos = localX2 * cos + x;
+		double localX2Sin = localX2 * sin;
+		double localY2Cos = localY2 * cos + y;
+		double localY2Sin = localY2 * sin;
+		
+		topLeftX = localXCos - localY2Sin;
+		topLeftY = localY2Cos + localXSin;
+		
+		topRightX = localX2Cos - localY2Sin;
+		topRightY = localY2Cos + localX2Sin;
+		
+		bottomLeftX = localXCos - localYSin;
+		bottomLeftY = localYCos + localXSin;
+		
+		bottomRightX = localX2Cos - localYSin;
+		bottomRightY = localYCos + localX2Sin;
+		
+		double oX = topLeftX;
+		double oY = topLeftY;
+		
+		worldX = oX * bone.a + oY * bone.b + bone.worldX;
+		worldY = oX * bone.c + oY * bone.d + bone.worldY;
+	}
+	
 	@Override
 	public String getName() {
-		return svgName;
-	}	
+		return getImage();
+	}
 }

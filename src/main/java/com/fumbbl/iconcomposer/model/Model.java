@@ -21,7 +21,6 @@ import com.fumbbl.iconcomposer.controllers.Controller;
 import com.fumbbl.iconcomposer.dto.DtoPosition;
 import com.fumbbl.iconcomposer.dto.DtoRoster;
 import com.fumbbl.iconcomposer.dto.DtoRuleset;
-import com.fumbbl.iconcomposer.model.types.Attachment;
 import com.fumbbl.iconcomposer.model.types.Bone;
 import com.fumbbl.iconcomposer.model.types.Diagram;
 import com.fumbbl.iconcomposer.model.types.Skeleton;
@@ -109,20 +108,15 @@ public class Model {
 			DtoPosition position = dataStore.getPosition();
 			for(Entry<String,SlotData> slotEntry : s.entrySet()) {
 				SlotData d = slotEntry.getValue();
-				for (Entry<String,Attachment> attachmentEntry : d.entrySet()) {
-					Attachment a = attachmentEntry.getValue();
-					String svgName = a.path;
-					if (svgName == null) {
-						svgName = a.name;
-					}
-					Diagram diagram = a.toDiagram();
+				for (Entry<String,Diagram> attachmentEntry : d.entrySet()) {
+					Diagram diagram = attachmentEntry.getValue();
 					diagram.attachmentName = attachmentEntry.getKey();
 					diagram.setSlot(dataStore.getSlot(slotEntry.getKey()));
-					if (position != null && !storedDiagrams.contains(diagram.attachmentName)) {
-						storedDiagrams.add(diagram.attachmentName);
+					if (position != null && !storedDiagrams.contains(diagram.getImage())) {
+						storedDiagrams.add(diagram.getImage());
 						dataLoader.saveDiagram(diagram);
 					}
-					dataStore.addDiagram(a.getImage(), diagram);
+					dataStore.addDiagram(diagram.getImage(), diagram);
 				}
 			}
 		}
@@ -202,44 +196,10 @@ public class Model {
 	public void loadSkins(int positionId) {
 		Collection<Skin> skins = dataLoader.getSkins(positionId);
 		
-		dataStore.clearDiagrams();
-		for(Skin s : skins) {
-			int skinId = s.id;
-			
-			Collection<Slot> slots = dataLoader.getSlots(s.skeletonId);
-			
-			Collection<Attachment> attachments = dataLoader.getAttachments(skinId);
-			loadSkeletons(positionId);
-			
-			Collection<Skeleton> skeletons = dataStore.getSkeletons();
-
-			dataStore.setSlots(slots);
-			
-			for (Skeleton skeleton : skeletons) {
-				if (skeleton.id == s.skeletonId) {
-					s.skeleton = skeleton;
-					skeleton.setBones(loadBones(skeleton.id));
-					skeleton.setSlots(loadSlots(skeleton.id));
-				}
-			}
-			for (Attachment a : attachments) {
-				int slotId = a.slotId;
-
-				Slot slot = dataStore.getSlot(slotId);
-				
-				SlotData sd = new SlotData();
-				sd.put(a.name, a);
-				s.put(slot.name, sd);
-
-				Diagram d = a.toDiagram();
-				d.setSlot(dataStore.getSlot(slotId));
-				dataStore.addDiagram(a.getImage(), d);
-			}
+		for (Skin s : skins) {
+			s.skeleton = dataStore.getSkeleton(s.skeletonId);
 		}
-
 		dataStore.setSkins(skins);
-		controller.onSlotsChanged(dataStore.getSlots());
-		controller.onDiagramsChanged(dataStore.getDiagrams());
 		controller.onSkinsChanged(skins);
 	}
 
@@ -282,7 +242,7 @@ public class Model {
 	}
 
 	public void addDiagram(NamedSVG svg) {
-		Diagram d = new Diagram(svg.name);
+		Diagram d = new Diagram(svg);
 		dataStore.addDiagram(svg.name, d);
 		controller.onDiagramsChanged(dataStore.getDiagrams());
 	}
@@ -408,6 +368,26 @@ public class Model {
 			dataLoader.deleteSkeleton(skeleton);
 			controller.onSkeletonChanged(null);
 			controller.onSkeletonsChanged(dataStore.getSkeletons());
+		}
+	}
+	
+	public void createSkin(Skeleton skeleton) {
+		Skin s = new Skin();
+		s.id = -1;
+		s.skeleton = skeleton;
+		s.name = "NewSkin";
+		
+		dataStore.addSkin(-1, s);
+		controller.onSkinsChanged(dataStore.getSkins());
+	}
+
+	public void setSkinDiagram(Skin skin, Slot slot, Diagram diagram) {
+		SlotData sd = new SlotData();
+		if (diagram != null) {
+			sd.put(slot.attachment, diagram);
+			skin.put(slot.name, sd);
+		} else {
+			sd.remove(slot.name);
 		}
 	}
 }

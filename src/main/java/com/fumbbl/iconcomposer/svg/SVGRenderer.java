@@ -5,11 +5,11 @@ import java.awt.Color;
 import java.awt.Graphics2D;
 import java.awt.RenderingHints;
 import java.awt.geom.AffineTransform;
+import java.awt.geom.Rectangle2D;
 
 import com.fumbbl.iconcomposer.ColourTheme;
 import com.fumbbl.iconcomposer.controllers.Controller;
 import com.fumbbl.iconcomposer.model.Model;
-import com.fumbbl.iconcomposer.model.types.Attachment;
 import com.fumbbl.iconcomposer.model.types.Bone;
 import com.fumbbl.iconcomposer.model.types.Diagram;
 import com.fumbbl.iconcomposer.model.types.Skeleton;
@@ -75,7 +75,7 @@ public class SVGRenderer {
 		g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 
 		try {
-			diagram.resetColour(controller.getSvg(diagram.svgName));
+			diagram.resetColour(controller.getSvg(diagram.getImage()));
 			controller.onColourThemeChanged(diagram.getTheme());
 			renderDiagram(g2, diagram);
 		} catch (SVGException e) {
@@ -179,10 +179,10 @@ public class SVGRenderer {
 			SlotData slotData = skin.get(slot.name);
 
 			if (slotData != null) {
-				Attachment a = slotData.get(slot.attachment);
+				Diagram a = slotData.get(slot.attachment);
 				Diagram diagram = model.getDiagram(a.getImage());
 				if (diagram != null) {
-					diagram.setColour(controller.getSvg(diagram.svgName), theme);
+					diagram.setColour(controller.getSvg(diagram.getImage()), theme);
 	
 					g2.translate(x, y);
 					renderDiagram(g2, diagram, skin.skeleton, slot, a, size);
@@ -194,7 +194,7 @@ public class SVGRenderer {
 		g2.setTransform(originalTransform);
 	}
 
-	private void renderDiagram(Graphics2D g2, Diagram diagram, Skeleton skeleton, Slot slot, Attachment a, double size) throws SVGException {
+	private void renderDiagram(Graphics2D g2, Diagram diagram, Skeleton skeleton, Slot slot, Diagram a, double size) throws SVGException {
 		AffineTransform at = g2.getTransform();
 		double scale = size / 960.0;
 		g2.translate(width/2 - size/2, height/2 - size/2);
@@ -202,7 +202,7 @@ public class SVGRenderer {
 		
 		skeleton.getTransform(slot.bone, a);
 
-		SVGDiagram d = controller.getSvg(diagram.svgName);
+		SVGDiagram d = controller.getSvg(diagram.getImage());
 		
 		if (d != null) {
 			g2.translate(a.worldX + 480, 960-a.worldY);
@@ -214,15 +214,14 @@ public class SVGRenderer {
 	
 	private void renderDiagram(Graphics2D g2, Diagram diagram) throws SVGException {
 		AffineTransform at = g2.getTransform();
-		SVGDiagram d = controller.getSvg(diagram.svgName);
+		SVGDiagram d = controller.getSvg(diagram.getImage());
 		if (d == null) {
 			return;
 		}
-		String viewBox = d.getRoot().getPresAbsolute("viewBox").getStringValue();
-		String[] list = viewBox.split(" ");
+		Rectangle2D.Double viewBox = SVGUtil.getViewbox(d);
 
-		double dw = Double.parseDouble(list[2]);
-		double dh = Double.parseDouble(list[3]);
+		double dw = viewBox.width;
+		double dh = viewBox.height;
 		
 		imageScale = Math.min(this.width / dw, this.height / dh);
 		g2.translate((this.width - dw*imageScale)/2.0, (this.height - dh*imageScale)/2.0);

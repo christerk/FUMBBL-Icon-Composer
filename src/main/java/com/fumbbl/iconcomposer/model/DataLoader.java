@@ -13,7 +13,6 @@ import com.fumbbl.iconcomposer.dto.DtoPosition;
 import com.fumbbl.iconcomposer.dto.DtoRoster;
 import com.fumbbl.iconcomposer.dto.DtoRuleset;
 import com.fumbbl.iconcomposer.dto.DtoSkin;
-import com.fumbbl.iconcomposer.model.types.Attachment;
 import com.fumbbl.iconcomposer.model.types.Bone;
 import com.fumbbl.iconcomposer.model.types.Diagram;
 import com.fumbbl.iconcomposer.model.types.Skeleton;
@@ -29,7 +28,6 @@ public class DataLoader {
 	private static final Type boneListType = new TypeToken<List<Bone>>() {}.getType();
 	private static final Type slotListType = new TypeToken<List<Slot>>() {}.getType();
 	private static final Type skeletonListType = new TypeToken<List<Skeleton>>() {}.getType();
-	private static final Type attachmentListType = new TypeToken<List<Attachment>>() {}.getType();
 	private static final Type diagramListType = new TypeToken<List<Diagram>>() {}.getType();
 
 	public DataLoader(Config cfg) {
@@ -54,9 +52,9 @@ public class DataLoader {
 		return list;
 	}
 
-	public Collection<Attachment> getAttachments(int skinId) {
-		String content = apiClient.get("/iconskeleton/attachments/" + skinId);
-		return gson.fromJson(content, attachmentListType);
+	public Collection<Diagram> getDiagrams(int skeletonId) {
+		String content = apiClient.get("/iconskeleton/attachments/" + skeletonId);
+		return gson.fromJson(content, diagramListType);
 	}
 
 	public Collection<Slot> getSlots(int skeletonId) {
@@ -87,11 +85,6 @@ public class DataLoader {
 	public DtoRuleset getRuleset(int rulesetId) {
 		String content = apiClient.get("/ruleset/get/" + rulesetId);
 		return gson.fromJson(content, DtoRuleset.class);
-	}
-
-	public Collection<Diagram> getDiagrams(int skeletonId) {
-		String content = apiClient.get("/iconskeleton/attachments/" + skeletonId);
-		return gson.fromJson(content, diagramListType);
 	}
 
 	public boolean isAuthenticated() {
@@ -171,7 +164,7 @@ public class DataLoader {
 		params.put("y", Double.toString(diagram.y));
 		params.put("width", Double.toString(diagram.width));
 		params.put("height", Double.toString(diagram.height));
-		params.put("svg", diagram.svgName);
+		params.put("svg", diagram.getImage());
 		String content = apiClient.post("/iconskeleton/setAttachment", params, true);
 		diagram.id = gson.fromJson(content, Integer.class);
 	}
