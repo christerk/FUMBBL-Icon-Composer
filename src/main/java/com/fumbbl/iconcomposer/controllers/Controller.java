@@ -7,13 +7,14 @@ import java.util.concurrent.Executors;
 import com.fumbbl.iconcomposer.ColourTheme;
 import com.fumbbl.iconcomposer.Config;
 import com.fumbbl.iconcomposer.ViewState;
-import com.fumbbl.iconcomposer.dto.DtoPosition;
-import com.fumbbl.iconcomposer.dto.DtoRoster;
-import com.fumbbl.iconcomposer.dto.DtoRuleset;
 import com.fumbbl.iconcomposer.model.Model;
-import com.fumbbl.iconcomposer.model.NamedSVG;
 import com.fumbbl.iconcomposer.model.types.Bone;
 import com.fumbbl.iconcomposer.model.types.Diagram;
+import com.fumbbl.iconcomposer.model.types.NamedItem;
+import com.fumbbl.iconcomposer.model.types.NamedSVG;
+import com.fumbbl.iconcomposer.model.types.Position;
+import com.fumbbl.iconcomposer.model.types.Roster;
+import com.fumbbl.iconcomposer.model.types.Ruleset;
 import com.fumbbl.iconcomposer.model.types.Skeleton;
 import com.fumbbl.iconcomposer.model.types.Skin;
 import com.fumbbl.iconcomposer.model.types.Slot;
@@ -102,7 +103,7 @@ public class Controller extends BaseController {
 		controllerManager.getMain().setApiStatus(success ? "Authorized" : "Not Authorized");
 	}
 	
-	public void onPositionsChanged(Collection<DtoPosition> positions) {
+	public void onPositionsChanged(Collection<Position> positions) {
 		controllerManager.getMain().onPositionsChanged(positions);
 	}
 	
@@ -151,7 +152,7 @@ public class Controller extends BaseController {
 		model.loadPosition(id);
 	}
 
-	public DtoRuleset[] loadRulesets() {
+	public Collection<Ruleset> loadRulesets() {
 		return model.loadRulesets();
 	}
 
@@ -179,12 +180,12 @@ public class Controller extends BaseController {
 		return model.getConfig();
 	}
 
-	public Collection<Bone> loadBones(int skeletonId) {
-		return model.loadBones(skeletonId);
+	public Collection<Bone> loadBones(Skeleton skeleton) {
+		return model.loadBones(skeleton);
 	}
 	
-	public Collection<Slot> loadSlots(int skeletonId) {
-		return model.loadSlots(skeletonId);
+	public Collection<Slot> loadSlots(Skeleton skeleton) {
+		return model.loadSlots(skeleton);
 	}
 
 	public void handleDroppedFile(String path) {
@@ -195,7 +196,7 @@ public class Controller extends BaseController {
 		model.authenticate();
 	}
 	
-	public void loadRoster(DtoRoster selectedItem) {
+	public void loadRoster(Roster selectedItem) {
 		model.loadRoster(selectedItem.id);
 	}
 	
@@ -212,7 +213,9 @@ public class Controller extends BaseController {
 	}
 	
 	public void createSkin(Skeleton skeleton) {
-		model.createSkin(skeleton);
+		if (skeleton != null) {
+			model.createSkin(skeleton);
+		}
 	}
 	
 	public void setSkinDiagram(Skin skin, Slot slot, Diagram diagram) {
@@ -265,11 +268,11 @@ public class Controller extends BaseController {
 		onImageChanged();
 	}
 	
-	public void onRulesetLoaded(DtoRuleset ruleset) {
+	public void onRulesetLoaded(Ruleset ruleset) {
 		((OpenRosterController)controllerManager.get(StageType.openRoster)).onRulesetLoaded(ruleset);
 	}
 
-	public void onPositionChanged(DtoPosition position) {
+	public void onPositionChanged(Position position) {
 		controllerManager.getMain().onPositionChanged(position);
 	}
 
@@ -279,5 +282,9 @@ public class Controller extends BaseController {
 
 	public void onImportComplete() {
 		controllerManager.getMain().onImportComplete();
+	}
+
+	public void onItemRenamed(NamedItem item) {
+		model.onItemRenamed(item);
 	}
 }

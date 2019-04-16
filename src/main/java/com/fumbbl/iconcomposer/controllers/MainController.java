@@ -11,10 +11,11 @@ import java.util.ResourceBundle;
 
 import com.fumbbl.iconcomposer.ColourTheme;
 import com.fumbbl.iconcomposer.ColourTheme.ColourType;
-import com.fumbbl.iconcomposer.dto.DtoPosition;
-import com.fumbbl.iconcomposer.model.NamedSVG;
 import com.fumbbl.iconcomposer.model.types.Bone;
 import com.fumbbl.iconcomposer.model.types.Diagram;
+import com.fumbbl.iconcomposer.model.types.NamedItem;
+import com.fumbbl.iconcomposer.model.types.NamedSVG;
+import com.fumbbl.iconcomposer.model.types.Position;
 import com.fumbbl.iconcomposer.model.types.Skeleton;
 import com.fumbbl.iconcomposer.model.types.Skin;
 import com.fumbbl.iconcomposer.model.types.Slot;
@@ -67,19 +68,19 @@ public class MainController extends BaseController implements Initializable {
 	public TextField diagramX;
 	public TextField diagramY;
 	public Label apiStatus;
-	public ListView<DtoPosition> positionList;
+	public ListView<Position> positionList;
 	public Label labelImporting;
 	
 	public ListView<Skeleton> skeletonList;
 	public ListView<NamedSVG> imageList;
-	public ListView<Diagram> attachmentList;
+	public ListView<Diagram> diagramList;
 	public ListView<Skin> skinList;
 	public ListView<Slot> slotList;
 	
 	public TitledPane positionPane;
 	public TitledPane skeletonPane;
 	public TitledPane imagePane;
-	public TitledPane attachmentPane;
+	public TitledPane diagramPane;
 	public TitledPane skinPane;
 	public TitledPane slotPane;
 	
@@ -98,13 +99,19 @@ public class MainController extends BaseController implements Initializable {
 	public void initialize(URL location, ResourceBundle resources) {
 		colourPane.setVisible(false);
 		diagramChoicePane.setVisible(false);
-
-		positionList.setCellFactory(new CellFactory<DtoPosition>().create());
-		skeletonList.setCellFactory(new CellFactory<Skeleton>().create());
-		imageList.setCellFactory(new CellFactory<NamedSVG>().create());
-		attachmentList.setCellFactory(new CellFactory<Diagram>().create());
-		skinList.setCellFactory(new CellFactory<Skin>().create());
-		slotList.setCellFactory(new CellFactory<Slot>().create());
+		
+		new CellFactory<Position>().apply(positionList, Position.class);
+		new CellFactory<Skeleton>().apply(skeletonList, Skeleton.class);
+		new CellFactory<NamedSVG>().apply(imageList, NamedSVG.class);
+		new CellFactory<Diagram>().apply(diagramList, Diagram.class);
+		new CellFactory<Skin>().apply(skinList, Skin.class);
+		new CellFactory<Slot>().apply(slotList, Slot.class);
+		
+		skeletonList.setEditable(true);
+		imageList.setEditable(true);
+		diagramList.setEditable(true);
+		skinList.setEditable(true);
+		slotList.setEditable(true);
 		
 		slotChoices.setConverter(new StringConverter<Slot>() {
 			@Override
@@ -147,7 +154,7 @@ public class MainController extends BaseController implements Initializable {
 		
 		positionList.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> {
 			if (newValue != null) {
-				attachmentList.getItems().clear();
+				diagramList.getItems().clear();
 				skinList.getItems().clear();
 				slotList.getItems().clear();
 				skeletonList.getItems().clear();
@@ -155,7 +162,7 @@ public class MainController extends BaseController implements Initializable {
 				
 				controller.loadPosition(newValue.id);
 				skeletonPane.setExpanded(true);
-				positionPane.setText("Positions - " + newValue.title);
+				positionPane.setText("Positions - " + newValue.getName());
 			} else {
 				positionPane.setText("Positions");
 			}
@@ -177,7 +184,7 @@ public class MainController extends BaseController implements Initializable {
 			}
 		});
 
-		attachmentList.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> {
+		diagramList.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> {
 			if (newValue != null) {
 				controller.displayDiagram(newValue);
 			}
@@ -287,8 +294,8 @@ public class MainController extends BaseController implements Initializable {
 		Collection<Slot> slots = null;
 		
 		if (newValue.id > 0) {
-			bones = controller.loadBones(newValue.id);
-			slots = controller.loadSlots(newValue.id);
+			bones = controller.loadBones(newValue);
+			slots = controller.loadSlots(newValue);
 		} else if (newValue.id == -1) {
 			bones = newValue.getBones();
 			slots = newValue.getSlots();
@@ -416,7 +423,7 @@ public class MainController extends BaseController implements Initializable {
 	}
 	
 	public void setDiagrams(Collection<Diagram> diagrams) {
-		ObservableList<Diagram> children = attachmentList.getItems();
+		ObservableList<Diagram> children = diagramList.getItems();
 		children.setAll(diagrams);
 		children.sort(NamedItem.Comparator);
 
@@ -434,9 +441,9 @@ public class MainController extends BaseController implements Initializable {
 		}
 	}
 
-	public void onPositionsChanged(Collection<DtoPosition> positions) {
+	public void onPositionsChanged(Collection<Position> positions) {
 		skinList.getItems().clear();
-		attachmentList.getItems().clear();
+		diagramList.getItems().clear();
 		slotList.getItems().clear();
 		skeletonList.getItems().clear();
 		skeletonPane.setText("Skeletons");
@@ -446,7 +453,7 @@ public class MainController extends BaseController implements Initializable {
 		positionPane.setExpanded(true);
 	}
 
-	public void onPositionChanged(DtoPosition position) {
+	public void onPositionChanged(Position position) {
 		controller.loadSkeletons(position.id);
 		controller.loadSkins(position.id);
 	}

@@ -5,9 +5,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
-import com.fumbbl.iconcomposer.controllers.NamedItem;
-
-public class Skeleton implements NamedItem {
+public class Skeleton extends NamedItem {
 	public int id;
 	public String name;
 
@@ -53,15 +51,6 @@ public class Skeleton implements NamedItem {
 	
 	public void setSlots(Collection<Slot> slots) {
 		this.slots.clear();
-		
-		if (slots != null) {
-			int order = 1;
-			for (Slot s : slots) {
-				this.slots.put(s.name, s);
-				s.setSkeleton(this);
-				s.order = order++;
-			}
-		}
 	}
 	
 	public Slot getSlot(String slotName) {
@@ -108,13 +97,8 @@ public class Skeleton implements NamedItem {
 		return name;
 	}
 
-	public void updateSlots() {
-		for (Slot s : getSlots()) {
-			if (s.boneId <= 0) {
-				s.boneId = getBone(s.bone).id;
-			} else if (s.bone == null) {
-				s.bone = getBone(s.boneId).name;
-			}
-		}
+	@Override
+	public void setName(String newName) {
+		name = newName;
 	}
 }

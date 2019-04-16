@@ -5,12 +5,11 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-public class Bone {
+public class Bone extends NamedItem {
 	public int id;
 	public String name;
-	public int parentId;
-	public String parent;
-	public double length;
+
+	public double length = 0;
 	public double x = 0;
 	public double y = 0;
 	public double rotation = 0;
@@ -21,9 +20,9 @@ public class Bone {
 	
 	public double a, b, worldX;
 	public double c, d, worldY;
-	public Bone parentBone;
-	
+
 	private Skeleton skeleton;
+	public Bone parentBone;
 	
 	private boolean dirty;
 	private Set<Bone> childBones;
@@ -115,5 +114,15 @@ public class Bone {
 
 	public Skeleton getSkeleton() {
 		return skeleton;
+	}
+
+	@Override
+	public String getName() {
+		return name;
+	}
+
+	@Override
+	public void setName(String newName) {
+		this.name = newName;
 	}
 }

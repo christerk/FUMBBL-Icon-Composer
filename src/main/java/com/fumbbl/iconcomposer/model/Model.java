@@ -8,29 +8,32 @@ import java.nio.file.Path;
 import java.nio.file.PathMatcher;
 import java.nio.file.Paths;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Map.Entry;
+import java.util.Map;
 import java.util.Set;
 
 import com.fumbbl.iconcomposer.ColourTheme;
 import com.fumbbl.iconcomposer.ColourTheme.ColourType;
 import com.fumbbl.iconcomposer.Config;
 import com.fumbbl.iconcomposer.controllers.Controller;
-import com.fumbbl.iconcomposer.dto.DtoPosition;
-import com.fumbbl.iconcomposer.dto.DtoRoster;
-import com.fumbbl.iconcomposer.dto.DtoRuleset;
+import com.fumbbl.iconcomposer.dto.fumbbl.DtoDiagram;
+import com.fumbbl.iconcomposer.dto.fumbbl.DtoRoster;
+import com.fumbbl.iconcomposer.dto.fumbbl.DtoRuleset;
+import com.fumbbl.iconcomposer.dto.fumbbl.DtoSkeleton;
+import com.fumbbl.iconcomposer.dto.fumbbl.DtoSkin;
+import com.fumbbl.iconcomposer.dto.fumbbl.DtoSlot;
 import com.fumbbl.iconcomposer.model.types.Bone;
 import com.fumbbl.iconcomposer.model.types.Diagram;
+import com.fumbbl.iconcomposer.model.types.NamedItem;
+import com.fumbbl.iconcomposer.model.types.NamedSVG;
+import com.fumbbl.iconcomposer.model.types.Ruleset;
 import com.fumbbl.iconcomposer.model.types.Skeleton;
 import com.fumbbl.iconcomposer.model.types.Skin;
-import com.fumbbl.iconcomposer.model.types.SkinCollection;
 import com.fumbbl.iconcomposer.model.types.Slot;
-import com.fumbbl.iconcomposer.model.types.SlotData;
-import com.fumbbl.iconcomposer.model.types.Spine;
 import com.fumbbl.iconcomposer.svg.SVGLoader;
-import com.google.gson.Gson;
 import com.kitfox.svg.SVGDiagram;
 
 import javafx.application.Platform;
@@ -44,8 +47,6 @@ public class Model {
 	
 	private Controller controller;
     
-	private DtoRoster roster;
-
 	public Model() {
 		dataStore = new DataStore();
 		cfg = new Config();
@@ -55,71 +56,6 @@ public class Model {
 	
 	public Config getConfig() {
 		return cfg;
-	}
-	
-	private Runnable importSkeleton(String json) {
-		Gson gson = new Gson();
-		Spine data = gson.fromJson(json,  Spine.class);
-		Skeleton skeleton = new Skeleton();
-
-		organizeBones(data.bones);
-		
-		skeleton.setBones(data.bones);
-		skeleton.setSlots(data.slots);
-		skeleton.name = "Imported";
-		
-		DtoPosition position = dataStore.getPosition();
-		if (position != null) {
-			skeleton.id = dataLoader.saveSkeleton(position.id, skeleton);
-			dataLoader.saveBones(skeleton);
-			skeleton.updateSlots();
-			dataLoader.saveSlots(skeleton);
-		}
-
-		dataStore.addSkeleton(skeleton);
-		dataStore.setSlots(data.slots);
-
-		importSkins(data.skins, skeleton);
-
-		return new Runnable() {
-			@Override
-			public void run() {
-				controller.onDiagramsChanged(dataStore.getDiagrams());
-				controller.onSkinsChanged(dataStore.getSkins());
-				controller.onBonesChanged(data.bones);
-				controller.onSlotsChanged(data.slots);
-				controller.onSkeletonsChanged(dataStore.getSkeletons());
-				controller.onSkeletonChanged(skeleton);
-			}
-		};
-	}
-	
-	private void importSkins(SkinCollection skins, Skeleton skeleton) {
-		Set<String> storedDiagrams = new HashSet<String>();
-		for (Entry<String, Skin>entry : skins.entrySet()) {
-			Skin s = entry.getValue();
-			s.skeleton = skeleton;
-			s.skeletonId = -1;
-			s.name = entry.getKey();
-			if (!"default".equals(s.name)) {
-				dataStore.addSkin(-1, s);
-			}
-			
-			DtoPosition position = dataStore.getPosition();
-			for(Entry<String,SlotData> slotEntry : s.entrySet()) {
-				SlotData d = slotEntry.getValue();
-				for (Entry<String,Diagram> attachmentEntry : d.entrySet()) {
-					Diagram diagram = attachmentEntry.getValue();
-					diagram.attachmentName = attachmentEntry.getKey();
-					diagram.setSlot(dataStore.getSlot(slotEntry.getKey()));
-					if (position != null && !storedDiagrams.contains(diagram.getImage())) {
-						storedDiagrams.add(diagram.getImage());
-						dataLoader.saveDiagram(diagram);
-					}
-					dataStore.addDiagram(diagram.getImage(), diagram);
-				}
-			}
-		}
 	}
 
 	private Runnable importSvg(Path path) throws FileNotFoundException, IOException {
@@ -150,8 +86,9 @@ public class Model {
 		dataStore.clearSlots();
 		dataStore.clearPosition();
 		
-		roster = dataLoader.getRoster(rosterId);
-		controller.onPositionsChanged(roster.positions);
+		DtoRoster roster = dataLoader.getRoster(rosterId);
+		
+		controller.onPositionsChanged(roster.toRoster().positions);
 	}
 
 	public void loadPosition(int positionId) {
@@ -159,86 +96,88 @@ public class Model {
 		dataStore.clearDiagrams();
 		dataStore.clearSkins();
 		
-		dataStore.setPosition(dataLoader.getPosition(positionId));
+		dataStore.setPosition(dataLoader.getPosition(positionId).toPosition());
 		
 		controller.onPositionChanged(dataStore.getPosition());
 	}
 	
-	public DtoRuleset[] loadRulesets() {
-		return dataLoader.getRulesets();
+	public Collection<Ruleset> loadRulesets() {
+		Collection<DtoRuleset> list = dataLoader.getRulesets();
+		Set<Ruleset> rulesets = new HashSet<Ruleset>();
+		list.forEach(r -> rulesets.add(r.toRuleset()));
+		return rulesets;
 	}
 	
 	public void loadRuleset(int rulesetId) {
-		dataStore.setRuleset(dataLoader.getRuleset(rulesetId));
-		
+		dataStore.setRuleset(dataLoader.getRuleset(rulesetId).toRuleset());
 		controller.onRulesetLoaded(dataStore.getRuleset());
 	}
 	
 	public void loadSkeletons(int positionId) {
-		Collection<Skeleton> skeletons = dataLoader.getSkeletons(positionId);
+		Collection<DtoSkeleton> list = dataLoader.getSkeletons(positionId);
+		Collection<Skeleton> skeletons = new LinkedList<Skeleton>();
+		
+		list.forEach(s -> skeletons.add(s.toSkeleton())); 
 		
 		dataStore.setSkeletons(skeletons);
-
 		controller.onSkeletonsChanged(dataStore.getSkeletons());
 	}
 	
 	public void loadDiagrams(int skeletonId) {
-		Collection<Diagram> diagrams = dataLoader.getDiagrams(skeletonId);
-		for (Diagram d : diagrams) {
-			d.templateColours = new ColourTheme("template");
-			d.setSlot(dataStore.getSlot(d.slotId));
-			d.attachmentName = d.name;
+		Map<Integer,Diagram> diagramMap = new HashMap<Integer,Diagram>();
+		
+		Collection<DtoDiagram> diagrams = dataLoader.getDiagrams(skeletonId);
+		
+		diagrams.forEach(d -> diagramMap.put(d.id, d.toDiagram()));
+		
+		for (DtoDiagram d : diagrams) {
+			Diagram diagram = diagramMap.get(d.id);
+			diagram.setSlot(dataStore.getSlot(d.slotId));
+			diagram.templateColours = new ColourTheme("template");
 		}
-		dataStore.setDiagrams(diagrams);
-		controller.onDiagramsChanged(diagrams);
+		dataStore.setDiagrams(diagramMap.values());
+		controller.onDiagramsChanged(diagramMap.values());
 	}
 	
 	public void loadSkins(int positionId) {
-		Collection<Skin> skins = dataLoader.getSkins(positionId);
+		Collection<DtoSkin> list = dataLoader.getSkins(positionId);
+
+		Map<Integer,Skin> skinMap = new HashMap<Integer,Skin>();
 		
-		for (Skin s : skins) {
-			s.skeleton = dataStore.getSkeleton(s.skeletonId);
+		list.forEach(s -> skinMap.put(s.id, s.toSkin()));
+		
+		for (DtoSkin s : list) {
+			Skin skin = skinMap.get(s.id);
+			skin.skeleton = dataStore.getSkeleton(s.skeletonId);
 		}
-		dataStore.setSkins(skins);
-		controller.onSkinsChanged(skins);
+		
+		dataStore.setSkins(skinMap.values());
+		controller.onSkinsChanged(skinMap.values());
 	}
 
-	public Collection<Bone> loadBones(int skeletonId) {
-		Collection<Bone> bones = dataLoader.getBones(skeletonId);
-		
-		organizeBones(bones);
+	public Collection<Bone> loadBones(Skeleton skeleton) {
+		Collection<Bone> bones = dataLoader.getBones(skeleton.id);
+
+		bones.forEach(b -> b.setSkeleton(skeleton));
+		dataStore.setBones(bones);
 		
 		return bones;
 	}
 
-	private void organizeBones(Collection<Bone> bones) {
-		dataStore.setBones(bones);
-		
-		for (Bone b : bones) {
-			if (b.parentId > 0) {
-				Bone parentBone = dataStore.getBone(b.parentId);
-				b.parent = parentBone.name;
-				b.parentBone = parentBone;
-			} else if (b.parent != null) {
-				b.parentBone = dataStore.getBone(b.parent);
-			}
-			if (b.parentBone != null) {
-				b.parentBone.addChildBone(b);
-			}
-		}
-	}
+	public Collection<Slot> loadSlots(Skeleton skeleton) {
+		Map<Integer,Slot> slots = new HashMap<Integer,Slot>();
+		Collection<DtoSlot> list = dataLoader.getSlots(skeleton.id);
 
-
-	public Collection<Slot> loadSlots(int skeletonId) {
-		Collection<Slot> slots = dataLoader.getSlots(skeletonId);
+		list.forEach(s -> slots.put(s.id, s.toSlot()));
 		
-		for (Slot s : slots) {
-			s.bone = dataStore.getBone(s.boneId).name;
+		for (DtoSlot s : list) {
+			Slot slot = slots.get(s.id);
+			slot.setBone(dataStore.getBone(s.boneId));
+			slot.setSkeleton(skeleton);
 		}
 		
-		dataStore.setSlots(slots);
-		
-		return slots;
+		dataStore.setSlots(slots.values());
+		return slots.values();
 	}
 
 	public void addDiagram(NamedSVG svg) {
@@ -279,20 +218,12 @@ public class Model {
 		this.controller = controller;
 	}
 
-	public Spine getSpine() {
-		return dataStore.getSpine();
-	}
-
 	public Diagram getDiagram(String image) {
 		return dataStore.getDiagram(image);
 	}
 
 	public ColourTheme getColourTheme(String theme) {
 		return dataStore.getColourTheme(theme);
-	}
-
-	public void setRoster(DtoRoster r) {
-		this.roster = r;
 	}
 
 	public void authenticate() {
@@ -330,7 +261,9 @@ public class Model {
 						byte[] bytes = Files.readAllBytes(p);
 						
 						if (jsonMatcher.matches(p)) {
-							delayedTasks.add(importSkeleton(new String(bytes)));
+							SpineImporter importer = new SpineImporter();
+							importer.importSkeleton(new String(bytes));
+							//delayedTasks.add();
 						} else if (svgMatcher.matches(p)) {
 							delayedTasks.add(importSvg(p));
 						}
@@ -377,17 +310,29 @@ public class Model {
 		s.skeleton = skeleton;
 		s.name = "NewSkin";
 		
-		dataStore.addSkin(-1, s);
+		dataLoader.saveSkin(dataStore.getPosition(), s);
+		
+		dataStore.addSkin(s);
 		controller.onSkinsChanged(dataStore.getSkins());
 	}
 
 	public void setSkinDiagram(Skin skin, Slot slot, Diagram diagram) {
-		SlotData sd = new SlotData();
 		if (diagram != null) {
-			sd.put(slot.attachment, diagram);
-			skin.put(slot.name, sd);
+			skin.setDiagram(slot, diagram);
 		} else {
-			sd.remove(slot.name);
+			skin.removeDiagram(slot);
+		}
+	}
+
+	public Collection<Slot> getSlots() {
+		return dataStore.getSlots();
+	}
+
+	public void onItemRenamed(NamedItem item) {
+		if (item instanceof Skin) {
+			dataLoader.saveSkin(dataStore.getPosition(), (Skin)item);
+		} else if (item instanceof Skeleton) {
+			dataLoader.saveSkeleton(dataStore.getPosition(), (Skeleton)item);
 		}
 	}
 }

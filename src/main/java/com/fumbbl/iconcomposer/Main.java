@@ -1,6 +1,7 @@
 package com.fumbbl.iconcomposer;
 
 
+import com.fumbbl.iconcomposer.controllers.CellFactory;
 import com.fumbbl.iconcomposer.controllers.Controller;
 import com.fumbbl.iconcomposer.controllers.ControllerManager;
 import com.fumbbl.iconcomposer.model.Model;
@@ -23,6 +24,7 @@ public class Main extends Application {
 		
 		Model model = new Model();
 		Controller controller = new Controller(model);
+		CellFactory.setController(controller);
 		ControllerManager controllerManager = new ControllerManager(model, controller);
 		StageManager stageManager = new StageManager(model, controller, controllerManager);
 		

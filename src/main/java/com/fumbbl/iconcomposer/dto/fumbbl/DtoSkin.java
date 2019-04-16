@@ -1,4 +1,4 @@
-package com.fumbbl.iconcomposer.dto;
+package com.fumbbl.iconcomposer.dto.fumbbl;
 
 import com.fumbbl.iconcomposer.model.types.Skin;
 
@@ -12,7 +12,6 @@ public class DtoSkin {
 		
 		s.id = this.id;
 		s.name = this.name;
-		s.skeletonId = this.skeletonId;
 		return s;
 	}
 }

@@ -4,8 +4,6 @@ import java.awt.geom.Rectangle2D;
 
 import com.fumbbl.iconcomposer.ColourTheme;
 import com.fumbbl.iconcomposer.ColourTheme.ColourType;
-import com.fumbbl.iconcomposer.controllers.NamedItem;
-import com.fumbbl.iconcomposer.model.NamedSVG;
 import com.fumbbl.iconcomposer.svg.SVGUtil;
 import com.kitfox.svg.SVGDiagram;
 import com.kitfox.svg.SVGElement;
@@ -14,22 +12,21 @@ import com.kitfox.svg.SVGRoot;
 import com.kitfox.svg.animation.AnimationElement;
 import com.kitfox.svg.xml.StyleAttribute;
 
-public class Diagram implements NamedItem {
+public class Diagram extends NamedItem {
 	public int id;
 	public String name;
-	public String path;
-	public String attachmentName;
-
-	public ColourTheme templateColours;
-	public int slotId;
-	private Slot slot;
 
 	public double x;
 	public double y;
 	public double rotation = 0;
 	public double width;
 	public double height;
+	public String svg;
 	
+	private Slot slot;
+	public ColourTheme templateColours;
+
+	// Render coordinates
 	public double topLeftX;
 	public double topLeftY;
 	public double topRightX;
@@ -38,7 +35,6 @@ public class Diagram implements NamedItem {
 	public double bottomLeftY;
 	public double bottomRightX;
 	public double bottomRightY;
-	
 	public double worldX;
 	public double worldY;
 	
@@ -47,6 +43,9 @@ public class Diagram implements NamedItem {
 	private static final String[] blacklistedStyles = new String[] {
 			"fill-opacity"
 	};
+	
+	public Diagram() {
+	}
 	
 	public Diagram(NamedSVG svg) {
 		this(svg.name, new ColourTheme("template"));
@@ -57,15 +56,12 @@ public class Diagram implements NamedItem {
 	}
 	
 	public Diagram(String svgName, ColourTheme template) {
-		this.path = svgName;
+		this.svg = svgName;
 		this.templateColours = template;
 	}
 
 	public String getImage() {
-		if (path != null) {
-			return path;
-		}
-		return name;
+		return svg;
 	}
 	
 	public ColourTheme getTheme() {
@@ -210,6 +206,11 @@ public class Diagram implements NamedItem {
 	
 	@Override
 	public String getName() {
-		return getImage();
+		return this.svg;
+	}
+	
+	@Override
+	public void setName(String newName) {
+		this.svg = newName;
 	}
 }

@@ -2,16 +2,13 @@ package com.fumbbl.iconcomposer.model.types;
 
 import java.util.Comparator;
 
-import com.fumbbl.iconcomposer.controllers.NamedItem;
-
-public class Slot implements NamedItem {
+public class Slot extends NamedItem {
 	public int id;
-	public int boneId;
-	public int order;
 	public String name;
-	public String bone;
 	public String attachment;
+	public int order;
 	
+	private Bone bone;
 	private Skeleton skeleton;
 	
 	public static Comparator<Slot> Comparator = new Comparator<Slot>() {
@@ -24,10 +21,38 @@ public class Slot implements NamedItem {
 			return r;
 		}
 	};
+
+	public static Comparator<Slot> ReverseComparator = new Comparator<Slot>() {
+		@Override
+		public int compare(Slot o1, Slot o2) {
+			int r = o1.order-o2.order;
+			if (r == 0) {
+				r = o2.getName().compareTo(o1.getName());
+			}
+			return r;
+		}
+	};
+	
+	public Slot() {
+		this.id = -1;
+	}
 	
 	@Override
 	public String getName() {
 		return name;
+	}
+	
+	@Override
+	public void setName(String newName) {
+		this.name = newName;
+	}
+	
+	public void setBone(Bone bone) {
+		this.bone = bone;
+	}
+	
+	public Bone getBone() {
+		return bone;
 	}
 	
 	public void setSkeleton(Skeleton skeleton) {

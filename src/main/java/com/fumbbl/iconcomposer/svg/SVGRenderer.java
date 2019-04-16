@@ -6,6 +6,7 @@ import java.awt.Graphics2D;
 import java.awt.RenderingHints;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.Rectangle2D;
+import java.util.stream.Collectors;
 
 import com.fumbbl.iconcomposer.ColourTheme;
 import com.fumbbl.iconcomposer.controllers.Controller;
@@ -15,8 +16,6 @@ import com.fumbbl.iconcomposer.model.types.Diagram;
 import com.fumbbl.iconcomposer.model.types.Skeleton;
 import com.fumbbl.iconcomposer.model.types.Skin;
 import com.fumbbl.iconcomposer.model.types.Slot;
-import com.fumbbl.iconcomposer.model.types.SlotData;
-import com.fumbbl.iconcomposer.model.types.Spine;
 import com.kitfox.svg.SVGDiagram;
 import com.kitfox.svg.SVGException;
 
@@ -45,7 +44,6 @@ public class SVGRenderer {
 			return;
 		}
 		Graphics2D g2 = controller.viewState.getGraphics2D();
-		Spine spine = model.getSpine();
 		g2.setColor(renderBackground);
 		g2.fillRect(0, 0, width, height);
 		
@@ -54,7 +52,7 @@ public class SVGRenderer {
 
 		try {
 			skin.skeleton.updateTransforms();
-			drawIcon(g2, spine, skin, 0, 0, 480);
+			drawIcon(g2, skin, 0, 0, 480);
 		} catch (SVGException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -117,7 +115,7 @@ public class SVGRenderer {
 			int cx = (int) (this.width/2 + b.worldX/2);
 			int cy = (int) (this.height - b.worldY/2);
 
-			if (b.parent != null) {
+			if (b.parentBone != null) {
 				Bone parent = b.parentBone;
 				int px = (int) (this.width/2 + parent.worldX/2);
 				int py = (int) (this.height - parent.worldY/2);
@@ -169,24 +167,19 @@ public class SVGRenderer {
 		return new Point2D(oX, oY);
 	}
 
-	private void drawIcon(Graphics2D g2, Spine spine, Skin skin, double x, double y, double size) throws SVGException {
+	private void drawIcon(Graphics2D g2, Skin skin, double x, double y, double size) throws SVGException {
 		AffineTransform originalTransform = g2.getTransform();
 		
 		AffineTransform at = g2.getTransform();
 		ColourTheme theme = controller.getColourTheme();
 		
-		for (Slot slot : spine.slots) {
-			SlotData slotData = skin.get(slot.name);
+		for (Slot slot : model.getSlots().stream().sorted(Slot.ReverseComparator).collect(Collectors.toList())) {
+			Diagram diagram = skin.getDiagram(slot);
 
-			if (slotData != null) {
-				Diagram a = slotData.get(slot.attachment);
-				Diagram diagram = model.getDiagram(a.getImage());
-				if (diagram != null) {
-					diagram.setColour(controller.getSvg(diagram.getImage()), theme);
-	
-					g2.translate(x, y);
-					renderDiagram(g2, diagram, skin.skeleton, slot, a, size);
-				}
+			if (diagram != null) {
+				diagram.setColour(controller.getSvg(diagram.getImage()), theme);
+				g2.translate(x, y);
+				renderDiagram(g2, diagram, skin.skeleton, slot, size);
 			}
 			g2.setTransform(at);
 		}
@@ -194,19 +187,19 @@ public class SVGRenderer {
 		g2.setTransform(originalTransform);
 	}
 
-	private void renderDiagram(Graphics2D g2, Diagram diagram, Skeleton skeleton, Slot slot, Diagram a, double size) throws SVGException {
+	private void renderDiagram(Graphics2D g2, Diagram diagram, Skeleton skeleton, Slot slot, double size) throws SVGException {
 		AffineTransform at = g2.getTransform();
 		double scale = size / 960.0;
 		g2.translate(width/2 - size/2, height/2 - size/2);
 		g2.scale(scale, scale);
 		
-		skeleton.getTransform(slot.bone, a);
+		skeleton.getTransform(slot.getBone().name, diagram);
 
 		SVGDiagram d = controller.getSvg(diagram.getImage());
 		
 		if (d != null) {
-			g2.translate(a.worldX + 480, 960-a.worldY);
-			g2.scale(a.width / d.getWidth(), a.height / d.getHeight());
+			g2.translate(diagram.worldX + 480, 960-diagram.worldY);
+			g2.scale(diagram.width / d.getWidth(), diagram.height / d.getHeight());
 			d.render(g2);
 			g2.setTransform(at);
 		}

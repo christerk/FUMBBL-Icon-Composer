@@ -5,20 +5,20 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import com.fumbbl.iconcomposer.ColourTheme;
-import com.fumbbl.iconcomposer.dto.DtoPosition;
-import com.fumbbl.iconcomposer.dto.DtoRuleset;
 import com.fumbbl.iconcomposer.model.types.Bone;
 import com.fumbbl.iconcomposer.model.types.Diagram;
+import com.fumbbl.iconcomposer.model.types.NamedSVG;
+import com.fumbbl.iconcomposer.model.types.Position;
+import com.fumbbl.iconcomposer.model.types.Ruleset;
 import com.fumbbl.iconcomposer.model.types.Skeleton;
 import com.fumbbl.iconcomposer.model.types.Skin;
 import com.fumbbl.iconcomposer.model.types.Slot;
-import com.fumbbl.iconcomposer.model.types.Spine;
 import com.google.gson.annotations.Expose;
 
 public class DataStore {
-	private Spine spine;
 	//private Map<Integer,Skin> skins;
 	private List<Skeleton> skeletons;
 	@Expose
@@ -27,20 +27,22 @@ public class DataStore {
 	private Map<String,ColourTheme> colourThemes;
 	
 	private Map<String,NamedSVG> svgs;
-	private DtoRuleset ruleset;
-	private DtoPosition position;
+	private Ruleset ruleset;
+	private Position position;
+	
+	private Map<Integer,Skin> skins;
+	private Map<Integer,Slot> slots;
+	private Map<Integer,Bone> bones;
 	
 	public DataStore() {
-		spine = new Spine();
 		//skins = new HashMap<Integer,Skin>();
 		skeletons = new LinkedList<Skeleton>();
 		diagrams = new HashMap<String,Diagram>();
 		colourThemes = new HashMap<String,ColourTheme>();
 		svgs = new HashMap<String,NamedSVG>();
-	}
-
-	public Spine getSpine() {
-		return spine;
+		skins = new HashMap<Integer,Skin>();
+		slots = new HashMap<Integer,Slot>();
+		bones = new HashMap<Integer,Bone>();
 	}
 
 	/*
@@ -110,34 +112,28 @@ public class DataStore {
 	 */
 	
 	public Collection<String> getSkinNames() {
-		return spine.skins.keySet();
-	}
-
-	public Skin getSkinData(String skinName) {
-		return spine.getSkin(skinName);
+		return skins.values().stream().map(s -> s.name).collect(Collectors.toList());
 	}
 
 	public Skin getSkin(int skinId) {
-		return spine.getSkin(skinId);
+		return skins.get(skinId);
 	}
 
-	public void addSkin(int id, Skin skin) {
-		spine.addSkin(id, skin);
+	public void addSkin(Skin skin) {
+		skins.put(skin.id, skin);
 	}
 
 	public void clearSkins() {
-		spine.clearSkins();
+		skins.clear();
 	}
 	
 	public Collection<Skin> getSkins() {
-		return spine.skins.values();
+		return skins.values();
 	}
 	
 	public void setSkins(Collection<Skin> skins) {
-		spine.clearSkins();
-		for (Skin skin : skins) {
-			spine.addSkin(-1, skin);
-		}
+		this.skins.clear();
+		skins.forEach(s -> this.skins.put(s.id, s));
 	}
 
 	/*
@@ -145,25 +141,20 @@ public class DataStore {
 	 */
 
 	public void setSlots(Collection<Slot> slots) {
-		spine.slots = slots;
+		this.slots.clear();
+		slots.forEach(s -> this.slots.put(s.id, s));
 	}
 
 	public Slot getSlot(int slotId) {
-		return spine.getSlot(slotId);
-	}
-
-	public Slot getSlot(String slotName) {
-		return spine.getSlot(slotName);
+		return slots.get(slotId);
 	}
 
 	public Collection<Slot> getSlots() {
-		return spine.slots;
+		return slots.values();
 	}
 	
 	public void clearSlots() {
-		if (spine.slots != null) {
-			spine.slots.clear();
-		}
+		slots.clear();
 	}
 
 	/*
@@ -171,15 +162,12 @@ public class DataStore {
 	 */
 	
 	public Bone getBone(int boneId) {
-		return spine.getBone(boneId);
-	}
-
-	public Bone getBone(String boneName) {
-		return spine.getBone(boneName);
+		return bones.get(boneId);
 	}
 
 	public void setBones(Collection<Bone> bones) {
-		spine.bones = bones;
+		this.bones.clear();
+		bones.forEach(b -> this.bones.put(b.id, b));
 	}
 
 	/*
@@ -222,11 +210,11 @@ public class DataStore {
 	 * Ruleset 
 	 */
 	
-	public void setRuleset(DtoRuleset ruleset) {
+	public void setRuleset(Ruleset ruleset) {
 		this.ruleset = ruleset;
 	}
 	
-	public DtoRuleset getRuleset() {
+	public Ruleset getRuleset() {
 		return ruleset;
 	}
 
@@ -234,11 +222,11 @@ public class DataStore {
 	 * Position
 	 */
 	
-	public void setPosition(DtoPosition position) {
+	public void setPosition(Position position) {
 		this.position = position;
 	}
 	
-	public DtoPosition getPosition() {
+	public Position getPosition() {
 		return this.position;
 	}
 

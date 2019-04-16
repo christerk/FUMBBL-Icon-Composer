@@ -1,10 +1,12 @@
 package com.fumbbl.iconcomposer.controllers;
 
 import java.net.URL;
+import java.util.Collection;
 import java.util.ResourceBundle;
 
-import com.fumbbl.iconcomposer.dto.DtoRoster;
-import com.fumbbl.iconcomposer.dto.DtoRuleset;
+import com.fumbbl.iconcomposer.model.types.NamedItem;
+import com.fumbbl.iconcomposer.model.types.Roster;
+import com.fumbbl.iconcomposer.model.types.Ruleset;
 import com.fumbbl.iconcomposer.ui.StageType;
 
 import javafx.beans.value.ChangeListener;
@@ -16,8 +18,8 @@ import javafx.scene.control.ListCell;
 import javafx.scene.control.ListView;
 
 public class OpenRosterController extends BaseController implements Initializable {
-	public ListView<DtoRuleset> rulesetList;
-	public ListView<DtoRoster> rosterList;
+	public ListView<Ruleset> rulesetList;
+	public ListView<Roster> rosterList;
 	public Button openButton;
 	
 	public void openRoster() {
@@ -27,11 +29,11 @@ public class OpenRosterController extends BaseController implements Initializabl
 	
 	@Override
 	public void onShow() {
-		DtoRuleset[] rulesets = controller.loadRulesets();
+		Collection<Ruleset> rulesets = controller.loadRulesets();
 		
-		ObservableList<DtoRuleset> items = rulesetList.getItems();
+		ObservableList<Ruleset> items = rulesetList.getItems();
 		items.clear();
-		for (DtoRuleset r : rulesets) {
+		for (Ruleset r : rulesets) {
 			items.add(r);
 		}
 		rosterList.getSelectionModel().clearSelection();
@@ -41,17 +43,17 @@ public class OpenRosterController extends BaseController implements Initializabl
 
 	@Override
 	public void initialize(URL location, ResourceBundle resources) {
-		rulesetList.getSelectionModel().selectedItemProperty().addListener(new ChangeListener<DtoRuleset>() {
+		rulesetList.getSelectionModel().selectedItemProperty().addListener(new ChangeListener<Ruleset>() {
 			@Override
-			public void changed(ObservableValue<? extends DtoRuleset> observable, DtoRuleset oldValue, DtoRuleset newValue) {
+			public void changed(ObservableValue<? extends Ruleset> observable, Ruleset oldValue, Ruleset newValue) {
 				loadRosters(newValue);
 			}
 		});
 		
-		rosterList.getSelectionModel().selectedItemProperty().addListener(new ChangeListener<DtoRoster>() {
+		rosterList.getSelectionModel().selectedItemProperty().addListener(new ChangeListener<Roster>() {
 
 			@Override
-			public void changed(ObservableValue<? extends DtoRoster> observable, DtoRoster oldValue, DtoRoster newValue) {
+			public void changed(ObservableValue<? extends Roster> observable, Roster oldValue, Roster newValue) {
 				if (newValue != null) {
 					openButton.setDisable(false);
 				} else {
@@ -60,9 +62,9 @@ public class OpenRosterController extends BaseController implements Initializabl
 			}
 		});
 		
-		rulesetList.setCellFactory(p -> new ListCell<DtoRuleset>() {
+		rulesetList.setCellFactory(p -> new ListCell<Ruleset>() {
 			@Override
-			protected void updateItem(DtoRuleset item, boolean empty) {
+			protected void updateItem(Ruleset item, boolean empty) {
 				super.updateItem(item, empty);
 				
 				if(getIndex() == 0) {
@@ -72,26 +74,26 @@ public class OpenRosterController extends BaseController implements Initializabl
 				if (empty || item == null) {
 					setText(null);
 				} else {
-					setText(item.value);
+					setText(item.getName());
 				}
 			}
 		});
 		
-		rosterList.setCellFactory(p -> new ListCell<DtoRoster>() {
+		rosterList.setCellFactory(p -> new ListCell<Roster>() {
 			@Override
-			protected void updateItem(DtoRoster item, boolean empty) {
+			protected void updateItem(Roster item, boolean empty) {
 				super.updateItem(item, empty);
 				
 				if (empty || item == null) {
 					setText(null);
 				} else {
-					setText(item.value);
+					setText(item.getName());
 				}
 			}
 		});		
 	}
 	
-	protected void loadRosters(DtoRuleset ruleset) {
+	protected void loadRosters(Ruleset ruleset) {
 		if (ruleset == null) {
 			rosterList.getItems().clear();
 			return;
@@ -100,8 +102,9 @@ public class OpenRosterController extends BaseController implements Initializabl
 		controller.loadRuleset(ruleset.id);
 	}
 
-	public void onRulesetLoaded(DtoRuleset ruleset) {
-		ObservableList<DtoRoster> items = rosterList.getItems();
+	public void onRulesetLoaded(Ruleset ruleset) {
+		ObservableList<Roster> items = rosterList.getItems();
 		items.setAll(ruleset.rosters);
+		items.sort(NamedItem.Comparator);
 	}
 }

@@ -1,7 +1,6 @@
 package com.fumbbl.iconcomposer.model;
 
 import java.lang.reflect.Type;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -9,12 +8,17 @@ import java.util.List;
 import java.util.Map;
 
 import com.fumbbl.iconcomposer.Config;
-import com.fumbbl.iconcomposer.dto.DtoPosition;
-import com.fumbbl.iconcomposer.dto.DtoRoster;
-import com.fumbbl.iconcomposer.dto.DtoRuleset;
-import com.fumbbl.iconcomposer.dto.DtoSkin;
+import com.fumbbl.iconcomposer.dto.fumbbl.DtoBone;
+import com.fumbbl.iconcomposer.dto.fumbbl.DtoDiagram;
+import com.fumbbl.iconcomposer.dto.fumbbl.DtoPosition;
+import com.fumbbl.iconcomposer.dto.fumbbl.DtoRoster;
+import com.fumbbl.iconcomposer.dto.fumbbl.DtoRuleset;
+import com.fumbbl.iconcomposer.dto.fumbbl.DtoSkeleton;
+import com.fumbbl.iconcomposer.dto.fumbbl.DtoSkin;
+import com.fumbbl.iconcomposer.dto.fumbbl.DtoSlot;
 import com.fumbbl.iconcomposer.model.types.Bone;
 import com.fumbbl.iconcomposer.model.types.Diagram;
+import com.fumbbl.iconcomposer.model.types.Position;
 import com.fumbbl.iconcomposer.model.types.Skeleton;
 import com.fumbbl.iconcomposer.model.types.Skin;
 import com.fumbbl.iconcomposer.model.types.Slot;
@@ -25,10 +29,12 @@ public class DataLoader {
 	private APIClient apiClient;
 	private Gson gson;
 
-	private static final Type boneListType = new TypeToken<List<Bone>>() {}.getType();
-	private static final Type slotListType = new TypeToken<List<Slot>>() {}.getType();
-	private static final Type skeletonListType = new TypeToken<List<Skeleton>>() {}.getType();
-	private static final Type diagramListType = new TypeToken<List<Diagram>>() {}.getType();
+	private static final Type boneListType = new TypeToken<List<DtoBone>>() {}.getType();
+	private static final Type slotListType = new TypeToken<List<DtoSlot>>() {}.getType();
+	private static final Type skeletonListType = new TypeToken<List<DtoSkeleton>>() {}.getType();
+	private static final Type diagramListType = new TypeToken<List<DtoDiagram>>() {}.getType();
+	private static final Type rulesetListType = new TypeToken<List<DtoRuleset>>() {}.getType();
+	private static final Type skinListType = new TypeToken<List<DtoSkin>>() {}.getType();
 
 	public DataLoader(Config cfg) {
 		apiClient = new APIClient(cfg.getApiBase());
@@ -39,32 +45,37 @@ public class DataLoader {
 		return apiClient.authenticate(clientId, clientSecret);
 	}
 
-	public Collection<Skin> getSkins(int positionId) {
+	public Collection<DtoSkin> getSkins(int positionId) {
 		String content = apiClient.get("/iconskeleton/skins/" + positionId);
-		DtoSkin[] skins = gson.fromJson(content, DtoSkin[].class);
-
-		List<Skin> list = new ArrayList<Skin>(skins.length);
-		for (DtoSkin s : skins) {
-			Skin skin = s.toSkin();
-			list.add(skin);
-		}
-
-		return list;
+		return gson.fromJson(content, skinListType);
 	}
 
-	public Collection<Diagram> getDiagrams(int skeletonId) {
-		String content = apiClient.get("/iconskeleton/attachments/" + skeletonId);
+	public Collection<DtoDiagram> getDiagrams(int skeletonId) {
+		String content = apiClient.get("/iconskeleton/diagrams/" + skeletonId);
 		return gson.fromJson(content, diagramListType);
 	}
 
-	public Collection<Slot> getSlots(int skeletonId) {
+	public Collection<DtoSlot> getSlots(int skeletonId) {
 		String content = apiClient.get("/iconskeleton/slots/" + skeletonId);
 		return gson.fromJson(content, slotListType);
 	}
 
 	public Collection<Bone> getBones(int i) {
+		Map<Integer,Bone> bones = new HashMap<Integer,Bone>();
 		String content = apiClient.get("/iconskeleton/bones/" + i);
-		return gson.fromJson(content, boneListType);
+		Collection<DtoBone> list = gson.fromJson(content, boneListType);
+		
+		list.forEach(b -> bones.put(b.id, b.toBone()));
+		
+		for (DtoBone b : list) {
+			Bone bone = bones.get(b.id);
+			if (b.parentId > 0) {
+				bone.parentBone = bones.get(b.parentId);
+				bone.parentBone.addChildBone(bone);
+			}
+		}
+		
+		return bones.values();
 	}
 
 	public DtoRoster getRoster(int rosterId) {
@@ -77,9 +88,9 @@ public class DataLoader {
 		return gson.fromJson(content, DtoPosition.class);
 	}
 
-	public DtoRuleset[] getRulesets() {
+	public Collection<DtoRuleset> getRulesets() {
 		String content = apiClient.post("/ruleset/list", null, true);
-		return gson.fromJson(content, DtoRuleset[].class);
+		return gson.fromJson(content, rulesetListType);
 	}
 
 	public DtoRuleset getRuleset(int rulesetId) {
@@ -91,15 +102,16 @@ public class DataLoader {
 		return apiClient.isAuthenticated();
 	}
 
-	public Collection<Skeleton> getSkeletons(int positionId) {
+	public Collection<DtoSkeleton> getSkeletons(int positionId) {
 		String content = apiClient.get("/iconskeleton/list/" + positionId);
 		return gson.fromJson(content, skeletonListType);
 	}
 
-	public int saveSkeleton(int positionId, Skeleton skeleton) {
+	public int saveSkeleton(Position position, Skeleton skeleton) {
 		Map<String, String> params = new HashMap<String, String>();
+		params.put("skeletonId", Integer.toString(skeleton.id));
 		params.put("name", skeleton.name);
-		params.put("positionId", Integer.toString(positionId));
+		params.put("positionId", Integer.toString(position.id));
 		String content = apiClient.post("/iconskeleton/create", params, true);
 		int skeletonId = gson.fromJson(content, Integer.class);
 		return skeletonId;
@@ -148,7 +160,7 @@ public class DataLoader {
 		params.put("slotId", Integer.toString(slot.id));
 		params.put("skeletonId", Integer.toString(slot.getSkeleton().id));
 		params.put("name", slot.name);
-		params.put("boneId", Integer.toString(slot.boneId));
+		params.put("boneId", Integer.toString(slot.getBone().id));
 		params.put("attachment", slot.attachment);
 		params.put("order", Integer.toString(slot.order));
 		String content = apiClient.post("/iconskeleton/setSlot", params, true);
@@ -159,7 +171,7 @@ public class DataLoader {
 		Map<String, String> params = new HashMap<String, String>();
 		params.put("attachmentId", Integer.toString(diagram.id));
 		params.put("slotId", Integer.toString(diagram.getSlot().id));
-		params.put("name", diagram.attachmentName);
+		params.put("name", diagram.getImage());
 		params.put("x", Double.toString(diagram.x));
 		params.put("y", Double.toString(diagram.y));
 		params.put("width", Double.toString(diagram.width));
@@ -172,5 +184,16 @@ public class DataLoader {
 	public void deleteSkeleton(Skeleton skeleton) {
 		apiClient.post("/iconskeleton/delete/" + skeleton.id, null, true);
 		return;
+	}
+
+	public void saveSkin(Position position, Skin skin) {
+		Map<String, String> params = new HashMap<String, String>();
+		params.put("skinId", Integer.toString(skin.id));
+		params.put("skeletonId", Integer.toString(skin.skeleton.id));
+		params.put("positionId", Integer.toString(position.id));
+		params.put("name", skin.getName());
+		
+		String content = apiClient.post("/iconskeleton/setSkin", params, true);
+		skin.id = gson.fromJson(content, Integer.class);
 	}
 }
