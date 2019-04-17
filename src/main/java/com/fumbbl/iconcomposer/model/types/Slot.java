@@ -73,7 +73,11 @@ public class Slot extends NamedItem {
 		}
 		Slot other = (Slot)o;
 		
-		return other.id == this.id;
+		int c = other.id - this.id;
+		if (c == 0) {
+			c = this.name.compareTo(other.name);
+		}
+		return c == 0;
 	}
 	
 	@Override

@@ -1,5 +1,6 @@
 package com.fumbbl.iconcomposer.model;
 
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -22,6 +23,7 @@ public class SpineImporter {
 	private Map<String,Bone> boneMap = new HashMap<String,Bone>();
 	private Map<String,Diagram> diagramMap = new HashMap<String,Diagram>();
 	private Map<String,Skin> skinMap = new HashMap<String,Skin>();
+	private Skeleton skeleton;
 
 	public SpineImporter() {
 	}
@@ -31,7 +33,7 @@ public class SpineImporter {
 		DtoSpine data = gson.fromJson(json, DtoSpine.class);
 
 		// Create Skeleton instance
-		Skeleton skeleton = new Skeleton();
+		skeleton = new Skeleton();
 		skeleton.setName("Imported");
 
 		processBones(data, skeleton);
@@ -39,6 +41,26 @@ public class SpineImporter {
 		processSkins(data, skeleton);
 	}
 
+	public Skeleton getSkeleton() {
+		return skeleton;
+	}
+	
+	public Collection<Bone> getBones() {
+		return boneMap.values();
+	}
+	
+	public Collection<Slot> getSlots() {
+		return slotMap.values();
+	}
+	
+	public Collection<Diagram> getDiagrams() {
+		return diagramMap.values();
+	}
+	
+	public Collection<Skin> getSkins() {
+		return skinMap.values();
+	}
+	
 	private void processSlots(DtoSpine data, Skeleton skeleton) {
 		data.slots.forEach(s -> slotMap.put(s.name, s.toSlot()));
 		
@@ -46,8 +68,10 @@ public class SpineImporter {
 		for (DtoSlot s : data.slots) {
 			Slot slot = slotMap.get(s.name);
 			slot.order = order++;
+			slot.setBone(boneMap.get(s.bone));
 			slot.setSkeleton(skeleton);
 		}
+		skeleton.setSlots(slotMap.values());
 	}
 
 	private void processBones(DtoSpine data, Skeleton skeleton) {
@@ -63,6 +87,7 @@ public class SpineImporter {
 				bone.setSkeleton(skeleton);
 			}
 		}
+		skeleton.setBones(boneMap.values());
 	}
 	
 	private void processSkins(DtoSpine spine, Skeleton skeleton) {
@@ -75,6 +100,7 @@ public class SpineImporter {
 
 			Skin skin = s.toSkin();
 			skin.name = skinName;
+			skin.skeleton = skeleton;
 			skinMap.put(skinName, skin);
 			
 			for(Entry<String,DtoSlotData> slotEntry : s.entrySet()) {
@@ -82,8 +108,10 @@ public class SpineImporter {
 				DtoSlotData d = slotEntry.getValue();
 				for (Entry<String,DtoAttachment> attachmentEntry : d.entrySet()) {
 					DtoAttachment attachment = attachmentEntry.getValue();
+					String name = attachmentEntry.getKey();
 					
 					Diagram diagram = attachment.toDiagram();
+					diagram.name = name;
 					diagram.setSlot(slotMap.get(slotName));
 					diagramMap.put(attachment.name, diagram);
 				}

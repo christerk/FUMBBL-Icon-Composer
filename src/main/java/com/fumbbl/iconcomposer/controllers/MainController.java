@@ -10,6 +10,7 @@ import java.util.Map;
 import java.util.ResourceBundle;
 
 import com.fumbbl.iconcomposer.ColourTheme;
+import com.fumbbl.iconcomposer.ViewState;
 import com.fumbbl.iconcomposer.ColourTheme.ColourType;
 import com.fumbbl.iconcomposer.model.types.Bone;
 import com.fumbbl.iconcomposer.model.types.Diagram;
@@ -201,7 +202,7 @@ public class MainController extends BaseController implements Initializable {
 				showDiagramPane();
 				
 				FilteredList<Diagram> filteredDiagrams = new FilteredList<Diagram>(masterDiagrams, diagram -> {
-					return diagram.getSlot() == newValue;
+					return newValue.equals(diagram.getSlot());
 				});
 
 				diagramChoices.setItems(new SortedList<Diagram>(filteredDiagrams, NamedItem.Comparator));
@@ -400,7 +401,11 @@ public class MainController extends BaseController implements Initializable {
 	
 	public void setSkeletons(Collection<Skeleton> skeletons) {
 		ObservableList<Skeleton> items = skeletonList.getItems();
+		Skeleton currentSkeleton = controller.viewState.getActiveSkeleton();
 		items.setAll(skeletons);
+		if (currentSkeleton != null) {
+			setSkeleton(currentSkeleton);
+		}
 	}
 	
 	public void setImages(Collection<NamedSVG> images) {
@@ -429,6 +434,7 @@ public class MainController extends BaseController implements Initializable {
 
 		masterDiagrams.setAll(diagrams);
 		children.sort(NamedItem.Comparator);
+		
 	}
 	
 	public void setBones(Collection<Bone> bones) {

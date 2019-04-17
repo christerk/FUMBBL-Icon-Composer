@@ -36,6 +36,7 @@ public class OpenRosterController extends BaseController implements Initializabl
 		for (Ruleset r : rulesets) {
 			items.add(r);
 		}
+		items.sort(NamedItem.Comparator);
 		rosterList.getSelectionModel().clearSelection();
 		rulesetList.getSelectionModel().clearSelection();
 		openButton.setDisable(true);

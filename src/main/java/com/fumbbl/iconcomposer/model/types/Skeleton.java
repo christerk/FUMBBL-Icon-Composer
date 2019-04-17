@@ -51,6 +51,13 @@ public class Skeleton extends NamedItem {
 	
 	public void setSlots(Collection<Slot> slots) {
 		this.slots.clear();
+		
+		if (slots != null) {
+			for (Slot s : slots) {
+				this.slots.put(s.name, s);
+				s.setSkeleton(this);
+			}
+		}
 	}
 	
 	public Slot getSlot(String slotName) {

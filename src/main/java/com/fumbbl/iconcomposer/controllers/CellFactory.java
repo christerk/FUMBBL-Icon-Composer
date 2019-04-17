@@ -32,7 +32,6 @@ public class CellFactory<T extends NamedItem> {
 			target.onRenamed(controller);
 		});
 		list.setOnEditCancel(event -> {
-			System.out.println(event);
 		});
 		
 	}

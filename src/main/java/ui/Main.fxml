@@ -251,7 +251,6 @@
             </Menu>
             <Menu text="_Skeleton">
               <items>
-                <MenuItem text="_Rename" />
                   <MenuItem onAction="#deleteSkeleton" text="_Delete" />
               </items>
             </Menu>

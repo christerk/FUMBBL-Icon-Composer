@@ -29,6 +29,7 @@ import com.fumbbl.iconcomposer.model.types.Bone;
 import com.fumbbl.iconcomposer.model.types.Diagram;
 import com.fumbbl.iconcomposer.model.types.NamedItem;
 import com.fumbbl.iconcomposer.model.types.NamedSVG;
+import com.fumbbl.iconcomposer.model.types.Position;
 import com.fumbbl.iconcomposer.model.types.Ruleset;
 import com.fumbbl.iconcomposer.model.types.Skeleton;
 import com.fumbbl.iconcomposer.model.types.Skin;
@@ -263,7 +264,37 @@ public class Model {
 						if (jsonMatcher.matches(p)) {
 							SpineImporter importer = new SpineImporter();
 							importer.importSkeleton(new String(bytes));
-							//delayedTasks.add();
+
+							Position pos = dataStore.getPosition();
+							Skeleton skeleton = importer.getSkeleton();
+							
+							dataStore.addSkeleton(skeleton);
+							dataStore.setSlots(skeleton.getSlots());
+							dataStore.setBones(skeleton.getBones());
+							
+							dataLoader.saveSkeleton(pos, skeleton);
+							dataLoader.saveBones(skeleton);
+							dataLoader.saveSlots(skeleton);
+							
+							Collection<Diagram> diagrams = importer.getDiagrams();
+							dataStore.setDiagrams(diagrams);
+							diagrams.forEach(d -> dataLoader.saveDiagram(d));
+							
+							Collection<Skin> skins = importer.getSkins();
+							dataStore.setSkins(skins);
+							skins.forEach(s -> dataLoader.saveSkin(pos, s));
+							
+							delayedTasks.add(new Runnable() {
+								@Override
+								public void run() {
+									controller.onSkeletonsChanged(dataStore.getSkeletons());
+									controller.onSkeletonChanged(skeleton);
+									controller.onBonesChanged(skeleton.getBones());
+									controller.onSlotsChanged(skeleton.getSlots());
+									controller.onDiagramsChanged(diagrams);
+									controller.onSkinsChanged(skins);
+								}
+							});
 						} else if (svgMatcher.matches(p)) {
 							delayedTasks.add(importSvg(p));
 						}
@@ -331,8 +362,12 @@ public class Model {
 	public void onItemRenamed(NamedItem item) {
 		if (item instanceof Skin) {
 			dataLoader.saveSkin(dataStore.getPosition(), (Skin)item);
+			controller.onSkinsChanged(dataStore.getSkins());
 		} else if (item instanceof Skeleton) {
 			dataLoader.saveSkeleton(dataStore.getPosition(), (Skeleton)item);
+			controller.onSkeletonsChanged(dataStore.getSkeletons());
+		} else if (item instanceof NamedSVG) {
+			controller.onImagesChanged(dataStore.getSvgs());
 		}
 	}
 }

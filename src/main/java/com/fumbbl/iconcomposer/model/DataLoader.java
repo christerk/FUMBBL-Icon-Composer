@@ -114,6 +114,7 @@ public class DataLoader {
 		params.put("positionId", Integer.toString(position.id));
 		String content = apiClient.post("/iconskeleton/create", params, true);
 		int skeletonId = gson.fromJson(content, Integer.class);
+		skeleton.id = skeletonId;
 		return skeletonId;
 	}
 
@@ -169,15 +170,15 @@ public class DataLoader {
 
 	public void saveDiagram(Diagram diagram) {
 		Map<String, String> params = new HashMap<String, String>();
-		params.put("attachmentId", Integer.toString(diagram.id));
+		params.put("diagramId", Integer.toString(diagram.id));
 		params.put("slotId", Integer.toString(diagram.getSlot().id));
-		params.put("name", diagram.getImage());
+		params.put("name", diagram.name);
 		params.put("x", Double.toString(diagram.x));
 		params.put("y", Double.toString(diagram.y));
 		params.put("width", Double.toString(diagram.width));
 		params.put("height", Double.toString(diagram.height));
 		params.put("svg", diagram.getImage());
-		String content = apiClient.post("/iconskeleton/setAttachment", params, true);
+		String content = apiClient.post("/iconskeleton/setDiagram", params, true);
 		diagram.id = gson.fromJson(content, Integer.class);
 	}
 
