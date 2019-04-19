@@ -290,7 +290,7 @@ public class Controller extends BaseController {
 	}
 
 	public void onProgressStart(String description) {
-		controllerManager.getMain().onImportStart(description);
+		controllerManager.getMain().onProgressStart(description);
 	}
 
 	public void onItemRenamed(NamedItem item) {

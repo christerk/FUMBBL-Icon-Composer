@@ -243,7 +243,6 @@ public class Model {
 	}
 
 	public void handleDroppedFile(String path) {
-		controller.onProgressStart("Importing");
 		Runnable task = new Runnable() {
 			@Override
 			public void run() {
@@ -263,6 +262,7 @@ public class Model {
 						byte[] bytes = Files.readAllBytes(p);
 						
 						if (jsonMatcher.matches(p)) {
+							controller.onProgressStart("Importing Spine");
 							SpineImporter importer = new SpineImporter();
 							importer.importSkeleton(new String(bytes));
 

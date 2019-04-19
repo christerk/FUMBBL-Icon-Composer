@@ -493,7 +493,7 @@ public class MainController extends BaseController implements Initializable {
 		setSkins(skins);
 	}
 
-	public void onImportStart(String description) {
+	public void onProgressStart(String description) {
 		labelProgress.setText(description);
 		progressPane.setVisible(true);
 	}
