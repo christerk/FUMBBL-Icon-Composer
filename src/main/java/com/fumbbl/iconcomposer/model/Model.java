@@ -217,6 +217,7 @@ public class Model {
 
 	public void setController(Controller controller) {
 		this.controller = controller;
+		dataLoader.setController(controller);
 	}
 
 	public Diagram getDiagram(String image) {
@@ -242,7 +243,7 @@ public class Model {
 	}
 
 	public void handleDroppedFile(String path) {
-		controller.onImportStart();
+		controller.onProgressStart("Importing");
 		Runnable task = new Runnable() {
 			@Override
 			public void run() {
@@ -272,6 +273,7 @@ public class Model {
 							dataStore.setSlots(skeleton.getSlots());
 							dataStore.setBones(skeleton.getBones());
 							
+							controller.startBatch();
 							dataLoader.saveSkeleton(pos, skeleton);
 							dataLoader.saveBones(skeleton);
 							dataLoader.saveSlots(skeleton);
@@ -283,6 +285,8 @@ public class Model {
 							Collection<Skin> skins = importer.getSkins();
 							dataStore.setSkins(skins);
 							skins.forEach(s -> dataLoader.saveSkin(pos, s));
+
+							controller.runBatch();
 							
 							delayedTasks.add(new Runnable() {
 								@Override
@@ -299,18 +303,22 @@ public class Model {
 							delayedTasks.add(importSvg(p));
 						}
 					}
-					
-					Platform.runLater(new Runnable() {
+
+					controller.runInBackground(new Runnable() {
 						@Override
 						public void run() {
-							for (Runnable task : delayedTasks) {
-								task.run();
-							}
-							controller.onImportComplete();
-						}						
+							Platform.runLater(new Runnable() {
+								@Override
+								public void run() {
+									for (Runnable task : delayedTasks) {
+										task.run();
+									}
+								}						
+							});
+						}
 					});
 				} catch (IOException e) {
-					controller.onImportComplete();
+					controller.onProgress(1, true);
 				}
 			}
 		};

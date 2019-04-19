@@ -1,8 +1,6 @@
 package com.fumbbl.iconcomposer.controllers;
 
 import java.util.Collection;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 
 import com.fumbbl.iconcomposer.ColourTheme;
 import com.fumbbl.iconcomposer.Config;
@@ -32,13 +30,13 @@ public class Controller extends BaseController {
 	private StageManager stageManager;
 	private ControllerManager controllerManager;
 	public ViewState viewState;
-	ExecutorService threadPool;
+	TaskQueue taskQueue;
 	
 	public Controller(Model model) {
 		this.model = model;
 		renderer = new SVGRenderer(model, this);
 		viewState = new ViewState();
-		threadPool = Executors.newSingleThreadExecutor();
+		taskQueue = new TaskQueue(this);
 	}
 
 	public void setStageManager(StageManager stageManager) {
@@ -58,11 +56,26 @@ public class Controller extends BaseController {
 	}
 	
 	public void runInBackground(Runnable task) {
-		threadPool.execute(task);
+		taskQueue.execute(task);
+	}
+	
+	public void startProgress() {
+		taskQueue.startProgress();
+	}
+	
+	public void onProgress(double progress, boolean complete) {
+		controllerManager.getMain().onProgress(progress, complete);
+		if (complete) {
+			controllerManager.getMain().onProgressComplete();
+		}
+	}
+	
+	public void stopProgress() {
+		taskQueue.stopProgress();
 	}
 	
 	public void shutdown() {
-		threadPool.shutdownNow();
+		taskQueue.shutdownNow();
 		Platform.exit();
 	}
 	
@@ -276,15 +289,19 @@ public class Controller extends BaseController {
 		controllerManager.getMain().onPositionChanged(position);
 	}
 
-	public void onImportStart() {
-		controllerManager.getMain().onImportStart();
-	}
-
-	public void onImportComplete() {
-		controllerManager.getMain().onImportComplete();
+	public void onProgressStart(String description) {
+		controllerManager.getMain().onImportStart(description);
 	}
 
 	public void onItemRenamed(NamedItem item) {
 		model.onItemRenamed(item);
+	}
+
+	public void startBatch() {
+		taskQueue.startBatch();
+	}
+
+	public void runBatch() {
+		taskQueue.runBatch();
 	}
 }

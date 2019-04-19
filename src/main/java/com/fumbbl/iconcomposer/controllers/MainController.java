@@ -10,7 +10,6 @@ import java.util.Map;
 import java.util.ResourceBundle;
 
 import com.fumbbl.iconcomposer.ColourTheme;
-import com.fumbbl.iconcomposer.ViewState;
 import com.fumbbl.iconcomposer.ColourTheme.ColourType;
 import com.fumbbl.iconcomposer.model.types.Bone;
 import com.fumbbl.iconcomposer.model.types.Diagram;
@@ -36,6 +35,7 @@ import javafx.scene.control.Label;
 import javafx.scene.control.ListView;
 import javafx.scene.control.Menu;
 import javafx.scene.control.MenuItem;
+import javafx.scene.control.ProgressBar;
 import javafx.scene.control.TextField;
 import javafx.scene.control.TitledPane;
 import javafx.scene.control.TreeItem;
@@ -46,6 +46,7 @@ import javafx.scene.input.MouseButton;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.FlowPane;
 import javafx.scene.layout.GridPane;
+import javafx.scene.layout.HBox;
 import javafx.util.StringConverter;
 
 public class MainController extends BaseController implements Initializable {
@@ -70,7 +71,10 @@ public class MainController extends BaseController implements Initializable {
 	public TextField diagramY;
 	public Label apiStatus;
 	public ListView<Position> positionList;
-	public Label labelImporting;
+
+	public Label labelProgress;
+	public HBox progressPane;
+	public ProgressBar progressBar;
 	
 	public ListView<Skeleton> skeletonList;
 	public ListView<NamedSVG> imageList;
@@ -472,11 +476,18 @@ public class MainController extends BaseController implements Initializable {
 		setSkins(skins);
 	}
 
-	public void onImportStart() {
-		labelImporting.setVisible(true);
+	public void onImportStart(String description) {
+		labelProgress.setText(description);
+		progressPane.setVisible(true);
 	}
 
-	public void onImportComplete() {
-		labelImporting.setVisible(false);
+	public void onProgressComplete() {
+		progressPane.setVisible(false);
+	}
+
+	public void onProgress(double progress, boolean complete) {
+		if (!complete) {
+			progressBar.setProgress(progress);
+		}
 	}
 }

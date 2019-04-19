@@ -9,6 +9,7 @@
 <?import javafx.scene.control.Menu?>
 <?import javafx.scene.control.MenuBar?>
 <?import javafx.scene.control.MenuItem?>
+<?import javafx.scene.control.ProgressBar?>
 <?import javafx.scene.control.SplitPane?>
 <?import javafx.scene.control.TextField?>
 <?import javafx.scene.control.TitledPane?>
@@ -288,11 +289,15 @@
                   <Insets left="20.0" />
                </StackPane.margin>
             </HBox>
-            <Label fx:id="labelImporting" text="Importing..." visible="false" StackPane.alignment="CENTER_RIGHT">
+            <HBox fx:id="progressPane" alignment="CENTER_RIGHT" visible="false" StackPane.alignment="CENTER_RIGHT">
                <StackPane.margin>
                   <Insets right="20.0" />
                </StackPane.margin>
-            </Label>
+               <children>
+                  <Label fx:id="labelProgress" text="Importing..." />
+                  <ProgressBar fx:id="progressBar" prefWidth="200.0" progress="0.0" />
+               </children>
+            </HBox>
          </children>
       </StackPane>
    </bottom>

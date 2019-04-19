@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.Map;
 
 import com.fumbbl.iconcomposer.Config;
+import com.fumbbl.iconcomposer.controllers.Controller;
 import com.fumbbl.iconcomposer.dto.fumbbl.DtoBone;
 import com.fumbbl.iconcomposer.dto.fumbbl.DtoDiagram;
 import com.fumbbl.iconcomposer.dto.fumbbl.DtoPosition;
@@ -28,6 +29,7 @@ import com.google.gson.reflect.TypeToken;
 public class DataLoader {
 	private APIClient apiClient;
 	private Gson gson;
+	private Controller controller;
 
 	private static final Type boneListType = new TypeToken<List<DtoBone>>() {}.getType();
 	private static final Type slotListType = new TypeToken<List<DtoSlot>>() {}.getType();
@@ -107,15 +109,20 @@ public class DataLoader {
 		return gson.fromJson(content, skeletonListType);
 	}
 
-	public int saveSkeleton(Position position, Skeleton skeleton) {
-		Map<String, String> params = new HashMap<String, String>();
-		params.put("skeletonId", Integer.toString(skeleton.id));
-		params.put("name", skeleton.name);
-		params.put("positionId", Integer.toString(position.id));
-		String content = apiClient.post("/iconskeleton/create", params, true);
-		int skeletonId = gson.fromJson(content, Integer.class);
-		skeleton.id = skeletonId;
-		return skeletonId;
+	public void saveSkeleton(Position position, Skeleton skeleton) {
+		Runnable task = new Runnable() {
+			@Override
+			public void run() {
+				Map<String, String> params = new HashMap<String, String>();
+				params.put("skeletonId", Integer.toString(skeleton.id));
+				params.put("name", skeleton.name);
+				params.put("positionId", Integer.toString(position.id));
+				String content = apiClient.post("/iconskeleton/create", params, true);
+				int skeletonId = gson.fromJson(content, Integer.class);
+				skeleton.id = skeletonId;
+			}
+		};
+		controller.runInBackground(task);
 	}
 
 	public void saveBones(Skeleton skeleton) {
@@ -137,15 +144,22 @@ public class DataLoader {
 	}
 
 	private void saveBone(Bone bone) {
-		Map<String, String> params = new HashMap<String, String>();
-		params.put("boneID", Integer.toString(bone.id));
-		params.put("skeletonId", Integer.toString(bone.getSkeleton().id));
-		params.put("name", bone.name);
-		params.put("parentId", Integer.toString(bone.parentBone != null ? bone.parentBone.id : -1));
-		params.put("x", Double.toString(bone.x));
-		params.put("y", Double.toString(bone.y));
-		String content = apiClient.post("/iconskeleton/setBone", params, true);
-		bone.id = gson.fromJson(content, Integer.class);
+		Runnable task = new Runnable() {
+			@Override
+			public void run() {
+				Map<String, String> params = new HashMap<String, String>();
+				params.put("boneID", Integer.toString(bone.id));
+				params.put("skeletonId", Integer.toString(bone.getSkeleton().id));
+				params.put("name", bone.name);
+				params.put("parentId", Integer.toString(bone.parentBone != null ? bone.parentBone.id : -1));
+				params.put("x", Double.toString(bone.x));
+				params.put("y", Double.toString(bone.y));
+				String content = apiClient.post("/iconskeleton/setBone", params, true);
+				bone.id = gson.fromJson(content, Integer.class);
+			}
+		};
+		
+		controller.runInBackground(task);
 	}
 
 	public void saveSlots(Skeleton skeleton) {
@@ -157,44 +171,75 @@ public class DataLoader {
 	}
 
 	public void saveSlot(Slot slot) {
-		Map<String, String> params = new HashMap<String, String>();
-		params.put("slotId", Integer.toString(slot.id));
-		params.put("skeletonId", Integer.toString(slot.getSkeleton().id));
-		params.put("name", slot.name);
-		params.put("boneId", Integer.toString(slot.getBone().id));
-		params.put("attachment", slot.attachment);
-		params.put("order", Integer.toString(slot.order));
-		String content = apiClient.post("/iconskeleton/setSlot", params, true);
-		slot.id = gson.fromJson(content, Integer.class);
+		Runnable task = new Runnable() {
+			@Override
+			public void run() {
+				Map<String, String> params = new HashMap<String, String>();
+				params.put("slotId", Integer.toString(slot.id));
+				params.put("skeletonId", Integer.toString(slot.getSkeleton().id));
+				params.put("name", slot.name);
+				params.put("boneId", Integer.toString(slot.getBone().id));
+				params.put("attachment", slot.attachment);
+				params.put("order", Integer.toString(slot.order));
+				String content = apiClient.post("/iconskeleton/setSlot", params, true);
+				slot.id = gson.fromJson(content, Integer.class);
+			}
+		};
+		
+		controller.runInBackground(task);
 	}
 
 	public void saveDiagram(Diagram diagram) {
-		Map<String, String> params = new HashMap<String, String>();
-		params.put("diagramId", Integer.toString(diagram.id));
-		params.put("slotId", Integer.toString(diagram.getSlot().id));
-		params.put("name", diagram.name);
-		params.put("x", Double.toString(diagram.x));
-		params.put("y", Double.toString(diagram.y));
-		params.put("width", Double.toString(diagram.width));
-		params.put("height", Double.toString(diagram.height));
-		params.put("svg", diagram.getImage());
-		String content = apiClient.post("/iconskeleton/setDiagram", params, true);
-		diagram.id = gson.fromJson(content, Integer.class);
+		Runnable task = new Runnable() {
+			@Override
+			public void run() {
+				Map<String, String> params = new HashMap<String, String>();
+				params.put("diagramId", Integer.toString(diagram.id));
+				params.put("slotId", Integer.toString(diagram.getSlot().id));
+				params.put("name", diagram.name);
+				params.put("x", Double.toString(diagram.x));
+				params.put("y", Double.toString(diagram.y));
+				params.put("width", Double.toString(diagram.width));
+				params.put("height", Double.toString(diagram.height));
+				params.put("svg", diagram.getImage());
+				String content = apiClient.post("/iconskeleton/setDiagram", params, true);
+				diagram.id = gson.fromJson(content, Integer.class);
+			}
+		};
+		
+		controller.runInBackground(task);
 	}
 
 	public void deleteSkeleton(Skeleton skeleton) {
-		apiClient.post("/iconskeleton/delete/" + skeleton.id, null, true);
-		return;
+		Runnable task = new Runnable() {
+			@Override
+			public void run() {
+				apiClient.post("/iconskeleton/delete/" + skeleton.id, null, true);
+			}
+		};
+		
+		controller.runInBackground(task);
 	}
 
 	public void saveSkin(Position position, Skin skin) {
-		Map<String, String> params = new HashMap<String, String>();
-		params.put("skinId", Integer.toString(skin.id));
-		params.put("skeletonId", Integer.toString(skin.skeleton.id));
-		params.put("positionId", Integer.toString(position.id));
-		params.put("name", skin.getName());
+		Runnable task = new Runnable() {
+			@Override
+			public void run() {
+				Map<String, String> params = new HashMap<String, String>();
+				params.put("skinId", Integer.toString(skin.id));
+				params.put("skeletonId", Integer.toString(skin.skeleton.id));
+				params.put("positionId", Integer.toString(position.id));
+				params.put("name", skin.getName());
+				
+				String content = apiClient.post("/iconskeleton/setSkin", params, true);
+				skin.id = gson.fromJson(content, Integer.class);
+			}
+		};
 		
-		String content = apiClient.post("/iconskeleton/setSkin", params, true);
-		skin.id = gson.fromJson(content, Integer.class);
+		controller.runInBackground(task);
+	}
+
+	public void setController(Controller controller) {
+		this.controller = controller;
 	}
 }
