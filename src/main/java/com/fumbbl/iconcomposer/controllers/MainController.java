@@ -290,6 +290,10 @@ public class MainController extends BaseController implements Initializable {
 			skeletonPane.setText("Skeletons");
 			controller.setSkeleton(null);
 			controller.displayBones(null);
+			setSlots(null);
+			setBones(null);
+			setDiagrams(null);
+			setSkins(null);
 			return;
 			
 		}
@@ -400,7 +404,14 @@ public class MainController extends BaseController implements Initializable {
 	
 	public void setSkins(Collection<Skin> skins) {
 		ObservableList<Skin> children = this.skinList.getItems();
+		
+		if (skins == null) {
+			children.clear();
+			return;
+		}
+		
 		children.setAll(skins);
+		children.sort(NamedItem.Comparator);
 	}
 	
 	public void setSkeletons(Collection<Skeleton> skeletons) {
@@ -433,15 +444,21 @@ public class MainController extends BaseController implements Initializable {
 	
 	public void setDiagrams(Collection<Diagram> diagrams) {
 		ObservableList<Diagram> children = diagramList.getItems();
+		
+		if (diagrams == null) {
+			masterDiagrams.clear();
+			children.clear();
+			return;
+		}
+		masterDiagrams.setAll(diagrams);
 		children.setAll(diagrams);
 		children.sort(NamedItem.Comparator);
-
-		masterDiagrams.setAll(diagrams);
-		children.sort(NamedItem.Comparator);
-		
 	}
 	
 	public void setBones(Collection<Bone> bones) {
+		if (bones == null) {
+			return;
+		}
 		Map<String,Bone> boneMap = new HashMap<String,Bone>();
 		Map<String,TreeItem<String>> itemMap = new HashMap<String,TreeItem<String>>();
 
