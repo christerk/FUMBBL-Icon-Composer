@@ -1,11 +1,9 @@
 package com.fumbbl.iconcomposer.svg;
 
-import java.awt.BasicStroke;
-import java.awt.Color;
-import java.awt.Graphics2D;
-import java.awt.RenderingHints;
+import java.awt.*;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.Rectangle2D;
+import java.awt.image.BufferedImage;
 import java.util.stream.Collectors;
 
 import com.fumbbl.iconcomposer.ColourTheme;
@@ -98,6 +96,21 @@ public class SVGRenderer {
 		}
 	}
 
+	public void renderPng(BufferedImage image) {
+		Graphics2D g2 = controller.viewState.getGraphics2D();
+		g2.setColor(renderBackground);
+		g2.fillRect(0, 0, width, height);
+
+		g2.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BICUBIC);
+		g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+
+		try {
+			renderPng(g2, image);
+		} catch (SVGException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	}
 	public void renderSkeleton(Skeleton skeleton, String currentBone) {
 		Graphics2D g2 = controller.viewState.getGraphics2D();
 		g2.setColor(renderBackground);
@@ -236,5 +249,11 @@ public class SVGRenderer {
 		g2.scale(imageScale * dw / diagram.getWidth(), imageScale * dh / diagram.getHeight());
 		diagram.render(g2);
 		g2.setTransform(at);
-	}	
+	}
+
+	private void renderPng(Graphics2D g2, BufferedImage image) throws SVGException {
+		AffineTransform at = g2.getTransform();
+		g2.drawImage(image, 0, 0, null);
+		g2.setTransform(at);
+	}
 }
