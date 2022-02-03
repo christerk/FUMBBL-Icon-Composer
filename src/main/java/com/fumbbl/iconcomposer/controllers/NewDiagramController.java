@@ -4,6 +4,7 @@ import java.net.URL;
 import java.util.Collection;
 import java.util.ResourceBundle;
 
+import com.fumbbl.iconcomposer.model.types.NamedImage;
 import com.fumbbl.iconcomposer.model.types.NamedItem;
 import com.fumbbl.iconcomposer.model.types.NamedSVG;
 import com.fumbbl.iconcomposer.ui.StageType;
@@ -14,18 +15,18 @@ import javafx.scene.control.ChoiceBox;
 import javafx.util.StringConverter;
 
 public class NewDiagramController extends BaseController implements Initializable {
-	public ChoiceBox<NamedSVG> imageChoiceBox;
+	public ChoiceBox<NamedImage> imageChoiceBox;
 
 	@Override
 	public void initialize(URL location, ResourceBundle resources) {
-		imageChoiceBox.setConverter(new StringConverter<NamedSVG>() {
+		imageChoiceBox.setConverter(new StringConverter<NamedImage>() {
 			@Override
-			public String toString(NamedSVG object) {
-				return object.name;
+			public String toString(NamedImage object) {
+				return object.getName();
 			}
 
 			@Override
-			public NamedSVG fromString(String string) {
+			public NamedImage fromString(String string) {
 				return null;
 			}
 		});
@@ -37,13 +38,13 @@ public class NewDiagramController extends BaseController implements Initializabl
 	}
 	
 	public void createDiagram() {
-		NamedSVG svg = imageChoiceBox.getSelectionModel().selectedItemProperty().getValue();
-		controller.createDiagram(svg);
+		NamedImage image = imageChoiceBox.getSelectionModel().selectedItemProperty().getValue();
+		controller.createDiagram(image);
 		controller.getStageManager().hide(StageType.newDiagram);
 	}
 
-	public void setImages(Collection<NamedSVG> images) {
-		ObservableList<NamedSVG> list = imageChoiceBox.getItems();
+	public void setImages(Collection<NamedImage> images) {
+		ObservableList<NamedImage> list = imageChoiceBox.getItems();
 		list.setAll(images);
 		list.sort(NamedItem.Comparator);
 	}

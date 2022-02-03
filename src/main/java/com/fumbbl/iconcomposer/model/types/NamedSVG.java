@@ -2,7 +2,7 @@ package com.fumbbl.iconcomposer.model.types;
 
 import com.kitfox.svg.SVGDiagram;
 
-public class NamedSVG extends NamedItem {
+public class NamedSVG extends NamedImage {
 	public int id;
 	public String name;
 	public SVGDiagram diagram;

@@ -6,17 +6,8 @@ import com.fumbbl.iconcomposer.ColourTheme;
 import com.fumbbl.iconcomposer.Config;
 import com.fumbbl.iconcomposer.ViewState;
 import com.fumbbl.iconcomposer.model.Model;
-import com.fumbbl.iconcomposer.model.types.Bone;
-import com.fumbbl.iconcomposer.model.types.Diagram;
-import com.fumbbl.iconcomposer.model.types.NamedItem;
-import com.fumbbl.iconcomposer.model.types.NamedSVG;
-import com.fumbbl.iconcomposer.model.types.Position;
-import com.fumbbl.iconcomposer.model.types.Roster;
-import com.fumbbl.iconcomposer.model.types.Ruleset;
-import com.fumbbl.iconcomposer.model.types.Skeleton;
-import com.fumbbl.iconcomposer.model.types.Skin;
-import com.fumbbl.iconcomposer.model.types.Slot;
-import com.fumbbl.iconcomposer.svg.SVGRenderer;
+import com.fumbbl.iconcomposer.model.types.*;
+import com.fumbbl.iconcomposer.image.BaseRenderer;
 import com.fumbbl.iconcomposer.ui.StageManager;
 import com.fumbbl.iconcomposer.ui.StageType;
 import com.kitfox.svg.SVGDiagram;
@@ -26,7 +17,7 @@ import javafx.scene.image.WritableImage;
 
 public class Controller extends BaseController {
 	private Model model;
-	private SVGRenderer renderer;
+	private BaseRenderer renderer;
 	private StageManager stageManager;
 	private ControllerManager controllerManager;
 	public ViewState viewState;
@@ -34,7 +25,7 @@ public class Controller extends BaseController {
 	
 	public Controller(Model model) {
 		this.model = model;
-		renderer = new SVGRenderer(model, this);
+		renderer = new BaseRenderer(model, this);
 		viewState = new ViewState();
 		taskQueue = new TaskQueue(this);
 	}
@@ -47,7 +38,7 @@ public class Controller extends BaseController {
 		this.controllerManager = controllerManager;
 	}
 	
-	public SVGRenderer getRenderer() {
+	public BaseRenderer getRenderer() {
 		return renderer;
 	}
 
@@ -120,7 +111,7 @@ public class Controller extends BaseController {
 		controllerManager.getMain().onPositionsChanged(positions);
 	}
 	
-	public void onImagesChanged(Collection<NamedSVG> images) {
+	public void onImagesChanged(Collection<NamedImage> images) {
 		controllerManager.getMain().setImages(images);
 		((NewDiagramController)controllerManager.get(StageType.newDiagram)).setImages(images);
 	}
@@ -213,8 +204,8 @@ public class Controller extends BaseController {
 		model.loadRoster(selectedItem.id);
 	}
 	
-	public void createDiagram(NamedSVG svg) {
-		model.addDiagram(svg);
+	public void createDiagram(NamedImage image) {
+		model.addDiagram(image);
 	}
 	
 	public SVGDiagram getSvg(String svgName) {
@@ -244,9 +235,9 @@ public class Controller extends BaseController {
 		displayDiagram();
 	}
 
-	public void displayImage(NamedSVG image) {
+	public void displayImage(NamedImage image) {
 		controllerManager.getMain().hideColourPane();
-		renderer.renderSvg(image.diagram);
+		renderer.render(image);
 		onImageChanged();
 	}
 	

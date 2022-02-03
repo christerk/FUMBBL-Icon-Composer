@@ -14,6 +14,7 @@ public class Skeleton extends NamedItem {
 	
 	public double x = 0, y = 0;
 	public double scaleX = 1, scaleY = 1;
+	public double width = 0, height = 0;
 	
 	public Skeleton() {
 		bones = new HashMap<String,Bone>();

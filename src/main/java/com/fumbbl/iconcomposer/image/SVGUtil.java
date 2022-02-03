@@ -1,4 +1,4 @@
-package com.fumbbl.iconcomposer.svg;
+package com.fumbbl.iconcomposer.image;
 
 import java.awt.geom.Rectangle2D;
 

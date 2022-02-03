@@ -11,16 +11,10 @@ import java.util.ResourceBundle;
 
 import com.fumbbl.iconcomposer.ColourTheme;
 import com.fumbbl.iconcomposer.ColourTheme.ColourType;
-import com.fumbbl.iconcomposer.model.types.Bone;
-import com.fumbbl.iconcomposer.model.types.Diagram;
-import com.fumbbl.iconcomposer.model.types.NamedItem;
-import com.fumbbl.iconcomposer.model.types.NamedSVG;
-import com.fumbbl.iconcomposer.model.types.Position;
-import com.fumbbl.iconcomposer.model.types.Skeleton;
-import com.fumbbl.iconcomposer.model.types.Skin;
-import com.fumbbl.iconcomposer.model.types.Slot;
+import com.fumbbl.iconcomposer.model.types.*;
 import com.fumbbl.iconcomposer.ui.StageType;
 
+import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.collections.transformation.FilteredList;
@@ -77,7 +71,7 @@ public class MainController extends BaseController implements Initializable {
 	public ProgressBar progressBar;
 	
 	public ListView<Skeleton> skeletonList;
-	public ListView<NamedSVG> imageList;
+	public ListView<NamedImage> imageList;
 	public ListView<Diagram> diagramList;
 	public ListView<Skin> skinList;
 	public ListView<Slot> slotList;
@@ -107,7 +101,7 @@ public class MainController extends BaseController implements Initializable {
 		
 		new CellFactory<Position>().apply(positionList, Position.class);
 		new CellFactory<Skeleton>().apply(skeletonList, Skeleton.class);
-		new CellFactory<NamedSVG>().apply(imageList, NamedSVG.class);
+		new CellFactory<NamedImage>().apply(imageList, NamedImage.class);
 		new CellFactory<Diagram>().apply(diagramList, Diagram.class);
 		new CellFactory<Skin>().apply(skinList, Skin.class);
 		new CellFactory<Slot>().apply(slotList, Slot.class);
@@ -133,7 +127,7 @@ public class MainController extends BaseController implements Initializable {
 		diagramChoices.setConverter(new StringConverter<Diagram>() {
 			@Override
 			public String toString(Diagram object) {
-				return object.getImage();
+				return object.getImage().getName();
 			}
 
 			@Override
@@ -210,6 +204,7 @@ public class MainController extends BaseController implements Initializable {
 				});
 
 				diagramChoices.setItems(new SortedList<Diagram>(filteredDiagrams, NamedItem.Comparator));
+
 				controller.displaySkin(controller.viewState.getActiveSkin());
 			}
 		});
@@ -232,7 +227,7 @@ public class MainController extends BaseController implements Initializable {
 			Color c = controller.viewState.getPixelRGB((int)x, (int)y);
 			
 			d.templateColours.setColour(type, c);
-			d.refreshColours(controller.getSvg(d.getImage()));
+			d.refreshColours(d.getImage());
 			controller.onColourThemeChanged(d.templateColours);
 		} else if (button == MouseButton.SECONDARY) {
 			Point2D point = controller.getRenderer().getImageOffset(x, y);
@@ -248,7 +243,7 @@ public class MainController extends BaseController implements Initializable {
 			Diagram d = controller.viewState.getActiveDiagram();
 			ColourType type = controller.viewState.getActiveColourType();
 			d.templateColours.resetColour(type);
-			d.refreshColours(controller.getSvg(d.getImage()));
+			d.refreshColours(d.getImage());
 			controller.onColourThemeChanged(d.templateColours);
 		}
 	}
@@ -423,8 +418,8 @@ public class MainController extends BaseController implements Initializable {
 		}
 	}
 	
-	public void setImages(Collection<NamedSVG> images) {
-		ObservableList<NamedSVG> list = imageList.getItems();
+	public void setImages(Collection<NamedImage> images) {
+		ObservableList<NamedImage> list = imageList.getItems();
 		list.setAll(images);
 		list.sort(NamedItem.Comparator);
 	}
@@ -494,8 +489,13 @@ public class MainController extends BaseController implements Initializable {
 	}
 
 	public void onProgressStart(String description) {
-		labelProgress.setText(description);
-		progressPane.setVisible(true);
+		Platform.runLater(new Runnable() {
+			@Override
+			public void run() {
+				labelProgress.setText(description);
+				progressPane.setVisible(true);
+			}
+		});
 	}
 
 	public void onProgressComplete() {

@@ -193,7 +193,7 @@ public class DataLoader {
 		Runnable task = new Runnable() {
 			@Override
 			public void run() {
-				Map<String, String> params = new HashMap<String, String>();
+				Map<String, String> params = new HashMap<>();
 				params.put("diagramId", Integer.toString(diagram.id));
 				params.put("slotId", Integer.toString(diagram.getSlot().id));
 				params.put("name", diagram.name);
@@ -201,7 +201,7 @@ public class DataLoader {
 				params.put("y", Double.toString(diagram.y));
 				params.put("width", Double.toString(diagram.width));
 				params.put("height", Double.toString(diagram.height));
-				params.put("svg", diagram.getImage());
+				params.put("svg", diagram.getImage().getName());
 				String content = apiClient.post("/iconskeleton/setDiagram", params, true);
 				diagram.id = gson.fromJson(content, Integer.class);
 			}

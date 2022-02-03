@@ -8,14 +8,7 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 import com.fumbbl.iconcomposer.ColourTheme;
-import com.fumbbl.iconcomposer.model.types.Bone;
-import com.fumbbl.iconcomposer.model.types.Diagram;
-import com.fumbbl.iconcomposer.model.types.NamedSVG;
-import com.fumbbl.iconcomposer.model.types.Position;
-import com.fumbbl.iconcomposer.model.types.Ruleset;
-import com.fumbbl.iconcomposer.model.types.Skeleton;
-import com.fumbbl.iconcomposer.model.types.Skin;
-import com.fumbbl.iconcomposer.model.types.Slot;
+import com.fumbbl.iconcomposer.model.types.*;
 import com.google.gson.annotations.Expose;
 
 public class DataStore {
@@ -25,8 +18,8 @@ public class DataStore {
 	private Map<String,Diagram> diagrams;
 	@Expose
 	private Map<String,ColourTheme> colourThemes;
-	
-	private Map<String,NamedSVG> svgs;
+
+	private Map<String, NamedImage> images;
 	private Ruleset ruleset;
 	private Position position;
 	
@@ -39,7 +32,7 @@ public class DataStore {
 		skeletons = new LinkedList<Skeleton>();
 		diagrams = new HashMap<String,Diagram>();
 		colourThemes = new HashMap<String,ColourTheme>();
-		svgs = new HashMap<String,NamedSVG>();
+		images = new HashMap<String,NamedImage>();
 		skins = new HashMap<Integer,Skin>();
 		slots = new HashMap<Integer,Slot>();
 		bones = new HashMap<Integer,Bone>();
@@ -61,21 +54,21 @@ public class DataStore {
 	}
 
 	/*
-	 * SVG
+	 * Image
 	 */
-	
-	public void addSvg(NamedSVG svg) {
-		svgs.put(svg.name, svg);
-	}
-	
-	public Collection<NamedSVG> getSvgs() {
-		return svgs.values();
+
+	public void addImage(NamedImage image) {
+		images.put(image.getName(), image);
 	}
 
-	public NamedSVG getSvg(String name) {
-		return svgs.get(name);
+	public Collection<NamedImage> getImages() {
+		return images.values();
 	}
-	
+
+	public NamedItem getImage(String name) {
+		return images.get(name);
+	}
+
 	/*
 	 * Diagram
 	 */

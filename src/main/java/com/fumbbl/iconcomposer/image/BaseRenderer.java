@@ -1,4 +1,4 @@
-package com.fumbbl.iconcomposer.svg;
+package com.fumbbl.iconcomposer.image;
 
 import java.awt.*;
 import java.awt.geom.AffineTransform;
@@ -9,28 +9,28 @@ import java.util.stream.Collectors;
 import com.fumbbl.iconcomposer.ColourTheme;
 import com.fumbbl.iconcomposer.controllers.Controller;
 import com.fumbbl.iconcomposer.model.Model;
-import com.fumbbl.iconcomposer.model.types.Bone;
-import com.fumbbl.iconcomposer.model.types.Diagram;
-import com.fumbbl.iconcomposer.model.types.Skeleton;
-import com.fumbbl.iconcomposer.model.types.Skin;
-import com.fumbbl.iconcomposer.model.types.Slot;
+import com.fumbbl.iconcomposer.model.types.*;
 import com.kitfox.svg.SVGDiagram;
 import com.kitfox.svg.SVGException;
 
 import javafx.geometry.Point2D;
 
-public class SVGRenderer {
-	private int width = 480;
-	private int height = 480;
+public class BaseRenderer {
+	protected int width = 480;
+	protected int height = 480;
 	private Model model;
-	private Controller controller;
-	private double imageScale;
-	private Color renderBackground = new Color(148,158,148);
+	protected Controller controller;
+	protected double imageScale;
+	protected Color renderBackground = new Color(148,158,148);
 	private Color gridColor = new Color(160,89,179);
+	private SvgRenderer svgRenderer;
+	private ImageRenderer imageRenderer;
 	
-	public SVGRenderer(Model model, Controller controller) {
+	public BaseRenderer(Model model, Controller controller) {
 		this.model = model;
 		this.controller = controller;
+		svgRenderer = new SvgRenderer(this);
+		imageRenderer = new ImageRenderer(this);
 	}
 
 	public double getImageScale() {
@@ -45,7 +45,7 @@ public class SVGRenderer {
 		g2.setColor(renderBackground);
 		g2.fillRect(0, 0, width, height);
 		
-		g2.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BICUBIC);
+		g2.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_NEAREST_NEIGHBOR);
 		g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 
 		try {
@@ -66,12 +66,18 @@ public class SVGRenderer {
 		g2.setStroke(new BasicStroke(1, BasicStroke.CAP_BUTT, BasicStroke.JOIN_MITER, 1f, new float[] {5,3}, 0f));
 		g2.drawLine(this.width / 2, 0, this.width / 2, this.height);
 		g2.drawLine(0, this.height / 2, this.width, this.height / 2);
-		
+
+		g2.drawLine(this.width / 2 - 1, 0, this.width / 2 - 1, this.height);
+		g2.drawLine(0, this.height / 2 - 1, this.width, this.height / 2 - 1);
+
 		g2.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BICUBIC);
 		g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 
+		//g2.translate(-diagram.width/2, -diagram.height/2);
+		applyPixelTransform(diagram, g2);
+
 		try {
-			diagram.resetColour(controller.getSvg(diagram.getImage()));
+			diagram.resetColour(controller.getSvg(diagram.getImage().getName()));
 			controller.onColourThemeChanged(diagram.getTheme());
 			renderDiagram(g2, diagram);
 		} catch (SVGException e) {
@@ -79,38 +85,14 @@ public class SVGRenderer {
 			e.printStackTrace();
 		}
 	}
-	
-	public void renderSvg(SVGDiagram svg) {
-		Graphics2D g2 = controller.viewState.getGraphics2D();
-		g2.setColor(renderBackground);
-		g2.fillRect(0, 0, width, height);
 
-		g2.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BICUBIC);
-		g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-
-		try {
-			renderSvg(g2, svg);
-		} catch (SVGException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
+	private void applyPixelTransform(Diagram diagram, Graphics2D g2) {
+		g2.scale(8.0, 8.0);
+		double xFix = diagram.width % 2 == 0 ? 0.0 : 0.5;
+		double yFix = diagram.height % 2 == 0 ? 0.0 : 0.5;
+		g2.translate(30- diagram.width/2 - xFix,30- diagram.height/2 - yFix);
 	}
 
-	public void renderPng(BufferedImage image) {
-		Graphics2D g2 = controller.viewState.getGraphics2D();
-		g2.setColor(renderBackground);
-		g2.fillRect(0, 0, width, height);
-
-		g2.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BICUBIC);
-		g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-
-		try {
-			renderPng(g2, image);
-		} catch (SVGException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-	}
 	public void renderSkeleton(Skeleton skeleton, String currentBone) {
 		Graphics2D g2 = controller.viewState.getGraphics2D();
 		g2.setColor(renderBackground);
@@ -122,16 +104,22 @@ public class SVGRenderer {
 		if (skeleton == null) {
 			return;
 		}
-		
+
+		double scale = 8;
+
+		if (skeleton.width != 0) {
+			scale = 8;
+		}
+
 		skeleton.updateTransforms();
 		for (Bone b : skeleton.getBones()) {
-			int cx = (int) (this.width/2 + b.worldX/2);
-			int cy = (int) (this.height - b.worldY/2);
+			int cx = (int) (this.width/2 + scale*b.worldX/2);
+			int cy = (int) (this.height/2 - scale*b.worldY/2);
 
 			if (b.parentBone != null) {
 				Bone parent = b.parentBone;
-				int px = (int) (this.width/2 + parent.worldX/2);
-				int py = (int) (this.height - parent.worldY/2);
+				int px = (int) (this.width/2 + scale*parent.worldX/2);
+				int py = (int) (this.height/2 - scale*parent.worldY/2);
 				
 				g2.setColor(gridColor);
 				g2.setStroke(new BasicStroke(1, BasicStroke.CAP_SQUARE, BasicStroke.JOIN_ROUND, 1f, new float[] {1, 4}, 0));
@@ -163,19 +151,28 @@ public class SVGRenderer {
 		int cy = (int) (240.0 + y*imageScale);
 		
 		g2.setColor(Color.black);
-		g2.setStroke(new BasicStroke(5));
-		g2.drawLine(cx-10, cy, cx+10, cy);
-		g2.drawLine(cx, cy-10, cx, cy+10);
+		g2.setStroke(new BasicStroke(3));
+		g2.drawLine(cx-8, cy-8, cx+8, cy+8);
+		g2.drawLine(cx+8, cy-8, cx-8, cy+8);
 		
 		g2.setColor(Color.pink);
-		g2.setStroke(new BasicStroke(3));
-		g2.drawLine(cx-10, cy, cx+10, cy);
-		g2.drawLine(cx, cy-10, cx, cy+10);
+		g2.setStroke(new BasicStroke(1));
+		g2.drawLine(cx-8, cy-8, cx+8, cy+8);
+		g2.drawLine(cx+8, cy-8, cx-8, cy+8);
+
+		g2.drawLine(cx-9, cy-8, cx+7, cy+8);
+		g2.drawLine(cx+7, cy-8, cx-9, cy+8);
+
+		g2.drawLine(cx-8, cy-9, cx+8, cy+7);
+		g2.drawLine(cx+8, cy-9, cx-8, cy+7);
+
+		g2.drawLine(cx-9, cy-9, cx+7, cy+7);
+		g2.drawLine(cx+7, cy-9, cx-9, cy+7);
 	}
 	
 	public Point2D getImageOffset(double x, double y) {
-		double oX = -(x - 240) / imageScale;
-		double oY = (y - 240) / imageScale;
+		double oX = Math.round(-(x - 240) / imageScale);
+		double oY = Math.round((y - 240) / imageScale);
 		
 		return new Point2D(oX, oY);
 	}
@@ -190,7 +187,7 @@ public class SVGRenderer {
 			Diagram diagram = skin.getDiagram(slot);
 
 			if (diagram != null) {
-				diagram.setColour(controller.getSvg(diagram.getImage()), theme);
+				diagram.setColour(controller.getSvg(diagram.getImage().getName()), theme);
 				g2.translate(x, y);
 				renderDiagram(g2, diagram, skin.skeleton, slot, size);
 			}
@@ -201,59 +198,34 @@ public class SVGRenderer {
 	}
 
 	private void renderDiagram(Graphics2D g2, Diagram diagram, Skeleton skeleton, Slot slot, double size) throws SVGException {
-		AffineTransform at = g2.getTransform();
-		double scale = size / 960.0;
-		g2.translate(width/2 - size/2, height/2 - size/2);
-		g2.scale(scale, scale);
-		
-		skeleton.getTransform(slot.getBone().name, diagram);
+		if (diagram != null) {
+			AffineTransform at = g2.getTransform();
 
-		SVGDiagram d = controller.getSvg(diagram.getImage());
-		
-		if (d != null) {
-			g2.translate(diagram.worldX + 480, 960-diagram.worldY);
-			g2.scale(diagram.width / d.getWidth(), diagram.height / d.getHeight());
-			d.render(g2);
+			skeleton.getTransform(slot.getBone().name, diagram);
+
+			applyPixelTransform(diagram, g2);
+			g2.translate(-diagram.worldX, -diagram.worldY);
+
+			renderDiagram(g2, diagram);
 			g2.setTransform(at);
 		}
 	}
 	
 	private void renderDiagram(Graphics2D g2, Diagram diagram) throws SVGException {
-		AffineTransform at = g2.getTransform();
-		SVGDiagram d = controller.getSvg(diagram.getImage());
-		if (d == null) {
-			return;
+		NamedImage image = diagram.getImage();
+
+		if (image instanceof NamedSVG) {
+			svgRenderer.renderSvg(((NamedSVG) image).diagram);
+		} else if (image instanceof NamedPng) {
+			imageRenderer.renderImage(g2, ((NamedPng)image).image);
 		}
-		Rectangle2D.Double viewBox = SVGUtil.getViewbox(d);
-
-		double dw = viewBox.width;
-		double dh = viewBox.height;
-		
-		imageScale = Math.min(this.width / dw, this.height / dh);
-		g2.translate((this.width - dw*imageScale)/2.0, (this.height - dh*imageScale)/2.0);
-		g2.scale(imageScale * dw / d.getWidth(), imageScale * dh / d.getHeight());
-		d.render(g2);
-		g2.setTransform(at);
-	}
-	
-	private void renderSvg(Graphics2D g2, SVGDiagram diagram) throws SVGException {
-		AffineTransform at = g2.getTransform();
-		String viewBox = diagram.getRoot().getPresAbsolute("viewBox").getStringValue();
-		String[] list = viewBox.split(" ");
-
-		double dw = Double.parseDouble(list[2]);
-		double dh = Double.parseDouble(list[3]);
-		
-		imageScale = Math.min(this.width / dw, this.height / dh);
-		g2.translate((this.width - dw*imageScale)/2.0, (this.height - dh*imageScale)/2.0);
-		g2.scale(imageScale * dw / diagram.getWidth(), imageScale * dh / diagram.getHeight());
-		diagram.render(g2);
-		g2.setTransform(at);
 	}
 
-	private void renderPng(Graphics2D g2, BufferedImage image) throws SVGException {
-		AffineTransform at = g2.getTransform();
-		g2.drawImage(image, 0, 0, null);
-		g2.setTransform(at);
+	public void render(NamedItem image) {
+		if (image instanceof NamedSVG) {
+			svgRenderer.renderSvg(((NamedSVG)image).diagram);
+		} else if (image instanceof NamedPng) {
+			imageRenderer.renderImage(((NamedPng)image).image);
+		}
 	}
 }

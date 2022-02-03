@@ -36,6 +36,7 @@ public class SpineImporter {
 		skeleton = new Skeleton();
 		skeleton.setName("Imported");
 
+		processSkeleton(data, skeleton);
 		processBones(data, skeleton);
 		processSlots(data, skeleton);
 		processSkins(data, skeleton);
@@ -60,7 +61,12 @@ public class SpineImporter {
 	public Collection<Skin> getSkins() {
 		return skinMap.values();
 	}
-	
+
+	private void processSkeleton(DtoSpine data, Skeleton skeleton) {
+		skeleton.width = data.skeleton.width;
+		skeleton.height = data.skeleton.height;
+	}
+
 	private void processSlots(DtoSpine data, Skeleton skeleton) {
 		data.slots.forEach(s -> slotMap.put(s.name, s.toSlot()));
 		

@@ -1,5 +1,6 @@
 package com.fumbbl.iconcomposer.model;
 
+import java.awt.image.BufferedImage;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.file.FileSystems;
@@ -25,19 +26,13 @@ import com.fumbbl.iconcomposer.dto.fumbbl.DtoRuleset;
 import com.fumbbl.iconcomposer.dto.fumbbl.DtoSkeleton;
 import com.fumbbl.iconcomposer.dto.fumbbl.DtoSkin;
 import com.fumbbl.iconcomposer.dto.fumbbl.DtoSlot;
-import com.fumbbl.iconcomposer.model.types.Bone;
-import com.fumbbl.iconcomposer.model.types.Diagram;
-import com.fumbbl.iconcomposer.model.types.NamedItem;
-import com.fumbbl.iconcomposer.model.types.NamedSVG;
-import com.fumbbl.iconcomposer.model.types.Position;
-import com.fumbbl.iconcomposer.model.types.Ruleset;
-import com.fumbbl.iconcomposer.model.types.Skeleton;
-import com.fumbbl.iconcomposer.model.types.Skin;
-import com.fumbbl.iconcomposer.model.types.Slot;
-import com.fumbbl.iconcomposer.svg.SVGLoader;
+import com.fumbbl.iconcomposer.model.types.*;
+import com.fumbbl.iconcomposer.image.SVGLoader;
 import com.kitfox.svg.SVGDiagram;
 
 import javafx.application.Platform;
+
+import javax.imageio.ImageIO;
 
 public class Model {
 	private DataStore dataStore;
@@ -59,17 +54,30 @@ public class Model {
 		return cfg;
 	}
 
+	private Runnable importPng(Path path) throws FileNotFoundException, IOException {
+		String fileId = stripExtension(path.getFileName());
+
+		BufferedImage image = ImageIO.read(path.toFile());
+
+		dataStore.addImage(new NamedPng(fileId, image));
+		return new Runnable() {
+			@Override
+			public void run() {
+				controller.onImagesChanged(dataStore.getImages());
+			}
+		};
+	}
 	private Runnable importSvg(Path path) throws FileNotFoundException, IOException {
 		String fileId = stripExtension(path.getFileName());
 
 		SVGDiagram svg = svgLoader.loadSVG(path);
 		
-		dataStore.addSvg(new NamedSVG(fileId, svg));
+		dataStore.addImage(new NamedSVG(fileId, svg));
 		return new Runnable() {
 
 			@Override
 			public void run() {
-				controller.onImagesChanged(dataStore.getSvgs());
+				controller.onImagesChanged(dataStore.getImages());
 			}
 		};
 	}
@@ -181,9 +189,9 @@ public class Model {
 		return slots.values();
 	}
 
-	public void addDiagram(NamedSVG svg) {
-		Diagram d = new Diagram(svg);
-		dataStore.addDiagram(svg.name, d);
+	public void addDiagram(NamedImage image) {
+		Diagram d = new Diagram(image);
+		dataStore.addDiagram(image.getName(), d);
 		controller.onDiagramsChanged(dataStore.getDiagrams());
 	}
 	
@@ -250,6 +258,7 @@ public class Model {
 					Path p = Paths.get(path);
 					PathMatcher jsonMatcher = FileSystems.getDefault().getPathMatcher("glob:**.json");
 					PathMatcher svgMatcher = FileSystems.getDefault().getPathMatcher("glob:**.svg");
+					PathMatcher pngMatcher = FileSystems.getDefault().getPathMatcher("glob:**.png");
 
 					if (!Files.isReadable(p)) {
 						return;
@@ -268,26 +277,26 @@ public class Model {
 
 							Position pos = dataStore.getPosition();
 							Skeleton skeleton = importer.getSkeleton();
-							
+
 							dataStore.addSkeleton(skeleton);
 							dataStore.setSlots(skeleton.getSlots());
 							dataStore.setBones(skeleton.getBones());
-							
+
 							controller.startBatch();
 							dataLoader.saveSkeleton(pos, skeleton);
 							dataLoader.saveBones(skeleton);
 							dataLoader.saveSlots(skeleton);
-							
+
 							Collection<Diagram> diagrams = importer.getDiagrams();
 							dataStore.setDiagrams(diagrams);
 							diagrams.forEach(d -> dataLoader.saveDiagram(d));
-							
+
 							Collection<Skin> skins = importer.getSkins();
 							dataStore.setSkins(skins);
 							skins.forEach(s -> dataLoader.saveSkin(pos, s));
 
 							controller.runBatch();
-							
+
 							delayedTasks.add(new Runnable() {
 								@Override
 								public void run() {
@@ -299,6 +308,8 @@ public class Model {
 									controller.onSkinsChanged(skins);
 								}
 							});
+						} else if (pngMatcher.matches(p)) {
+							delayedTasks.add(importPng(p));
 						} else if (svgMatcher.matches(p)) {
 							delayedTasks.add(importSvg(p));
 						}
@@ -327,9 +338,9 @@ public class Model {
 	}
 
 	public SVGDiagram getSvg(String svgName) {
-		NamedSVG svg = dataStore.getSvg(svgName);
-		if (svg != null) {
-			return svg.diagram;
+		NamedItem image = dataStore.getImage(svgName);
+		if (image != null && image instanceof NamedSVG) {
+			return ((NamedSVG)image).diagram;
 		}
 		return null;
 	}
@@ -375,7 +386,7 @@ public class Model {
 			dataLoader.saveSkeleton(dataStore.getPosition(), (Skeleton)item);
 			controller.onSkeletonsChanged(dataStore.getSkeletons());
 		} else if (item instanceof NamedSVG) {
-			controller.onImagesChanged(dataStore.getSvgs());
+			controller.onImagesChanged(dataStore.getImages());
 		}
 	}
 }

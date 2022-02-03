@@ -1,4 +1,4 @@
-package com.fumbbl.iconcomposer.svg;
+package com.fumbbl.iconcomposer.image;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;

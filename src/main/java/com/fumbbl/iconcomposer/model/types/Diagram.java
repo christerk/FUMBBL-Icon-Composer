@@ -4,7 +4,7 @@ import java.awt.geom.Rectangle2D;
 
 import com.fumbbl.iconcomposer.ColourTheme;
 import com.fumbbl.iconcomposer.ColourTheme.ColourType;
-import com.fumbbl.iconcomposer.svg.SVGUtil;
+import com.fumbbl.iconcomposer.image.SVGUtil;
 import com.kitfox.svg.SVGDiagram;
 import com.kitfox.svg.SVGElement;
 import com.kitfox.svg.SVGElementException;
@@ -21,7 +21,7 @@ public class Diagram extends NamedItem {
 	public double rotation = 0;
 	public double width;
 	public double height;
-	public String svg;
+	public NamedImage image;
 	
 	private Slot slot;
 	public ColourTheme templateColours;
@@ -47,30 +47,36 @@ public class Diagram extends NamedItem {
 	public Diagram() {
 	}
 	
-	public Diagram(NamedSVG svg) {
-		this(svg.name, new ColourTheme("template"));
-		
-		Rectangle2D.Double viewbox = SVGUtil.getViewbox(svg.diagram);
-		this.width = viewbox.width;
-		this.height = viewbox.height;
+	public Diagram(NamedImage image) {
+		this(image, new ColourTheme("template"));
+
+		if (image instanceof NamedSVG) {
+			Rectangle2D.Double viewbox = SVGUtil.getViewbox(((NamedSVG)image).diagram);
+			this.width = viewbox.width;
+			this.height = viewbox.height;
+		} else {
+			this.width = ((NamedPng)image).image.getWidth();
+			this.height = ((NamedPng)image).image.getHeight();
+		}
 	}
 	
-	public Diagram(String svgName, ColourTheme template) {
-		this.svg = svgName;
+	public Diagram(NamedImage image, ColourTheme template) {
+		this.image = image;
 		this.templateColours = template;
 	}
 
-	public String getImage() {
-		return svg;
+	public NamedImage getImage() {
+		return image;
 	}
 	
 	public ColourTheme getTheme() {
 		return templateColours;
 	}
 	
-	public void refreshColours(SVGDiagram svgDiagram) {
+	public void refreshColours(NamedImage image) {
 		try {
-			tagColours(svgDiagram);
+			if (image instanceof NamedSVG)
+			tagColours(((NamedSVG)image).diagram);
 		} catch (SVGElementException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -197,8 +203,8 @@ public class Diagram extends NamedItem {
 		bottomRightX = localX2Cos - localYSin;
 		bottomRightY = localYCos + localX2Sin;
 		
-		double oX = topLeftX;
-		double oY = topLeftY;
+		double oX = (topLeftX + topRightX) / 2;
+		double oY = (topLeftY + bottomLeftY) / 2;
 		
 		worldX = oX * bone.a + oY * bone.b + bone.worldX;
 		worldY = oX * bone.c + oY * bone.d + bone.worldY;
@@ -206,11 +212,13 @@ public class Diagram extends NamedItem {
 	
 	@Override
 	public String getName() {
-		return this.svg;
+		return this.image.getName();
 	}
 	
 	@Override
 	public void setName(String newName) {
-		this.svg = newName;
+		if (this.image != null) {
+			this.image.setName(newName);
+		}
 	}
 }
