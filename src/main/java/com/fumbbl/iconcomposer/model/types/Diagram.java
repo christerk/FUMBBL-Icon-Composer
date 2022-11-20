@@ -5,6 +5,7 @@ import java.awt.geom.Rectangle2D;
 import com.fumbbl.iconcomposer.ColourTheme;
 import com.fumbbl.iconcomposer.ColourTheme.ColourType;
 import com.fumbbl.iconcomposer.image.SVGUtil;
+import com.fumbbl.iconcomposer.model.Perspective;
 import com.kitfox.svg.SVGDiagram;
 import com.kitfox.svg.SVGElement;
 import com.kitfox.svg.SVGElementException;
@@ -22,8 +23,9 @@ public class Diagram extends NamedItem {
 	public double width;
 	public double height;
 	public NamedImage image;
-	
-	private Slot slot;
+    public Perspective perspective;
+
+    private Slot slot;
 	public ColourTheme templateColours;
 
 	// Render coordinates
@@ -212,13 +214,11 @@ public class Diagram extends NamedItem {
 	
 	@Override
 	public String getName() {
-		return this.image.getName();
+		return this.name;
 	}
 	
 	@Override
 	public void setName(String newName) {
-		if (this.image != null) {
-			this.image.setName(newName);
-		}
+		this.name = newName;
 	}
 }

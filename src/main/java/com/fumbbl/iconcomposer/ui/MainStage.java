@@ -13,7 +13,7 @@ public class MainStage extends BaseStage {
 	public MainStage() throws IOException {
 		super("FUMBBL Icon Composer");
 		setFxml("/ui/Main.fxml");
-		
+
 		scene.setOnDragOver(new EventHandler<DragEvent>() {
 			@Override
 			public void handle(DragEvent event) {

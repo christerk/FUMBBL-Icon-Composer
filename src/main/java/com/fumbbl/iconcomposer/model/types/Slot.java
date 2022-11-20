@@ -81,7 +81,7 @@ public class Slot extends NamedItem {
 	}
 	
 	@Override
-	public final int hashCode() {
+	public int hashCode() {
 		return this.id + (name != null ? name.hashCode() : 0);
 	}
 }

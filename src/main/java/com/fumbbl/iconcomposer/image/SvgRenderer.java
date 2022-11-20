@@ -16,19 +16,19 @@ public class SvgRenderer {
     }
 
     public void renderSvg(SVGDiagram svg) {
-        Graphics2D g2 = renderer.controller.viewState.getGraphics2D();
-        g2.setColor(renderer.renderBackground);
-        g2.fillRect(0, 0, renderer.width, renderer.height);
-
-        g2.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BICUBIC);
-        g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-
-        try {
-            renderSvg(g2, svg);
-        } catch (SVGException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
-        }
+//        Graphics2D g2 = renderer.controller.viewState.getGraphics2D();
+//        g2.setColor(renderer.renderBackground);
+//        g2.fillRect(0, 0, renderer.width, renderer.height);
+//
+//        g2.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BICUBIC);
+//        g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+//
+//        try {
+//            renderSvg(g2, svg);
+//        } catch (SVGException e) {
+//            // TODO Auto-generated catch block
+//            e.printStackTrace();
+//        }
     }
 
     private void renderSvg(Graphics2D g2, SVGDiagram diagram) throws SVGException {

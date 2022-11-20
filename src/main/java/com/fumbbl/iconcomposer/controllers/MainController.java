@@ -8,10 +8,13 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.ResourceBundle;
+import java.util.stream.Collectors;
 
 import com.fumbbl.iconcomposer.ColourTheme;
 import com.fumbbl.iconcomposer.ColourTheme.ColourType;
+import com.fumbbl.iconcomposer.model.Perspective;
 import com.fumbbl.iconcomposer.model.types.*;
+import com.fumbbl.iconcomposer.model.types.Skin;
 import com.fumbbl.iconcomposer.ui.StageType;
 
 import javafx.application.Platform;
@@ -24,15 +27,7 @@ import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.fxml.Initializable;
 import javafx.geometry.Point2D;
-import javafx.scene.control.ChoiceBox;
-import javafx.scene.control.Label;
-import javafx.scene.control.ListView;
-import javafx.scene.control.Menu;
-import javafx.scene.control.MenuItem;
-import javafx.scene.control.ProgressBar;
-import javafx.scene.control.TextField;
-import javafx.scene.control.TitledPane;
-import javafx.scene.control.TreeItem;
+import javafx.scene.control.*;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.image.WritableImage;
@@ -44,9 +39,21 @@ import javafx.scene.layout.HBox;
 import javafx.util.StringConverter;
 
 public class MainController extends BaseController implements Initializable {
-	public ImageView imageView;
+	public ImageView frontDiagram;
+	public ImageView sideDiagram;
+
+	public ImageView frontSkeleton;
+	public ImageView sideSkeleton;
+
+	public ImageView preview;
+
 	public Image image;
-	
+
+	public TabPane tabs;
+	public Tab skeletonTab;
+	public Tab diagramTab;
+	public Tab previewTab;
+
 	public ImageView primaryLo;
 	public ImageView primaryMid;
 	public ImageView primaryHi;
@@ -61,8 +68,10 @@ public class MainController extends BaseController implements Initializable {
 	public ImageView skinHi;
 	public GridPane colourPane;
 	public ChoiceBox<Slot> slotChoices;
-	public TextField diagramX;
-	public TextField diagramY;
+	public TextField frontDiagramX;
+	public TextField frontDiagramY;
+	public TextField sideDiagramX;
+	public TextField sideDiagramY;
 	public Label apiStatus;
 	public ListView<Position> positionList;
 
@@ -72,23 +81,21 @@ public class MainController extends BaseController implements Initializable {
 	
 	public ListView<Skeleton> skeletonList;
 	public ListView<NamedImage> imageList;
-	public ListView<Diagram> diagramList;
-	public ListView<Skin> skinList;
+	public ListView<VirtualDiagram> diagramList;
 	public ListView<Slot> slotList;
 	
 	public TitledPane positionPane;
 	public TitledPane skeletonPane;
 	public TitledPane imagePane;
 	public TitledPane diagramPane;
-	public TitledPane skinPane;
 	public TitledPane slotPane;
 	
 	public FlowPane diagramChoicePane;
-	public ChoiceBox<Diagram> diagramChoices;
+	public ChoiceBox<VirtualDiagram> diagramChoices;
 	
 	public Menu menuColourThemes;
-	
-	private ObservableList<Diagram> masterDiagrams;
+
+	private ObservableList<VirtualDiagram> masterDiagrams;
 	
 	public MainController() {
 		masterDiagrams = FXCollections.observableArrayList();
@@ -99,17 +106,15 @@ public class MainController extends BaseController implements Initializable {
 		colourPane.setVisible(false);
 		diagramChoicePane.setVisible(false);
 		
-		new CellFactory<Position>().apply(positionList, Position.class);
-		new CellFactory<Skeleton>().apply(skeletonList, Skeleton.class);
-		new CellFactory<NamedImage>().apply(imageList, NamedImage.class);
-		new CellFactory<Diagram>().apply(diagramList, Diagram.class);
-		new CellFactory<Skin>().apply(skinList, Skin.class);
-		new CellFactory<Slot>().apply(slotList, Slot.class);
+		new CellFactory<Position>().apply(positionList, Position.class, this);
+		new CellFactory<Skeleton>().apply(skeletonList, Skeleton.class, this);
+		new CellFactory<NamedImage>().apply(imageList, NamedImage.class, this);
+		new CellFactory<VirtualDiagram>().apply(diagramList, VirtualDiagram.class, this);
+		new CellFactory<Slot>().apply(slotList, Slot.class, this);
 		
 		skeletonList.setEditable(true);
 		imageList.setEditable(true);
 		diagramList.setEditable(true);
-		skinList.setEditable(true);
 		slotList.setEditable(true);
 		
 		slotChoices.setConverter(new StringConverter<Slot>() {
@@ -124,37 +129,35 @@ public class MainController extends BaseController implements Initializable {
 			}
 		});
 
-		diagramChoices.setConverter(new StringConverter<Diagram>() {
+		diagramChoices.setConverter(new StringConverter<VirtualDiagram>() {
 			@Override
-			public String toString(Diagram object) {
-				return object.getImage().getName();
+			public String toString(VirtualDiagram object) {
+				return object.getName();
 			}
 
 			@Override
-			public Diagram fromString(String string) {
+			public VirtualDiagram fromString(String string) {
 				return null;
 			}
 		});
 		
 		diagramChoices.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> {
 			Slot slot = slotList.getSelectionModel().getSelectedItem();
-			Skin skin = controller.viewState.getActiveSkin();
-
-			if (slot != null && skin != null) {
-				controller.setSkinDiagram(skin, slot, newValue);
-				controller.displaySkin(controller.viewState.getActiveSkin());
-			}
 		});
 
 		slotChoices.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> {
-			Diagram d = controller.viewState.getActiveDiagram();
+			Diagram d = controller.viewState.getActiveDiagram(Perspective.Front);
 			d.setSlot(newValue);
+
+			d = controller.viewState.getActiveDiagram(Perspective.Side);
+			if (d != null) {
+				d.setSlot(newValue);
+			}
 		});
 		
 		positionList.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> {
 			if (newValue != null) {
 				diagramList.getItems().clear();
-				skinList.getItems().clear();
 				slotList.getItems().clear();
 				skeletonList.getItems().clear();
 				skeletonPane.setText("Skeletons");
@@ -169,62 +172,57 @@ public class MainController extends BaseController implements Initializable {
 
 		skeletonList.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> {
 			if (newValue != null) {
-				setSkeleton(newValue);
-				controller.loadDiagrams(newValue.id);
+				//setSkeleton(newValue);
+				//controller.loadDiagrams(Perspective.Front, newValue.id);
+				//controller.loadDiagrams(Perspective.Side, newValue.id);
 			} else {
-				skeletonPane.setText("Skeletons");
-				controller.setSkeleton(null);
+				//skeletonPane.setText("Skeletons");
+				//controller.setSkeleton(null);
 			}
 		});
 
 		imageList.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> {
 			if (newValue != null) {
-				controller.displayImage(newValue);
+				controller.displayImage(Perspective.Front, newValue);
 			}
 		});
 
 		diagramList.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> {
 			if (newValue != null) {
-				controller.displayDiagram(newValue);
-			}
-		});
-
-		skinList.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> {
-			if (newValue != null) {
-				controller.displaySkin(newValue);
+				controller.displayDiagrams(newValue.getName());
+				tabs.getSelectionModel().select(diagramTab);
 			}
 		});
 
 		slotList.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> {
 			if (newValue != null) {
-				showDiagramPane();
-				
-				FilteredList<Diagram> filteredDiagrams = new FilteredList<Diagram>(masterDiagrams, diagram -> {
-					return newValue.equals(diagram.getSlot());
-				});
-
-				diagramChoices.setItems(new SortedList<Diagram>(filteredDiagrams, NamedItem.Comparator));
-
-				controller.displaySkin(controller.viewState.getActiveSkin());
 			}
 		});
 		
 	}
-	
+
 	/*
 	 *    Control Event Handlers
 	 */
-	
-	public void imageClicked(MouseEvent e) {
+
+	public void frontImageClicked(MouseEvent e) {
+		imageClicked(Perspective.Front, e);
+	}
+
+	public void sideImageClicked(MouseEvent e) {
+		imageClicked(Perspective.Side, e);
+	}
+
+	public void imageClicked(Perspective perspective, MouseEvent e) {
 		double x = e.getX();
 		double y = e.getY();
 		MouseButton button = e.getButton();
 
-		Diagram d = controller.viewState.getActiveDiagram();
+		Diagram d = controller.viewState.getActiveDiagram(perspective);
 		ColourType type = controller.viewState.getActiveColourType();
 		
 		if (button == MouseButton.PRIMARY && controller != null && type != null) {
-			Color c = controller.viewState.getPixelRGB((int)x, (int)y);
+			Color c = controller.viewState.getPixelRGB(Perspective.Front, (int)x, (int)y);
 			
 			d.templateColours.setColour(type, c);
 			d.refreshColours(d.getImage());
@@ -233,21 +231,21 @@ public class MainController extends BaseController implements Initializable {
 			Point2D point = controller.getRenderer().getImageOffset(x, y);
 			d.x = point.getX();
 			d.y = point.getY();
-			controller.displayDiagram();
+			controller.displayDiagram(d);
 		}
 	}
 
 	public void activateColour(MouseEvent e) {
 		controller.viewState.setActiveColourType(ColourType.fromString(((ImageView)e.getSource()).getId()));
 		if (e.getButton() == MouseButton.SECONDARY) {
-			Diagram d = controller.viewState.getActiveDiagram();
+			Diagram d = controller.viewState.getActiveDiagram(Perspective.Front);
 			ColourType type = controller.viewState.getActiveColourType();
 			d.templateColours.resetColour(type);
 			d.refreshColours(d.getImage());
 			controller.onColourThemeChanged(d.templateColours);
 		}
 	}
-	
+
 	public void quit() {
 		controller.shutdown();
 	}
@@ -268,32 +266,22 @@ public class MainController extends BaseController implements Initializable {
 		controller.getStageManager().show(StageType.about);
 	}
 	
-	public void deleteSkeleton() {
-		controller.deleteSkeleton(controller.viewState.getActiveSkeleton());
-	}
-	
-	public void createSkin() {
-		controller.createSkin(controller.viewState.getActiveSkeleton());
-	}
-	
 	/*
 	 *   Update Methods
 	 */
 	
-	public void setSkeleton(Skeleton newValue) {
+	public void setSkeleton(Perspective perspective, Skeleton newValue) {
 		if (newValue == null) {
 			skeletonPane.setText("Skeletons");
-			controller.setSkeleton(null);
+			controller.setSkeleton(perspective,null);
 			controller.displayBones(null);
 			setSlots(null);
 			setBones(null);
 			setDiagrams(null);
-			setSkins(null);
 			return;
 			
 		}
-		skeletonPane.setText("Skeletons - " + newValue.name);
-		
+
 		Collection<Bone> bones = null;
 		Collection<Slot> slots = null;
 		
@@ -305,14 +293,14 @@ public class MainController extends BaseController implements Initializable {
 			slots = newValue.getSlots();
 		}
 
-		controller.setSkeleton(newValue);
-		controller.setBones(bones);
-		controller.setSlots(slots);
+		controller.setSkeleton(perspective, newValue);
+		controller.setBones(perspective, bones);
+		controller.setSlots(perspective, slots);
 		
 		setBones(bones);
 		setSlots(slots);
 		
-		controller.loadDiagrams(newValue.id);
+		controller.loadDiagrams(perspective, newValue);
 		
 		controller.displayBones(null);
 	}
@@ -370,16 +358,33 @@ public class MainController extends BaseController implements Initializable {
 		diagramChoicePane.setVisible(false);
 	}
 
-	public void setSlotInfo(Slot slot, double x, double y) {
+	public void setSlotInfo(Perspective perspective, Slot slot, double x, double y) {
 		slotChoices.setValue(slot);
-		diagramX.setText(Double.toString(x));
-		diagramY.setText(Double.toString(y));
+
+		(perspective==Perspective.Front ? frontDiagramX : sideDiagramX).setText(Integer.toString((int)x));
+		(perspective==Perspective.Front ? frontDiagramY : sideDiagramY).setText(Integer.toString((int)y));
 	}
 
-	public void setImage(WritableImage image) {
-		imageView.setImage(image);
+	public void setFrontDiagramImage(WritableImage image) {
+		frontDiagram.setImage(image);
 	}
-	
+
+	public void setSideDiagramImage(WritableImage image) {
+		sideDiagram.setImage(image);
+	}
+
+	public void setFrontSkeletonImage(WritableImage image) {
+		frontSkeleton.setImage(image);
+	}
+
+	public void setSideSkeletonImage(WritableImage image) {
+		sideSkeleton.setImage(image);
+	}
+
+	public void setPreviewImage(WritableImage image) {
+		preview.setImage(image);
+	}
+
 	public void setColourThemes(Collection<ColourTheme> themes) {
 		ObservableList<MenuItem> menuItems = menuColourThemes.getItems();
 		EventHandler<ActionEvent> action = new EventHandler<ActionEvent>() {
@@ -387,7 +392,6 @@ public class MainController extends BaseController implements Initializable {
 			public void handle(ActionEvent event) {
 				String theme = ((MenuItem) event.getSource()).getText();
 				controller.setColourTheme(theme);
-				controller.displaySkin(controller.viewState.getActiveSkin());
 			}
 		};
 		for (ColourTheme s : themes) {
@@ -397,24 +401,14 @@ public class MainController extends BaseController implements Initializable {
 		}
 	}
 	
-	public void setSkins(Collection<Skin> skins) {
-		ObservableList<Skin> children = this.skinList.getItems();
-		
-		if (skins == null) {
-			children.clear();
-			return;
-		}
-		
-		children.setAll(skins);
-		children.sort(NamedItem.Comparator);
-	}
-	
 	public void setSkeletons(Collection<Skeleton> skeletons) {
 		ObservableList<Skeleton> items = skeletonList.getItems();
-		Skeleton currentSkeleton = controller.viewState.getActiveSkeleton();
+
 		items.setAll(skeletons);
-		if (currentSkeleton != null) {
-			setSkeleton(currentSkeleton);
+
+		controller.clearDiagrams();
+		for (Skeleton s : skeletons) {
+			setSkeleton(s.perspective, s);
 		}
 	}
 	
@@ -437,8 +431,8 @@ public class MainController extends BaseController implements Initializable {
 		}
 	}
 	
-	public void setDiagrams(Collection<Diagram> diagrams) {
-		ObservableList<Diagram> children = diagramList.getItems();
+	public void setDiagrams(Collection<VirtualDiagram> diagrams) {
+		ObservableList<VirtualDiagram> children = diagramList.getItems();
 		
 		if (diagrams == null) {
 			masterDiagrams.clear();
@@ -464,7 +458,6 @@ public class MainController extends BaseController implements Initializable {
 	}
 
 	public void onPositionsChanged(Collection<Position> positions) {
-		skinList.getItems().clear();
 		diagramList.getItems().clear();
 		slotList.getItems().clear();
 		skeletonList.getItems().clear();
@@ -477,17 +470,12 @@ public class MainController extends BaseController implements Initializable {
 
 	public void onPositionChanged(Position position) {
 		controller.loadSkeletons(position.id);
-		controller.loadSkins(position.id);
 	}
 	
 	public void onSkeletonsChanged(Collection<Skeleton> skeletons) {
 		setSkeletons(skeletons);
 	}
 	
-	public void onSkinsChanged(Collection<Skin> skins) {
-		setSkins(skins);
-	}
-
 	public void onProgressStart(String description) {
 		Platform.runLater(new Runnable() {
 			@Override
@@ -506,5 +494,34 @@ public class MainController extends BaseController implements Initializable {
 		if (!complete) {
 			progressBar.setProgress(progress);
 		}
+	}
+
+	public void renderPreview() {
+		controller.displayPreview();
+		tabs.getSelectionModel().select(previewTab);
+	}
+
+	public Collection<VirtualDiagram> getDiagrams(Slot slot) {
+		return masterDiagrams.stream().filter(d -> d.getSlot() == slot).collect(Collectors.toList());
+	}
+
+	/*
+		Context Menus
+	 */
+	public void setFront(ActionEvent e) {
+		Skeleton s = skeletonList.getSelectionModel().getSelectedItem();
+		controller.setSkeleton(Perspective.Front, s);
+		setSkeleton(Perspective.Front, s);
+	}
+
+	public void setSide(ActionEvent e) {
+		Skeleton s = skeletonList.getSelectionModel().getSelectedItem();
+		controller.setSkeleton(Perspective.Side, s);
+		setSkeleton(Perspective.Side, s);
+	}
+
+	public void deleteSkeleton(ActionEvent e) {
+		Skeleton s = skeletonList.getSelectionModel().getSelectedItem();
+		controller.deleteSkeleton(s);
 	}
 }

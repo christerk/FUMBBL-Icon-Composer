@@ -39,7 +39,7 @@ public class NewDiagramController extends BaseController implements Initializabl
 	
 	public void createDiagram() {
 		NamedImage image = imageChoiceBox.getSelectionModel().selectedItemProperty().getValue();
-		controller.createDiagram(image);
+		//controller.createDiagram(image);
 		controller.getStageManager().hide(StageType.newDiagram);
 	}
 

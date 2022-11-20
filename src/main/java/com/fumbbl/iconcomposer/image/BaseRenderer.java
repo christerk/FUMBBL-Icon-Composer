@@ -2,26 +2,29 @@ package com.fumbbl.iconcomposer.image;
 
 import java.awt.*;
 import java.awt.geom.AffineTransform;
-import java.awt.geom.Rectangle2D;
 import java.awt.image.BufferedImage;
+import java.util.Collection;
 import java.util.stream.Collectors;
 
 import com.fumbbl.iconcomposer.ColourTheme;
 import com.fumbbl.iconcomposer.controllers.Controller;
+import com.fumbbl.iconcomposer.controllers.MainController;
 import com.fumbbl.iconcomposer.model.Model;
+import com.fumbbl.iconcomposer.model.Perspective;
 import com.fumbbl.iconcomposer.model.types.*;
-import com.kitfox.svg.SVGDiagram;
 import com.kitfox.svg.SVGException;
 
 import javafx.geometry.Point2D;
+import javafx.scene.image.WritableImage;
 
 public class BaseRenderer {
 	protected int width = 480;
 	protected int height = 480;
 	private Model model;
 	protected Controller controller;
-	protected double imageScale;
+	protected double imageScale = 8.0;
 	protected Color renderBackground = new Color(148,158,148);
+	protected Color iconBackground = new Color(70, 125, 80);
 	private Color gridColor = new Color(160,89,179);
 	private SvgRenderer svgRenderer;
 	private ImageRenderer imageRenderer;
@@ -36,29 +39,68 @@ public class BaseRenderer {
 	public double getImageScale() {
 		return imageScale;
 	}
-	
-	public void renderSkin(Skin skin) {
-		if (skin == null || skin.skeleton == null) {
+
+//	public void renderSkin(Skin skin) {
+//		renderSkin(Perspective.Front, skin);
+//		renderSkin(Perspective.Side, skin);
+//	}
+
+	public void renderPreview() {
+		Skin skin = new Skin();
+
+		Graphics2D g2 = controller.viewState.getPreviewGraphics2D();
+		WritableImage image = controller.viewState.getPreviewImage();
+		g2.setColor(renderBackground);
+		g2.fillRect(0, 0, (int)image.getWidth(), (int)image.getHeight());
+
+		for (int y=0; y<2; y++) {
+			for (int x = 0; x < 14; x++) {
+				MainController mainController = controller.getMainController();
+				for (Slot slot : model.getSlots()) {
+					Collection<VirtualDiagram> diagrams = mainController.getDiagrams(slot);
+					VirtualDiagram randomDiagram = random(diagrams);
+					skin.setDiagram(slot, randomDiagram);
+				}
+
+				renderSkin(Perspective.Front, skin, x, y * 2);
+				renderSkin(Perspective.Side, skin, x, y * 2 + 1);
+			}
+		}
+
+	}
+
+	public static <T> T random(Collection<T> coll) {
+		int num = (int) (Math.random() * coll.size());
+		for(T t: coll) if (--num < 0) return t;
+		throw new AssertionError();
+	}
+
+	public void renderSkin(Perspective perspective, Skin skin, int x, int y) {
+		Skeleton skeleton = controller.viewState.getActiveSkeleton(perspective);
+
+		if (skin == null || skeleton == null) {
 			return;
 		}
-		Graphics2D g2 = controller.viewState.getGraphics2D();
-		g2.setColor(renderBackground);
-		g2.fillRect(0, 0, width, height);
-		
+
+		Graphics2D g2 = controller.viewState.getPreviewGraphics2D();
+		g2.setColor(iconBackground);
+		g2.fillRect(x*65 + 5, y*65 + 5, 60, 60);
+
 		g2.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_NEAREST_NEIGHBOR);
 		g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 
 		try {
-			skin.skeleton.updateTransforms();
-			drawIcon(g2, skin, 0, 0, 480);
+			skeleton.updateTransforms();
+			drawIcon(g2, skeleton, skin, x*65+5, y*65+5);
 		} catch (SVGException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}			
 	}
 
-	public void renderDiagram(Diagram diagram) {
-		Graphics2D g2 = controller.viewState.getGraphics2D();
+	public void renderDiagram(Perspective perspective, Diagram diagram) {
+		Graphics2D g2 = controller.viewState.getDiagramGraphics2D(perspective);
+		AffineTransform at = g2.getTransform();
 		g2.setColor(renderBackground);
 		g2.fillRect(0, 0, width, height);
 
@@ -73,28 +115,23 @@ public class BaseRenderer {
 		g2.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BICUBIC);
 		g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 
-		//g2.translate(-diagram.width/2, -diagram.height/2);
 		applyPixelTransform(diagram, g2);
 
-		try {
-			diagram.resetColour(controller.getSvg(diagram.getImage().getName()));
-			controller.onColourThemeChanged(diagram.getTheme());
-			renderDiagram(g2, diagram);
-		} catch (SVGException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
+		controller.onColourThemeChanged(diagram.getTheme());
+		render(perspective, diagram);
+		g2.setTransform(at);
 	}
 
 	private void applyPixelTransform(Diagram diagram, Graphics2D g2) {
-		g2.scale(8.0, 8.0);
+		//g2.scale(8.0, 8.0);
 		double xFix = diagram.width % 2 == 0 ? 0.0 : 0.5;
 		double yFix = diagram.height % 2 == 0 ? 0.0 : 0.5;
 		g2.translate(30- diagram.width/2 - xFix,30- diagram.height/2 - yFix);
 	}
 
-	public void renderSkeleton(Skeleton skeleton, String currentBone) {
-		Graphics2D g2 = controller.viewState.getGraphics2D();
+
+	public void renderSkeleton(Perspective perspective, Skeleton skeleton, String currentBone) {
+		Graphics2D g2 = controller.viewState.getSkeletonGraphics2D(perspective);
 		g2.setColor(renderBackground);
 		g2.fillRect(0, 0, width, height);
 
@@ -105,13 +142,25 @@ public class BaseRenderer {
 			return;
 		}
 
-		double scale = 8;
+		int scale = 8;
 
 		if (skeleton.width != 0) {
 			scale = 8;
 		}
 
+		// Find center; should correspond to "root" bone.
+		for (Bone b : skeleton.getBones()) {
+			if ("root".equals(b.getName())) {
+				skeleton.x = b.x;
+				skeleton.y = -b.y;
+			}
+		}
+
 		skeleton.updateTransforms();
+
+		g2.setColor(gridColor);
+		g2.drawRect(this.width / 2 + -scale*45/2, this.height / 2 - scale*45/2, scale*45, scale*45);
+
 		for (Bone b : skeleton.getBones()) {
 			int cx = (int) (this.width/2 + scale*b.worldX/2);
 			int cy = (int) (this.height/2 - scale*b.worldY/2);
@@ -143,9 +192,8 @@ public class BaseRenderer {
 		}
 	}
 	
-	public void renderCursor(double x, double y) {
-		Graphics2D g2 = controller.viewState.getGraphics2D();
-		g2.setColor(Color.blue);
+	public void renderCursor(Perspective perspective, double x, double y) {
+		Graphics2D g2 = controller.viewState.getDiagramGraphics2D(perspective);
 
 		int cx = (int) (240.0 - x*imageScale);
 		int cy = (int) (240.0 + y*imageScale);
@@ -154,8 +202,9 @@ public class BaseRenderer {
 		g2.setStroke(new BasicStroke(3));
 		g2.drawLine(cx-8, cy-8, cx+8, cy+8);
 		g2.drawLine(cx+8, cy-8, cx-8, cy+8);
-		
+
 		g2.setColor(Color.pink);
+
 		g2.setStroke(new BasicStroke(1));
 		g2.drawLine(cx-8, cy-8, cx+8, cy+8);
 		g2.drawLine(cx+8, cy-8, cx-8, cy+8);
@@ -177,34 +226,37 @@ public class BaseRenderer {
 		return new Point2D(oX, oY);
 	}
 
-	private void drawIcon(Graphics2D g2, Skin skin, double x, double y, double size) throws SVGException {
+	private void drawIcon(Graphics2D g2, Skeleton skeleton, Skin skin, double x, double y) throws SVGException {
 		AffineTransform originalTransform = g2.getTransform();
 		
 		AffineTransform at = g2.getTransform();
 		ColourTheme theme = controller.getColourTheme();
-		
-		for (Slot slot : model.getSlots().stream().sorted(Slot.ReverseComparator).collect(Collectors.toList())) {
-			Diagram diagram = skin.getDiagram(slot);
 
-			if (diagram != null) {
-				diagram.setColour(controller.getSvg(diagram.getImage().getName()), theme);
-				g2.translate(x, y);
-				renderDiagram(g2, diagram, skin.skeleton, slot, size);
+		for (Slot slot : model.getSlots().stream().sorted(Slot.ReverseComparator).collect(Collectors.toList())) {
+			VirtualDiagram virtualDiagram = skin.getDiagram(slot);
+			if (virtualDiagram != null) {
+				Diagram diagram = model.getDiagram(skeleton.id, virtualDiagram.getName());
+
+				if (diagram != null) {
+					//diagram.setColour(controller.getSvg(diagram.getImage().getName()), theme);
+					g2.translate(x, y);
+					renderDiagram(g2, diagram, skeleton, slot);
+				}
 			}
 			g2.setTransform(at);
 		}
-		
+
 		g2.setTransform(originalTransform);
 	}
 
-	private void renderDiagram(Graphics2D g2, Diagram diagram, Skeleton skeleton, Slot slot, double size) throws SVGException {
+	private void renderDiagram(Graphics2D g2, Diagram diagram, Skeleton skeleton, Slot slot) throws SVGException {
 		if (diagram != null) {
 			AffineTransform at = g2.getTransform();
 
 			skeleton.getTransform(slot.getBone().name, diagram);
 
 			applyPixelTransform(diagram, g2);
-			g2.translate(-diagram.worldX, -diagram.worldY);
+			g2.translate(diagram.worldX, -diagram.worldY);
 
 			renderDiagram(g2, diagram);
 			g2.setTransform(at);
@@ -212,20 +264,28 @@ public class BaseRenderer {
 	}
 	
 	private void renderDiagram(Graphics2D g2, Diagram diagram) throws SVGException {
-		NamedImage image = diagram.getImage();
+		BufferedImage image = model.getImage(diagram.perspective.name()+"_"+diagram.getName());
+		imageRenderer.renderImage(g2, image);
+
+		/*
+		NamedImage image = model.getImage(diagram.name);
 
 		if (image instanceof NamedSVG) {
 			svgRenderer.renderSvg(((NamedSVG) image).diagram);
 		} else if (image instanceof NamedPng) {
 			imageRenderer.renderImage(g2, ((NamedPng)image).image);
+		} else {
 		}
+		 */
 	}
 
-	public void render(NamedItem image) {
+	public void render(Perspective perspective, NamedItem image) {
 		if (image instanceof NamedSVG) {
 			svgRenderer.renderSvg(((NamedSVG)image).diagram);
 		} else if (image instanceof NamedPng) {
-			imageRenderer.renderImage(((NamedPng)image).image);
+			imageRenderer.renderImage(perspective, ((NamedPng)image).image);
+		} else {
+			imageRenderer.renderImage(perspective, model.getImage(perspective.name()+"_"+image.getName()));
 		}
 	}
 }

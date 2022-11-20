@@ -8,13 +8,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.PathMatcher;
 import java.nio.file.Paths;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 import com.fumbbl.iconcomposer.ColourTheme;
 import com.fumbbl.iconcomposer.ColourTheme.ColourType;
@@ -126,44 +120,32 @@ public class Model {
 		Collection<DtoSkeleton> list = dataLoader.getSkeletons(positionId);
 		Collection<Skeleton> skeletons = new LinkedList<Skeleton>();
 		
-		list.forEach(s -> skeletons.add(s.toSkeleton())); 
+		list.forEach(s -> {
+			Skeleton skeleton = s.toSkeleton();
+			skeletons.add(skeleton);
+		});
 		
 		dataStore.setSkeletons(skeletons);
 		controller.onSkeletonsChanged(dataStore.getSkeletons());
 	}
 	
-	public void loadDiagrams(int skeletonId) {
+	public void loadDiagrams(Perspective perspective, Skeleton skeleton) {
 		Map<Integer,Diagram> diagramMap = new HashMap<Integer,Diagram>();
 		
-		Collection<DtoDiagram> diagrams = dataLoader.getDiagrams(skeletonId);
-		
-		diagrams.forEach(d -> diagramMap.put(d.id, d.toDiagram()));
+		Collection<DtoDiagram> diagrams = dataLoader.getDiagrams(skeleton);
+
+		diagrams.forEach(d -> diagramMap.put(d.id, d.toDiagram(perspective)));
 		
 		for (DtoDiagram d : diagrams) {
 			Diagram diagram = diagramMap.get(d.id);
 			diagram.setSlot(dataStore.getSlot(d.slotId));
 			diagram.templateColours = new ColourTheme("template");
 		}
-		dataStore.setDiagrams(diagramMap.values());
+
+		dataStore.setDiagrams(skeleton.id, diagramMap.values());
 		controller.onDiagramsChanged(diagramMap.values());
 	}
 	
-	public void loadSkins(int positionId) {
-		Collection<DtoSkin> list = dataLoader.getSkins(positionId);
-
-		Map<Integer,Skin> skinMap = new HashMap<Integer,Skin>();
-		
-		list.forEach(s -> skinMap.put(s.id, s.toSkin()));
-		
-		for (DtoSkin s : list) {
-			Skin skin = skinMap.get(s.id);
-			skin.skeleton = dataStore.getSkeleton(s.skeletonId);
-		}
-		
-		dataStore.setSkins(skinMap.values());
-		controller.onSkinsChanged(skinMap.values());
-	}
-
 	public Collection<Bone> loadBones(Skeleton skeleton) {
 		Collection<Bone> bones = dataLoader.getBones(skeleton.id);
 
@@ -191,8 +173,8 @@ public class Model {
 
 	public void addDiagram(NamedImage image) {
 		Diagram d = new Diagram(image);
-		dataStore.addDiagram(image.getName(), d);
-		controller.onDiagramsChanged(dataStore.getDiagrams());
+		//dataStore.addDiagram(image.getName(), d);
+		//controller.onDiagramsChanged(dataStore.getDiagramNames());
 	}
 	
 	public void setupThemes() {
@@ -228,8 +210,8 @@ public class Model {
 		dataLoader.setController(controller);
 	}
 
-	public Diagram getDiagram(String image) {
-		return dataStore.getDiagram(image);
+	public Diagram getDiagram(int skeletonId, String diagramName) {
+		return dataStore.getDiagram(skeletonId, diagramName);
 	}
 
 	public ColourTheme getColourTheme(String theme) {
@@ -257,7 +239,6 @@ public class Model {
 				try {
 					Path p = Paths.get(path);
 					PathMatcher jsonMatcher = FileSystems.getDefault().getPathMatcher("glob:**.json");
-					PathMatcher svgMatcher = FileSystems.getDefault().getPathMatcher("glob:**.svg");
 					PathMatcher pngMatcher = FileSystems.getDefault().getPathMatcher("glob:**.png");
 
 					if (!Files.isReadable(p)) {
@@ -288,7 +269,7 @@ public class Model {
 							dataLoader.saveSlots(skeleton);
 
 							Collection<Diagram> diagrams = importer.getDiagrams();
-							dataStore.setDiagrams(diagrams);
+							dataStore.setDiagrams(skeleton.id, diagrams);
 							diagrams.forEach(d -> dataLoader.saveDiagram(d));
 
 							Collection<Skin> skins = importer.getSkins();
@@ -305,13 +286,10 @@ public class Model {
 									controller.onBonesChanged(skeleton.getBones());
 									controller.onSlotsChanged(skeleton.getSlots());
 									controller.onDiagramsChanged(diagrams);
-									controller.onSkinsChanged(skins);
 								}
 							});
 						} else if (pngMatcher.matches(p)) {
 							delayedTasks.add(importPng(p));
-						} else if (svgMatcher.matches(p)) {
-							delayedTasks.add(importSvg(p));
 						}
 					}
 
@@ -337,14 +315,14 @@ public class Model {
 		controller.runInBackground(task);
 	}
 
-	public SVGDiagram getSvg(String svgName) {
-		NamedItem image = dataStore.getImage(svgName);
-		if (image != null && image instanceof NamedSVG) {
-			return ((NamedSVG)image).diagram;
+	public BufferedImage getImage(String imageName) {
+		NamedItem image = dataStore.getImage(imageName.toLowerCase());
+		if (image != null && image instanceof NamedPng) {
+			return ((NamedPng)image).image;
 		}
 		return null;
 	}
-	
+
 	public void deleteSkeleton(Skeleton skeleton) {
 		if (skeleton != null) {
 			dataStore.removeSkeleton(skeleton);
@@ -353,20 +331,8 @@ public class Model {
 			controller.onSkeletonsChanged(dataStore.getSkeletons());
 		}
 	}
-	
-	public void createSkin(Skeleton skeleton) {
-		Skin s = new Skin();
-		s.id = -1;
-		s.skeleton = skeleton;
-		s.name = "NewSkin";
-		
-		dataLoader.saveSkin(dataStore.getPosition(), s);
-		
-		dataStore.addSkin(s);
-		controller.onSkinsChanged(dataStore.getSkins());
-	}
 
-	public void setSkinDiagram(Skin skin, Slot slot, Diagram diagram) {
+	public void setSkinDiagram(Skin skin, Slot slot, VirtualDiagram diagram) {
 		if (diagram != null) {
 			skin.setDiagram(slot, diagram);
 		} else {
@@ -379,14 +345,20 @@ public class Model {
 	}
 
 	public void onItemRenamed(NamedItem item) {
-		if (item instanceof Skin) {
-			dataLoader.saveSkin(dataStore.getPosition(), (Skin)item);
-			controller.onSkinsChanged(dataStore.getSkins());
-		} else if (item instanceof Skeleton) {
+		if (item instanceof Skeleton) {
 			dataLoader.saveSkeleton(dataStore.getPosition(), (Skeleton)item);
 			controller.onSkeletonsChanged(dataStore.getSkeletons());
-		} else if (item instanceof NamedSVG) {
+		} else if (item instanceof NamedImage) {
 			controller.onImagesChanged(dataStore.getImages());
 		}
+	}
+
+	public void setPerspective(Skeleton s, Perspective perspective)
+	{
+		dataLoader.setPerspective(dataStore.getPosition(), s, perspective);
+	}
+
+	public void clearDiagrams() {
+		dataStore.clearDiagrams();
 	}
 }

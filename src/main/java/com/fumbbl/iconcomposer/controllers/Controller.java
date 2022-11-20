@@ -1,16 +1,17 @@
 package com.fumbbl.iconcomposer.controllers;
 
 import java.util.Collection;
+import java.util.HashSet;
 
 import com.fumbbl.iconcomposer.ColourTheme;
 import com.fumbbl.iconcomposer.Config;
 import com.fumbbl.iconcomposer.ViewState;
 import com.fumbbl.iconcomposer.model.Model;
+import com.fumbbl.iconcomposer.model.Perspective;
 import com.fumbbl.iconcomposer.model.types.*;
 import com.fumbbl.iconcomposer.image.BaseRenderer;
 import com.fumbbl.iconcomposer.ui.StageManager;
 import com.fumbbl.iconcomposer.ui.StageType;
-import com.kitfox.svg.SVGDiagram;
 
 import javafx.application.Platform;
 import javafx.scene.image.WritableImage;
@@ -36,6 +37,10 @@ public class Controller extends BaseController {
 
 	public void setControllerManager(ControllerManager controllerManager) {
 		this.controllerManager = controllerManager;
+	}
+
+	public MainController getMainController() {
+		return controllerManager.getMain();
 	}
 	
 	public BaseRenderer getRenderer() {
@@ -87,7 +92,7 @@ public class Controller extends BaseController {
 	}
 
 	public void onSkeletonChanged(Skeleton skeleton) {
-		controllerManager.getMain().setSkeleton(skeleton);
+		//controllerManager.getMain().setSkeleton(skeleton);
 	}
 	
 	public void onColourThemesChanged(Collection<ColourTheme> themes) {
@@ -97,12 +102,27 @@ public class Controller extends BaseController {
 	public void onColourThemeChanged(ColourTheme t) {
 		controllerManager.getMain().setColourTheme(t);
 	}
-	
-	public void onImageChanged() {
-		WritableImage image = viewState.getImage();
-		controllerManager.getMain().setImage(image);
+
+	public void onDiagramImageChanged() {
+		WritableImage image = viewState.getDiagramImage(Perspective.Front);
+		controllerManager.getMain().setFrontDiagramImage(image);
+
+		image = viewState.getDiagramImage(Perspective.Side);
+		controllerManager.getMain().setSideDiagramImage(image);
 	}
-	
+
+	public void onPreviewImageChanged() {
+		WritableImage image = viewState.getPreviewImage();
+		controllerManager.getMain().setPreviewImage(image);
+	}
+
+	public void onSkeletonImageChanged() {
+		WritableImage image = viewState.getSkeletonImage(Perspective.Front);
+		controllerManager.getMain().setFrontSkeletonImage(image);
+
+		image = viewState.getSkeletonImage(Perspective.Side);
+		controllerManager.getMain().setSideSkeletonImage(image);
+	}
 	public void onAuthenticateChange(boolean success) {
 		controllerManager.getMain().setApiStatus(success ? "Authorized" : "Not Authorized");
 	}
@@ -117,31 +137,34 @@ public class Controller extends BaseController {
 	}
 
 	public void onDiagramsChanged(Collection<Diagram> diagrams) {
-		controllerManager.getMain().setDiagrams(diagrams);
+		Collection<VirtualDiagram> virtualDiagrams = new HashSet<>();
+
+		for (Diagram d : diagrams) {
+			virtualDiagrams.add(new VirtualDiagram(d));
+		}
+
+		controllerManager.getMain().setDiagrams(virtualDiagrams);
 	}
 
-	public void onSkinsChanged(Collection<Skin> skins) {
-		controllerManager.getMain().onSkinsChanged(skins);
-	}
-	
 	/*
 	 * ViewState updates
 	 */
 	
-	public void setBones(Collection<Bone> bones) {
-		viewState.getActiveSkeleton().setBones(bones);
+	public void setBones(Perspective perspective, Collection<Bone> bones) {
+		viewState.getActiveSkeleton(perspective).setBones(bones);
 	}
 
-	public void setSlots(Collection<Slot> slots) {
-		viewState.getActiveSkeleton().setSlots(slots);
+	public void setSlots(Perspective perspective, Collection<Slot> slots) {
+		viewState.getActiveSkeleton(perspective).setSlots(slots);
 	}
 
 	public void setColourTheme(String theme) {
 		viewState.setActiveColourTheme(model.getColourTheme(theme));
 	}
 	
-	public void setSkeleton(Skeleton skeleton) {
-		viewState.setActiveSkeleton(skeleton);
+	public void setSkeleton(Perspective perspective, Skeleton skeleton) {
+		model.setPerspective(skeleton, perspective);
+		viewState.setActiveSkeleton(perspective, skeleton);
 	}
 
 	public ColourTheme getColourTheme() {
@@ -164,16 +187,12 @@ public class Controller extends BaseController {
 		model.loadRuleset(id);
 	}
 	
-	public void loadSkins(int positionId) {
-		model.loadSkins(positionId);
-	}
-
 	public void loadSkeletons(int positionId) {
 		model.loadSkeletons(positionId);
 	}
 
-	public void loadDiagrams(int skeletonId) {
-		model.loadDiagrams(skeletonId);
+	public void loadDiagrams(Perspective perspective, Skeleton skeleton) {
+		model.loadDiagrams(perspective, skeleton);
 	}
 	
 	public boolean isAuthorized() {
@@ -208,68 +227,56 @@ public class Controller extends BaseController {
 		model.addDiagram(image);
 	}
 	
-	public SVGDiagram getSvg(String svgName) {
-		return model.getSvg(svgName);
-	}
-
 	public void deleteSkeleton(Skeleton skeleton) {
 		model.deleteSkeleton(skeleton);
-	}
-	
-	public void createSkin(Skeleton skeleton) {
-		if (skeleton != null) {
-			model.createSkin(skeleton);
-		}
-	}
-	
-	public void setSkinDiagram(Skin skin, Slot slot, Diagram diagram) {
-		model.setSkinDiagram(skin, slot, diagram);
 	}
 	
 	/*
 	 * Renderer
 	 */
+
+	public void displayImage(Perspective perspective, NamedImage image) {
+		controllerManager.getMain().hideColourPane();
+		renderer.render(perspective, image);
+		onDiagramImageChanged();
+	}
 	
-	public void displayImage(String image) {
-		viewState.setActiveDiagram(model.getDiagram(image));
-		displayDiagram();
+	public void displayPreview() {
+		renderer.renderPreview();
+		onPreviewImageChanged();
 	}
 
-	public void displayImage(NamedImage image) {
-		controllerManager.getMain().hideColourPane();
-		renderer.render(image);
-		onImageChanged();
-	}
-	
-	public void displaySkin(Skin skin) {
-		viewState.setActiveSkin(skin);
-		controllerManager.getMain().hideColourPane();
-		renderer.renderSkin(skin);
-        onImageChanged();
-	}
-	
-	public void displayDiagram() {
-		Diagram d = viewState.getActiveDiagram();
+	public void displayDiagrams(String diagramName) {
+
+		Diagram d = model.getDiagram(viewState.getActiveSkeleton(Perspective.Front).id, diagramName);
+		displayDiagram(d);
+
+		d = model.getDiagram(viewState.getActiveSkeleton(Perspective.Side).id, diagramName);
 		displayDiagram(d);
 	}
-	
+
 	public void displayDiagram(Diagram d) {
-		viewState.setActiveDiagram(d);
+		if (d == null) {
+			return;
+		}
+		viewState.setActiveDiagram(d.perspective, d);
 		controllerManager.getMain().showColourPane();
-		renderer.renderDiagram(d);
+
+		renderer.renderDiagram(d.perspective, d);
 
 		Slot slot = d.getSlot();
 		
-		controllerManager.getMain().setSlotInfo(slot, d.x, d.y);
+		controllerManager.getMain().setSlotInfo(d.perspective, slot, d.x, d.y);
 
-		renderer.renderCursor(d.x, d.y);
-		onImageChanged();
+		renderer.renderCursor(d.perspective, d.x, d.y);
+		onDiagramImageChanged();
 	}
 
 	public void displayBones(String value) {
 		controllerManager.getMain().hideColourPane();
-		renderer.renderSkeleton(viewState.getActiveSkeleton(), value);
-		onImageChanged();
+		renderer.renderSkeleton(Perspective.Front, viewState.getActiveSkeleton(Perspective.Front), value);
+		renderer.renderSkeleton(Perspective.Side, viewState.getActiveSkeleton(Perspective.Side), value);
+		onSkeletonImageChanged();
 	}
 	
 	public void onRulesetLoaded(Ruleset ruleset) {
@@ -294,5 +301,9 @@ public class Controller extends BaseController {
 
 	public void runBatch() {
 		taskQueue.runBatch();
+	}
+
+	public void clearDiagrams() {
+		model.clearDiagrams();
 	}
 }

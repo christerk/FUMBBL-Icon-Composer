@@ -1,5 +1,6 @@
 package com.fumbbl.iconcomposer.dto.fumbbl;
 
+import com.fumbbl.iconcomposer.model.Perspective;
 import com.fumbbl.iconcomposer.model.types.Diagram;
 
 public class DtoDiagram {
@@ -12,7 +13,7 @@ public class DtoDiagram {
 	public double height;
 	public String svg;
 	
-	public Diagram toDiagram() {
+	public Diagram toDiagram(Perspective perspective) {
 		Diagram d = new Diagram();
 		d.id = id;
 		d.name = name;
@@ -21,6 +22,7 @@ public class DtoDiagram {
 		d.width = width;
 		d.height = height;
 		d.setName(svg);
+		d.perspective = perspective;
 		
 		return d;
 	}

@@ -4,13 +4,18 @@
 <?import javafx.geometry.Rectangle2D?>
 <?import javafx.scene.control.Accordion?>
 <?import javafx.scene.control.ChoiceBox?>
+<?import javafx.scene.control.ContextMenu?>
 <?import javafx.scene.control.Label?>
 <?import javafx.scene.control.ListView?>
 <?import javafx.scene.control.Menu?>
 <?import javafx.scene.control.MenuBar?>
 <?import javafx.scene.control.MenuItem?>
 <?import javafx.scene.control.ProgressBar?>
+<?import javafx.scene.control.Separator?>
+<?import javafx.scene.control.SeparatorMenuItem?>
 <?import javafx.scene.control.SplitPane?>
+<?import javafx.scene.control.Tab?>
+<?import javafx.scene.control.TabPane?>
 <?import javafx.scene.control.TextField?>
 <?import javafx.scene.control.TitledPane?>
 <?import javafx.scene.effect.DropShadow?>
@@ -26,13 +31,13 @@
 <?import javafx.scene.layout.StackPane?>
 <?import javafx.scene.layout.VBox?>
 
-<BorderPane xmlns="http://javafx.com/javafx/8.0.171" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.fumbbl.iconcomposer.controllers.MainController">
+<BorderPane maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" stylesheets="@IconBuilder.css" xmlns="http://javafx.com/javafx/8.0.171" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.fumbbl.iconcomposer.controllers.MainController">
    <center>
-      <AnchorPane BorderPane.alignment="CENTER">
+      <AnchorPane maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" BorderPane.alignment="CENTER_RIGHT">
          <children>
-            <SplitPane dividerPositions="0.5" style="-fx-background-color: -fx-base;" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
+            <SplitPane dividerPositions="0.19855884707766214" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" style="-fx-background-color: -fx-base;" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
                <items>
-                  <Accordion>
+                  <Accordion maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308">
                     <panes>
                       <TitledPane fx:id="positionPane" text="Positions">
                         <content>
@@ -41,7 +46,23 @@
                       </TitledPane>
                         <TitledPane fx:id="skeletonPane" expanded="false" text="Skeletons">
                            <content>
-                              <ListView fx:id="skeletonList" prefHeight="200.0" prefWidth="200.0" />
+                              <ListView fx:id="skeletonList" prefHeight="200.0" prefWidth="200.0">
+                                 <contextMenu>
+                                    <ContextMenu fx:id="skeletonContext">
+                                      <items>
+                                        <MenuItem mnemonicParsing="false" onAction="#setFront" text="Set as Front" />
+                                          <MenuItem mnemonicParsing="false" onAction="#setSide" text="Set as Side" />
+                                          <SeparatorMenuItem mnemonicParsing="false" />
+                                          <MenuItem mnemonicParsing="false" onAction="#deleteSkeleton" text="Delete" />
+                                      </items>
+                                    </ContextMenu>
+                                 </contextMenu>
+                              </ListView>
+                           </content>
+                        </TitledPane>
+                        <TitledPane fx:id="slotPane" prefHeight="200.0" prefWidth="200.0" text="Slots">
+                           <content>
+                              <ListView fx:id="slotList" prefHeight="200.0" prefWidth="200.0" />
                            </content>
                         </TitledPane>
                         <TitledPane fx:id="diagramPane" prefHeight="200.0" prefWidth="200.0" text="Diagrams">
@@ -54,175 +75,278 @@
                               <ListView fx:id="imageList" prefHeight="200.0" prefWidth="200.0" />
                            </content>
                         </TitledPane>
-                        <TitledPane fx:id="skinPane" prefHeight="200.0" prefWidth="200.0" text="Skins">
-                           <content>
-                              <ListView fx:id="skinList" prefHeight="200.0" prefWidth="200.0" />
-                           </content>
-                        </TitledPane>
-                        <TitledPane fx:id="slotPane" prefHeight="200.0" prefWidth="200.0" text="Slots">
-                           <content>
-                              <ListView fx:id="slotList" prefHeight="200.0" prefWidth="200.0" />
-                           </content>
-                        </TitledPane>
                     </panes>
                   </Accordion>
-                  <VBox alignment="CENTER" spacing="8.0" style="-fx-background-color: rgb(60,63,69);">
-                     <children>
-                        <ImageView fx:id="imageView" fitHeight="480.0" fitWidth="480.0" onMouseClicked="#imageClicked" pickOnBounds="true" preserveRatio="true">
-                           <effect>
-                              <DropShadow color="#0000006a" height="43.74" radius="20.6275" spread="0.31" width="40.77" />
-                           </effect>
-                           <VBox.margin>
-                              <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
-                           </VBox.margin>
-                           <viewport>
-                              <Rectangle2D height="480.0" width="480.0" />
-                           </viewport></ImageView>
-                        <StackPane>
-                           <children>
-                              <FlowPane fx:id="diagramChoicePane" hgap="10.0">
+                  <TabPane fx:id="tabs" tabClosingPolicy="UNAVAILABLE">
+                    <tabs>
+                        <Tab fx:id="skeletonTab" text="Skeleton">
+                          <content>
+                            <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="180.0" prefWidth="200.0" style="-fx-background-color: rgb(60,63,69);">
                                  <children>
-                                    <Label text="Diagram" />
-                                    <ChoiceBox fx:id="diagramChoices" prefWidth="150.0" />
-                                 </children>
-                              </FlowPane>
-                              <GridPane fx:id="colourPane" hgap="5.0" vgap="5.0" visible="false">
-                                <columnConstraints>
-                                  <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" prefWidth="100.0" />
-                                  <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" prefWidth="100.0" />
-                                    <ColumnConstraints />
-                                </columnConstraints>
-                                <rowConstraints>
-                                    <RowConstraints vgrow="SOMETIMES" />
-                                  <RowConstraints vgrow="SOMETIMES" />
-                                  <RowConstraints vgrow="SOMETIMES" />
-                                </rowConstraints>
-                                 <children>
-                                    <FlowPane>
+                                    <VBox alignment="CENTER" prefHeight="200.0" prefWidth="100.0">
                                        <children>
-                                          <Label maxWidth="75.0" minWidth="75.0" prefWidth="75.0" text="Slot" />
-                                          <ChoiceBox fx:id="slotChoices" prefWidth="150.0">
-                                             <FlowPane.margin>
-                                                <Insets left="10.0" />
-                                             </FlowPane.margin>
-                                          </ChoiceBox>
+                                          <HBox alignment="CENTER" prefHeight="100.0" prefWidth="200.0" spacing="5.0">
+                                             <children>
+                                                <ImageView fx:id="frontSkeleton" fitHeight="480.0" fitWidth="480.0" onMouseClicked="#frontImageClicked" pickOnBounds="true" preserveRatio="true">
+                                                   <effect>
+                                                      <DropShadow color="#0000006a" height="43.74" radius="20.6275" spread="0.31" width="40.77" />
+                                                   </effect>
+                                                   <viewport>
+                                                      <Rectangle2D height="480.0" width="480.0" />
+                                                   </viewport>
+                                                </ImageView>
+                                                <ImageView fx:id="sideSkeleton" fitHeight="480.0" fitWidth="480.0" onMouseClicked="#sideImageClicked" pickOnBounds="true" preserveRatio="true">
+                                                   <effect>
+                                                      <DropShadow color="#0000006a" height="43.74" radius="20.6275" spread="0.31" width="40.77" />
+                                                   </effect>
+                                                   <viewport>
+                                                      <Rectangle2D height="480.0" width="480.0" />
+                                                   </viewport>
+                                                </ImageView>
+                                             </children>
+                                          </HBox>
                                        </children>
-                                       <GridPane.margin>
-                                          <Insets bottom="2.0" top="2.0" />
-                                       </GridPane.margin>
-                                    </FlowPane>
-                                    <FlowPane hgap="10.0" GridPane.columnIndex="1">
+                                       <padding>
+                                          <Insets bottom="16.0" left="16.0" right="16.0" top="16.0" />
+                                       </padding>
+                                    </VBox>
+                                 </children>
+                              </AnchorPane>
+                          </content>
+                        </Tab>
+                      <Tab fx:id="diagramTab" text="Diagram">
+                        <content>
+                          <AnchorPane minHeight="0.0" minWidth="0.0" style="-fx-background-color: rgb(60,63,69);">
+                                 <children>
+                                    <VBox alignment="CENTER" spacing="8.0" style="-fx-background-color: rgb(60,63,69);">
                                        <children>
-                                          <Label text="x">
-                                             <FlowPane.margin>
+                                          <HBox alignment="CENTER" prefHeight="100.0" prefWidth="200.0" spacing="5.0">
+                                             <children>
+                                                <VBox spacing="5.0">
+                                                   <children>
+                                                      <Label alignment="CENTER" contentDisplay="CENTER" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" text="Front" />
+                                                      <ImageView fx:id="frontDiagram" fitHeight="480.0" fitWidth="480.0" onMouseClicked="#frontImageClicked" pickOnBounds="true" preserveRatio="true">
+                                                         <effect>
+                                                            <DropShadow color="#0000006a" height="43.74" radius="20.6275" spread="0.31" width="40.77" />
+                                                         </effect>
+                                                         <viewport>
+                                                            <Rectangle2D height="480.0" width="480.0" />
+                                                         </viewport>
+                                                      </ImageView>
+                                                      <FlowPane hgap="10.0">
+                                                         <children>
+                                                            <Label text="Attachment Point" />
+                                                            <Label text="x">
+                                                               <FlowPane.margin>
+                                                                  <Insets />
+                                                               </FlowPane.margin>
+                                                               <padding>
+                                                                  <Insets left="10.0" />
+                                                               </padding>
+                                                            </Label>
+                                                            <TextField fx:id="frontDiagramX" prefWidth="75.0">
+                                                               <FlowPane.margin>
+                                                                  <Insets top="2.0" />
+                                                               </FlowPane.margin>
+                                                            </TextField>
+                                                            <Label text="y" />
+                                                            <TextField fx:id="frontDiagramY" prefWidth="75.0">
+                                                               <FlowPane.margin>
+                                                                  <Insets top="2.0" />
+                                                               </FlowPane.margin>
+                                                            </TextField>
+                                                         </children>
+                                                      </FlowPane>
+                                                   </children>
+                                                </VBox>
+                                                <Separator orientation="VERTICAL" prefHeight="200.0" />
+                                                <VBox spacing="5.0">
+                                                   <children>
+                                                      <Label alignment="CENTER" contentDisplay="CENTER" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" text="Side" />
+                                                      <ImageView fx:id="sideDiagram" fitHeight="480.0" fitWidth="480.0" onMouseClicked="#sideImageClicked" pickOnBounds="true" preserveRatio="true">
+                                                         <effect>
+                                                            <DropShadow color="#0000006a" height="43.74" radius="20.6275" spread="0.31" width="40.77" />
+                                                         </effect>
+                                                         <viewport>
+                                                            <Rectangle2D height="480.0" width="480.0" />
+                                                         </viewport>
+                                                      </ImageView>
+                                                      <FlowPane hgap="10.0">
+                                                         <children>
+                                                            <Label text="Attachment Point" />
+                                                            <Label text="x">
+                                                               <FlowPane.margin>
+                                                                  <Insets />
+                                                               </FlowPane.margin>
+                                                               <padding>
+                                                                  <Insets left="10.0" />
+                                                               </padding>
+                                                            </Label>
+                                                            <TextField fx:id="sideDiagramX" prefWidth="75.0">
+                                                               <FlowPane.margin>
+                                                                  <Insets top="2.0" />
+                                                               </FlowPane.margin>
+                                                            </TextField>
+                                                            <Label text="y" />
+                                                            <TextField fx:id="sideDiagramY" prefWidth="75.0">
+                                                               <FlowPane.margin>
+                                                                  <Insets top="2.0" />
+                                                               </FlowPane.margin>
+                                                            </TextField>
+                                                         </children>
+                                                      </FlowPane>
+                                                   </children>
+                                                </VBox>
+                                             </children>
+                                             <opaqueInsets>
                                                 <Insets />
-                                             </FlowPane.margin>
-                                             <padding>
-                                                <Insets left="10.0" />
-                                             </padding>
-                                          </Label>
-                                          <TextField fx:id="diagramX" prefWidth="75.0">
-                                             <FlowPane.margin>
-                                                <Insets top="2.0" />
-                                             </FlowPane.margin>
-                                          </TextField>
-                                          <Label text="y" />
-                                          <TextField fx:id="diagramY" prefWidth="75.0">
-                                             <FlowPane.margin>
-                                                <Insets top="2.0" />
-                                             </FlowPane.margin>
-                                          </TextField>
+                                             </opaqueInsets>
+                                          </HBox>
+                                          <Separator maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" />
+                                          <StackPane>
+                                             <children>
+                                                <FlowPane fx:id="diagramChoicePane" hgap="10.0">
+                                                   <children>
+                                                      <Label text="Diagram" />
+                                                      <ChoiceBox fx:id="diagramChoices" prefWidth="150.0" />
+                                                   </children>
+                                                </FlowPane>
+                                                <GridPane fx:id="colourPane" hgap="5.0" vgap="5.0" visible="false">
+                                                  <columnConstraints>
+                                                    <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" prefWidth="100.0" />
+                                                    <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" prefWidth="100.0" />
+                                                      <ColumnConstraints />
+                                                  </columnConstraints>
+                                                  <rowConstraints>
+                                                      <RowConstraints vgrow="SOMETIMES" />
+                                                    <RowConstraints vgrow="SOMETIMES" />
+                                                    <RowConstraints vgrow="SOMETIMES" />
+                                                  </rowConstraints>
+                                                   <children>
+                                                      <FlowPane>
+                                                         <children>
+                                                            <Label maxWidth="75.0" minWidth="75.0" prefWidth="75.0" text="Slot" />
+                                                            <ChoiceBox fx:id="slotChoices" prefWidth="150.0">
+                                                               <FlowPane.margin>
+                                                                  <Insets left="10.0" />
+                                                               </FlowPane.margin>
+                                                            </ChoiceBox>
+                                                         </children>
+                                                         <GridPane.margin>
+                                                            <Insets bottom="2.0" top="2.0" />
+                                                         </GridPane.margin>
+                                                      </FlowPane>
+                                                      <FlowPane GridPane.rowIndex="1">
+                                                         <children>
+                                                            <Label maxWidth="75.0" minWidth="75.0" prefWidth="75.0" text="Primary" />
+                                                            <ImageView fx:id="primaryLo" fitHeight="20.0" fitWidth="20.0" onMouseClicked="#activateColour" pickOnBounds="true" preserveRatio="true">
+                                                               <FlowPane.margin>
+                                                                  <Insets bottom="5.0" left="10.0" top="5.0" />
+                                                               </FlowPane.margin>
+                                                            </ImageView>
+                                                            <ImageView fx:id="primaryMid" fitHeight="20.0" fitWidth="20.0" layoutX="126.0" layoutY="10.0" onMouseClicked="#activateColour" pickOnBounds="true" preserveRatio="true">
+                                                               <FlowPane.margin>
+                                                                  <Insets left="10.0" />
+                                                               </FlowPane.margin>
+                                                            </ImageView>
+                                                            <ImageView fx:id="primaryHi" fitHeight="20.0" fitWidth="20.0" layoutX="126.0" layoutY="10.0" onMouseClicked="#activateColour" pickOnBounds="true" preserveRatio="true">
+                                                               <FlowPane.margin>
+                                                                  <Insets left="10.0" />
+                                                               </FlowPane.margin>
+                                                            </ImageView>
+                                                         </children>
+                                                      </FlowPane>
+                                                      <FlowPane layoutX="10.0" layoutY="5.0" GridPane.rowIndex="2">
+                                                         <children>
+                                                            <Label maxWidth="75.0" minWidth="75.0" prefWidth="75.0" text="Secondary" />
+                                                            <ImageView fx:id="secondaryLo" fitHeight="20.0" fitWidth="20.0" onMouseClicked="#activateColour" pickOnBounds="true" preserveRatio="true">
+                                                               <FlowPane.margin>
+                                                                  <Insets bottom="5.0" left="10.0" top="5.0" />
+                                                               </FlowPane.margin>
+                                                            </ImageView>
+                                                            <ImageView fx:id="secondaryMid" fitHeight="20.0" fitWidth="20.0" layoutX="126.0" layoutY="10.0" onMouseClicked="#activateColour" pickOnBounds="true" preserveRatio="true">
+                                                               <FlowPane.margin>
+                                                                  <Insets left="10.0" />
+                                                               </FlowPane.margin>
+                                                            </ImageView>
+                                                            <ImageView fx:id="secondaryHi" fitHeight="20.0" fitWidth="20.0" layoutX="126.0" layoutY="10.0" onMouseClicked="#activateColour" pickOnBounds="true" preserveRatio="true">
+                                                               <FlowPane.margin>
+                                                                  <Insets left="10.0" />
+                                                               </FlowPane.margin>
+                                                            </ImageView>
+                                                         </children>
+                                                      </FlowPane>
+                                                      <FlowPane layoutX="10.0" layoutY="15.0" GridPane.columnIndex="1" GridPane.rowIndex="1">
+                                                         <children>
+                                                            <Label text="Skin" />
+                                                            <ImageView fx:id="skinLo" fitHeight="20.0" fitWidth="20.0" onMouseClicked="#activateColour" pickOnBounds="true" preserveRatio="true">
+                                                               <FlowPane.margin>
+                                                                  <Insets left="10.0" />
+                                                               </FlowPane.margin>
+                                                            </ImageView>
+                                                            <ImageView fx:id="skinMid" fitHeight="20.0" fitWidth="20.0" layoutX="126.0" layoutY="10.0" onMouseClicked="#activateColour" pickOnBounds="true" preserveRatio="true">
+                                                               <FlowPane.margin>
+                                                                  <Insets left="10.0" />
+                                                               </FlowPane.margin>
+                                                            </ImageView>
+                                                            <ImageView fx:id="skinHi" fitHeight="20.0" fitWidth="20.0" layoutX="126.0" layoutY="10.0" onMouseClicked="#activateColour" pickOnBounds="true" preserveRatio="true">
+                                                               <FlowPane.margin>
+                                                                  <Insets left="10.0" />
+                                                               </FlowPane.margin>
+                                                            </ImageView>
+                                                         </children>
+                                                      </FlowPane>
+                                                      <FlowPane layoutX="250.0" layoutY="15.0" GridPane.columnIndex="1" GridPane.rowIndex="2">
+                                                         <children>
+                                                            <Label text="Hair" />
+                                                            <ImageView fx:id="hairLo" fitHeight="20.0" fitWidth="20.0" onMouseClicked="#activateColour" pickOnBounds="true" preserveRatio="true">
+                                                               <FlowPane.margin>
+                                                                  <Insets left="10.0" />
+                                                               </FlowPane.margin>
+                                                            </ImageView>
+                                                            <ImageView fx:id="hairMid" fitHeight="20.0" fitWidth="20.0" layoutX="126.0" layoutY="10.0" onMouseClicked="#activateColour" pickOnBounds="true" preserveRatio="true">
+                                                               <FlowPane.margin>
+                                                                  <Insets left="10.0" />
+                                                               </FlowPane.margin>
+                                                            </ImageView>
+                                                            <ImageView fx:id="hairHi" fitHeight="20.0" fitWidth="20.0" layoutX="126.0" layoutY="10.0" onMouseClicked="#activateColour" pickOnBounds="true" preserveRatio="true">
+                                                               <FlowPane.margin>
+                                                                  <Insets left="10.0" />
+                                                               </FlowPane.margin>
+                                                            </ImageView>
+                                                         </children>
+                                                      </FlowPane>
+                                                   </children>
+                                                </GridPane>
+                                             </children>
+                                          </StackPane>
                                        </children>
-                                    </FlowPane>
-                                    <FlowPane GridPane.rowIndex="1">
-                                       <children>
-                                          <Label maxWidth="75.0" minWidth="75.0" prefWidth="75.0" text="Primary" />
-                                          <ImageView fx:id="primaryLo" fitHeight="20.0" fitWidth="20.0" onMouseClicked="#activateColour" pickOnBounds="true" preserveRatio="true">
-                                             <FlowPane.margin>
-                                                <Insets bottom="5.0" left="10.0" top="5.0" />
-                                             </FlowPane.margin>
-                                          </ImageView>
-                                          <ImageView fx:id="primaryMid" fitHeight="20.0" fitWidth="20.0" layoutX="126.0" layoutY="10.0" onMouseClicked="#activateColour" pickOnBounds="true" preserveRatio="true">
-                                             <FlowPane.margin>
-                                                <Insets left="10.0" />
-                                             </FlowPane.margin>
-                                          </ImageView>
-                                          <ImageView fx:id="primaryHi" fitHeight="20.0" fitWidth="20.0" layoutX="126.0" layoutY="10.0" onMouseClicked="#activateColour" pickOnBounds="true" preserveRatio="true">
-                                             <FlowPane.margin>
-                                                <Insets left="10.0" />
-                                             </FlowPane.margin>
-                                          </ImageView>
-                                       </children>
-                                    </FlowPane>
-                                    <FlowPane layoutX="10.0" layoutY="5.0" GridPane.rowIndex="2">
-                                       <children>
-                                          <Label maxWidth="75.0" minWidth="75.0" prefWidth="75.0" text="Secondary" />
-                                          <ImageView fx:id="secondaryLo" fitHeight="20.0" fitWidth="20.0" onMouseClicked="#activateColour" pickOnBounds="true" preserveRatio="true">
-                                             <FlowPane.margin>
-                                                <Insets bottom="5.0" left="10.0" top="5.0" />
-                                             </FlowPane.margin>
-                                          </ImageView>
-                                          <ImageView fx:id="secondaryMid" fitHeight="20.0" fitWidth="20.0" layoutX="126.0" layoutY="10.0" onMouseClicked="#activateColour" pickOnBounds="true" preserveRatio="true">
-                                             <FlowPane.margin>
-                                                <Insets left="10.0" />
-                                             </FlowPane.margin>
-                                          </ImageView>
-                                          <ImageView fx:id="secondaryHi" fitHeight="20.0" fitWidth="20.0" layoutX="126.0" layoutY="10.0" onMouseClicked="#activateColour" pickOnBounds="true" preserveRatio="true">
-                                             <FlowPane.margin>
-                                                <Insets left="10.0" />
-                                             </FlowPane.margin>
-                                          </ImageView>
-                                       </children>
-                                    </FlowPane>
-                                    <FlowPane layoutX="10.0" layoutY="15.0" GridPane.columnIndex="1" GridPane.rowIndex="1">
-                                       <children>
-                                          <Label text="Skin" />
-                                          <ImageView fx:id="skinLo" fitHeight="20.0" fitWidth="20.0" onMouseClicked="#activateColour" pickOnBounds="true" preserveRatio="true">
-                                             <FlowPane.margin>
-                                                <Insets left="10.0" />
-                                             </FlowPane.margin>
-                                          </ImageView>
-                                          <ImageView fx:id="skinMid" fitHeight="20.0" fitWidth="20.0" layoutX="126.0" layoutY="10.0" onMouseClicked="#activateColour" pickOnBounds="true" preserveRatio="true">
-                                             <FlowPane.margin>
-                                                <Insets left="10.0" />
-                                             </FlowPane.margin>
-                                          </ImageView>
-                                          <ImageView fx:id="skinHi" fitHeight="20.0" fitWidth="20.0" layoutX="126.0" layoutY="10.0" onMouseClicked="#activateColour" pickOnBounds="true" preserveRatio="true">
-                                             <FlowPane.margin>
-                                                <Insets left="10.0" />
-                                             </FlowPane.margin>
-                                          </ImageView>
-                                       </children>
-                                    </FlowPane>
-                                    <FlowPane layoutX="250.0" layoutY="15.0" GridPane.columnIndex="1" GridPane.rowIndex="2">
-                                       <children>
-                                          <Label text="Hair" />
-                                          <ImageView fx:id="hairLo" fitHeight="20.0" fitWidth="20.0" onMouseClicked="#activateColour" pickOnBounds="true" preserveRatio="true">
-                                             <FlowPane.margin>
-                                                <Insets left="10.0" />
-                                             </FlowPane.margin>
-                                          </ImageView>
-                                          <ImageView fx:id="hairMid" fitHeight="20.0" fitWidth="20.0" layoutX="126.0" layoutY="10.0" onMouseClicked="#activateColour" pickOnBounds="true" preserveRatio="true">
-                                             <FlowPane.margin>
-                                                <Insets left="10.0" />
-                                             </FlowPane.margin>
-                                          </ImageView>
-                                          <ImageView fx:id="hairHi" fitHeight="20.0" fitWidth="20.0" layoutX="126.0" layoutY="10.0" onMouseClicked="#activateColour" pickOnBounds="true" preserveRatio="true">
-                                             <FlowPane.margin>
-                                                <Insets left="10.0" />
-                                             </FlowPane.margin>
-                                          </ImageView>
-                                       </children>
-                                    </FlowPane>
+                                       <padding>
+                                          <Insets bottom="16.0" left="16.0" right="16.0" top="16.0" />
+                                       </padding>
+                                    </VBox>
                                  </children>
-                              </GridPane>
-                           </children>
-                        </StackPane>
-                     </children>
+                              </AnchorPane>
+                        </content>
+                      </Tab>
+                      <Tab fx:id="previewTab" onSelectionChanged="#renderPreview" text="Preview">
+                        <content>
+                          <AnchorPane maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" minHeight="0.0" minWidth="0.0" style="-fx-background-color: rgb(60,63,69);">
+                                 <children>
+                                    <VBox alignment="CENTER" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
+                                       <children>
+                                          <ImageView fx:id="preview" fitHeight="265.0" fitWidth="915.0" pickOnBounds="true" preserveRatio="true" />
+                                       </children>
+                                    </VBox>
+                                 </children>
+                              </AnchorPane>
+                        </content>
+                      </Tab>
+                    </tabs>
                      <padding>
-                        <Insets bottom="16.0" left="16.0" right="16.0" top="16.0" />
+                        <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
                      </padding>
-                  </VBox>
+                  </TabPane>
                </items>
             </SplitPane>
          </children>
@@ -250,19 +374,9 @@
                   </MenuItem>
               </items>
             </Menu>
-            <Menu text="_Skeleton">
-              <items>
-                  <MenuItem onAction="#deleteSkeleton" text="_Delete" />
-              </items>
-            </Menu>
             <Menu mnemonicParsing="false" text="Diagram">
               <items>
                 <MenuItem mnemonicParsing="false" onAction="#createDiagram" text="Create Diagram" />
-              </items>
-            </Menu>
-            <Menu mnemonicParsing="false" text="_Skin">
-              <items>
-                <MenuItem mnemonicParsing="false" onAction="#createSkin" text="Create Skin" />
               </items>
             </Menu>
             <Menu fx:id="menuColourThemes" mnemonicParsing="false" text="Colour Themes" />

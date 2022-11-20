@@ -11,17 +11,13 @@ import com.fumbbl.iconcomposer.dto.spine.DtoSkin;
 import com.fumbbl.iconcomposer.dto.spine.DtoSlot;
 import com.fumbbl.iconcomposer.dto.spine.DtoSlotData;
 import com.fumbbl.iconcomposer.dto.spine.DtoSpine;
-import com.fumbbl.iconcomposer.model.types.Bone;
-import com.fumbbl.iconcomposer.model.types.Diagram;
-import com.fumbbl.iconcomposer.model.types.Skeleton;
-import com.fumbbl.iconcomposer.model.types.Skin;
-import com.fumbbl.iconcomposer.model.types.Slot;
+import com.fumbbl.iconcomposer.model.types.*;
 import com.google.gson.Gson;
 
 public class SpineImporter {
 	private Map<String,Slot> slotMap = new HashMap<String,Slot>();
 	private Map<String,Bone> boneMap = new HashMap<String,Bone>();
-	private Map<String,Diagram> diagramMap = new HashMap<String,Diagram>();
+	private Map<String, Diagram> diagramMap = new HashMap<>();
 	private Map<String,Skin> skinMap = new HashMap<String,Skin>();
 	private Skeleton skeleton;
 
@@ -100,13 +96,12 @@ public class SpineImporter {
 		for (Entry<String, DtoSkin>entry : spine.skins.entrySet()) {
 			String skinName = entry.getKey();
 			DtoSkin s = entry.getValue();
-			if ("default".equals(skinName)) {
+			if (!"default".equals(skinName)) {
 				continue;
 			}
 
 			Skin skin = s.toSkin();
 			skin.name = skinName;
-			skin.skeleton = skeleton;
 			skinMap.put(skinName, skin);
 			
 			for(Entry<String,DtoSlotData> slotEntry : s.entrySet()) {
@@ -119,7 +114,7 @@ public class SpineImporter {
 					Diagram diagram = attachment.toDiagram();
 					diagram.name = name;
 					diagram.setSlot(slotMap.get(slotName));
-					diagramMap.put(attachment.name, diagram);
+					diagramMap.put(attachmentEntry.getKey(), diagram);
 				}
 			}
 		}

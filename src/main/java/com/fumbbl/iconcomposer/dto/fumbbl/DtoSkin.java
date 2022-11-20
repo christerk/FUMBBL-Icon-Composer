@@ -4,7 +4,6 @@ import com.fumbbl.iconcomposer.model.types.Skin;
 
 public class DtoSkin {
 	public int id;
-	public int skeletonId;
 	public String name;
 	
 	public Skin toSkin() {

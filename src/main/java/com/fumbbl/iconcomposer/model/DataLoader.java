@@ -52,8 +52,8 @@ public class DataLoader {
 		return gson.fromJson(content, skinListType);
 	}
 
-	public Collection<DtoDiagram> getDiagrams(int skeletonId) {
-		String content = apiClient.get("/iconskeleton/diagrams/" + skeletonId);
+	public Collection<DtoDiagram> getDiagrams(Skeleton skeleton) {
+		String content = apiClient.get("/iconskeleton/diagrams/" + skeleton.id);
 		return gson.fromJson(content, diagramListType);
 	}
 
@@ -120,6 +120,21 @@ public class DataLoader {
 				String content = apiClient.post("/iconskeleton/create", params, true);
 				int skeletonId = gson.fromJson(content, Integer.class);
 				skeleton.id = skeletonId;
+			}
+		};
+		controller.runInBackground(task);
+	}
+
+	public void setPerspective(Position position, Skeleton skeleton, Perspective perspective)
+	{
+		Runnable task = new Runnable() {
+			@Override
+			public void run() {
+				Map<String, String> params = new HashMap<String, String>();
+				params.put("skeletonId", Integer.toString(skeleton.id));
+				params.put("perspective", perspective.name());
+				params.put("positionId", Integer.toString(position.id));
+				String content = apiClient.post("/iconskeleton/setPerspective", params, true);
 			}
 		};
 		controller.runInBackground(task);
@@ -201,7 +216,7 @@ public class DataLoader {
 				params.put("y", Double.toString(diagram.y));
 				params.put("width", Double.toString(diagram.width));
 				params.put("height", Double.toString(diagram.height));
-				params.put("svg", diagram.getImage().getName());
+				params.put("svg", diagram.name);
 				String content = apiClient.post("/iconskeleton/setDiagram", params, true);
 				diagram.id = gson.fromJson(content, Integer.class);
 			}
@@ -227,7 +242,6 @@ public class DataLoader {
 			public void run() {
 				Map<String, String> params = new HashMap<String, String>();
 				params.put("skinId", Integer.toString(skin.id));
-				params.put("skeletonId", Integer.toString(skin.skeleton.id));
 				params.put("positionId", Integer.toString(position.id));
 				params.put("name", skin.getName());
 				

@@ -5,12 +5,12 @@ import java.util.Map;
 public class Skin extends NamedItem {
 	public int id;
 	public String name;
-	public Skeleton skeleton;
-	
-	public Map<Slot,Diagram> diagrams;
-	
+
+	public Map<Slot, VirtualDiagram> diagrams;
+	public Position position;
+
 	public Skin() {
-		diagrams = new HashMap<Slot,Diagram>();
+		diagrams = new HashMap<Slot, VirtualDiagram>();
 	}
 	
 	@Override
@@ -23,11 +23,11 @@ public class Skin extends NamedItem {
 		this.name = newName;
 	}
 
-	public void setDiagram(Slot slot, Diagram diagram) {
+	public void setDiagram(Slot slot, VirtualDiagram diagram) {
 		diagrams.put(slot, diagram);
 	}
 
-	public Diagram getDiagram(Slot slot) {
+	public VirtualDiagram getDiagram(Slot slot) {
 		return diagrams.get(slot);
 	}
 

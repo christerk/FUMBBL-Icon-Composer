@@ -1,10 +1,6 @@
 package com.fumbbl.iconcomposer.model;
 
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import com.fumbbl.iconcomposer.ColourTheme;
@@ -30,7 +26,7 @@ public class DataStore {
 	public DataStore() {
 		//skins = new HashMap<Integer,Skin>();
 		skeletons = new LinkedList<Skeleton>();
-		diagrams = new HashMap<String,Diagram>();
+		diagrams = new HashMap<>();
 		colourThemes = new HashMap<String,ColourTheme>();
 		images = new HashMap<String,NamedImage>();
 		skins = new HashMap<Integer,Skin>();
@@ -58,7 +54,7 @@ public class DataStore {
 	 */
 
 	public void addImage(NamedImage image) {
-		images.put(image.getName(), image);
+		images.put(image.getName().toLowerCase(), image);
 	}
 
 	public Collection<NamedImage> getImages() {
@@ -66,37 +62,32 @@ public class DataStore {
 	}
 
 	public NamedItem getImage(String name) {
-		return images.get(name);
+		return images.get(name.toLowerCase());
 	}
 
 	/*
 	 * Diagram
 	 */
 	
-	public Diagram getDiagram(String image) {
-		return diagrams.get(image);
+	public Diagram getDiagram(int skeletonId, String image) {
+		return diagrams.get(skeletonId+"::"+image.toLowerCase());
 	}
 	
-	public void addDiagram(String name, Diagram diagram) {
-		diagrams.put(name, diagram);
+	public void addDiagram(Skeleton skeleton, String name, Diagram diagram) {
+		diagrams.put(skeleton.id+"::"+name.toLowerCase(), diagram);
 	}
 
 	public Collection<String> getDiagramNames() {
 		return diagrams.keySet();
-	}
-	
-	public Collection<Diagram> getDiagrams() {
-		return diagrams.values();
 	}
 
 	public void clearDiagrams() {
 		diagrams.clear();
 	}
 
-	public void setDiagrams(Collection<Diagram> diagrams) {
-		this.diagrams.clear();
-		for (Diagram d : diagrams) {
-			this.diagrams.put(d.getName(), d);
+	public void setDiagrams(int skeletonId, Collection<Diagram> newDiagrams) {
+		for (Diagram d : newDiagrams) {
+			diagrams.put(skeletonId+"::"+d.name.toLowerCase(), d);
 		}
 	}
 	

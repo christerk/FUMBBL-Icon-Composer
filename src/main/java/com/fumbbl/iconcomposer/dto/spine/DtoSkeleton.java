@@ -7,5 +7,6 @@ public class DtoSkeleton {
     public double y;
     public double width;
     public double height;
+    public String images;
     public String audio;
 }

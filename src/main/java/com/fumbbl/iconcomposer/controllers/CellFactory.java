@@ -2,6 +2,9 @@ package com.fumbbl.iconcomposer.controllers;
 
 import com.fumbbl.iconcomposer.model.types.NamedItem;
 
+import com.fumbbl.iconcomposer.ui.MenuType;
+import javafx.scene.control.ContextMenu;
+import javafx.scene.control.Control;
 import javafx.scene.control.ListCell;
 import javafx.scene.control.ListView;
 import javafx.scene.control.cell.TextFieldListCell;
@@ -19,10 +22,10 @@ public class CellFactory<T extends NamedItem> {
 		CellFactory.controller = controller;
 	}
 	
-	public void apply(ListView<T> list, Class<T> c) {
+	public void apply(ListView<T> list, Class<T> c, BaseController base) {
 		this.c = c;
 		list.setCellFactory(this.create());
-		
+
 		list.setOnEditStart(event -> {
 		});
 		list.setOnEditCommit(event -> {
@@ -33,7 +36,6 @@ public class CellFactory<T extends NamedItem> {
 		});
 		list.setOnEditCancel(event -> {
 		});
-		
 	}
 	
 	private Callback<ListView<T>,ListCell<T>> create() {
@@ -45,6 +47,7 @@ public class CellFactory<T extends NamedItem> {
 					
 					if (empty || item == null) {
 						setText(null);
+						setContextMenu(null);
 					} else {
 						setText(item.getName());
 					}

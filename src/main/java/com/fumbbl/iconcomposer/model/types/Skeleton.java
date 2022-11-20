@@ -1,5 +1,7 @@
 package com.fumbbl.iconcomposer.model.types;
 
+import com.fumbbl.iconcomposer.model.Perspective;
+
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -8,6 +10,7 @@ import java.util.Map;
 public class Skeleton extends NamedItem {
 	public int id;
 	public String name;
+	public Perspective perspective;
 
 	private Map<String,Bone> bones;
 	private Map<String,Slot> slots;
@@ -20,6 +23,7 @@ public class Skeleton extends NamedItem {
 		bones = new HashMap<String,Bone>();
 		slots = new HashMap<String,Slot>();
 		id = -1;
+		perspective = Perspective.Unknown;
 	}
 	
 	public void setBones(Collection<Bone> bones) {

@@ -1,6 +1,7 @@
 package com.fumbbl.iconcomposer.ui;
 
 import java.io.IOException;
+import java.net.URL;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -9,16 +10,21 @@ import com.fumbbl.iconcomposer.controllers.BaseController;
 import com.fumbbl.iconcomposer.controllers.Controller;
 import com.fumbbl.iconcomposer.controllers.ControllerManager;
 import com.fumbbl.iconcomposer.model.Model;
+import com.sun.applet2.AppletParameters;
+import javafx.fxml.FXMLLoader;
+import javafx.scene.control.ContextMenu;
 
 public class StageManager {
 
+	private final Controller controller;
 	private Map<StageType,BaseStage> stages;
-	
+
 	public StageManager(Model model, Controller controller, ControllerManager controllerManager) throws IOException {
 		stages = new HashMap<StageType,BaseStage>();
-		
+		this.controller = controller;
+
 		controller.setStageManager(this);
-		
+
 		stages.put(StageType.main, new MainStage());
 		stages.put(StageType.prefs, new PrefsStage());
 		stages.put(StageType.openRoster, new OpenRosterStage());
@@ -37,7 +43,7 @@ public class StageManager {
 			}
 		}
 	}
-	
+
 	public void show(StageType type) {
 		stages.get(type).show();
 	}
