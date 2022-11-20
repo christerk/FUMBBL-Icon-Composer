@@ -54,15 +54,19 @@ public class MainController extends BaseController implements Initializable {
 	public Tab diagramTab;
 	public Tab previewTab;
 
+	public ImageView primaryLine;
 	public ImageView primaryLo;
 	public ImageView primaryMid;
 	public ImageView primaryHi;
+	public ImageView secondaryLine;
 	public ImageView secondaryLo;
 	public ImageView secondaryMid;
 	public ImageView secondaryHi;
+	public ImageView hairLine;
 	public ImageView hairLo;
 	public ImageView hairMid;
 	public ImageView hairHi;
+	public ImageView skinLine;
 	public ImageView skinLo;
 	public ImageView skinMid;
 	public ImageView skinHi;
@@ -165,6 +169,7 @@ public class MainController extends BaseController implements Initializable {
 				controller.loadPosition(newValue.id);
 				skeletonPane.setExpanded(true);
 				positionPane.setText("Positions - " + newValue.getName());
+				controller.viewState.setActivePosition(newValue);
 			} else {
 				positionPane.setText("Positions");
 			}
@@ -218,15 +223,16 @@ public class MainController extends BaseController implements Initializable {
 		double y = e.getY();
 		MouseButton button = e.getButton();
 
+		Position p = controller.viewState.getActivePosition();
 		Diagram d = controller.viewState.getActiveDiagram(perspective);
 		ColourType type = controller.viewState.getActiveColourType();
 		
 		if (button == MouseButton.PRIMARY && controller != null && type != null) {
-			Color c = controller.viewState.getPixelRGB(Perspective.Front, (int)x, (int)y);
+			Color c = controller.viewState.getPixelRGB(perspective, (int)x, (int)y);
 			
-			d.templateColours.setColour(type, c);
+			p.templateColours.setColour(type, c);
 			d.refreshColours(d.getImage());
-			controller.onColourThemeChanged(d.templateColours);
+			controller.onColourThemeChanged(p.templateColours);
 		} else if (button == MouseButton.SECONDARY) {
 			Point2D point = controller.getRenderer().getImageOffset(x, y);
 			d.x = point.getX();
@@ -238,11 +244,10 @@ public class MainController extends BaseController implements Initializable {
 	public void activateColour(MouseEvent e) {
 		controller.viewState.setActiveColourType(ColourType.fromString(((ImageView)e.getSource()).getId()));
 		if (e.getButton() == MouseButton.SECONDARY) {
-			Diagram d = controller.viewState.getActiveDiagram(Perspective.Front);
+			Position p = controller.viewState.getActivePosition();
 			ColourType type = controller.viewState.getActiveColourType();
-			d.templateColours.resetColour(type);
-			d.refreshColours(d.getImage());
-			controller.onColourThemeChanged(d.templateColours);
+			p.templateColours.resetColour(type);
+			controller.onColourThemeChanged(p.templateColours);
 		}
 	}
 
@@ -309,18 +314,22 @@ public class MainController extends BaseController implements Initializable {
 		if (t == null) {
 			return;
 		}
+		setImageColour(primaryLine, t, ColourType.PRIMARYLINE);
 		setImageColour(primaryLo, t, ColourType.PRIMARYLO);
 		setImageColour(primaryMid, t, ColourType.PRIMARY);
 		setImageColour(primaryHi, t, ColourType.PRIMARYHI);
 
+		setImageColour(secondaryLine, t, ColourType.SECONDARYLINE);
 		setImageColour(secondaryLo, t, ColourType.SECONDARYLO);
 		setImageColour(secondaryMid, t, ColourType.SECONDARY);
 		setImageColour(secondaryHi, t, ColourType.SECONDARYHI);
 
+		setImageColour(skinLine, t, ColourType.SKINLINE);
 		setImageColour(skinLo, t, ColourType.SKINLO);
 		setImageColour(skinMid, t, ColourType.SKIN);
 		setImageColour(skinHi, t, ColourType.SKINHI);
 
+		setImageColour(hairLine, t, ColourType.HAIRLINE);
 		setImageColour(hairLo, t, ColourType.HAIRLO);
 		setImageColour(hairMid, t, ColourType.HAIR);
 		setImageColour(hairHi, t, ColourType.HAIRHI);
@@ -392,6 +401,7 @@ public class MainController extends BaseController implements Initializable {
 			public void handle(ActionEvent event) {
 				String theme = ((MenuItem) event.getSource()).getText();
 				controller.setColourTheme(theme);
+				renderPreview();
 			}
 		};
 		for (ColourTheme s : themes) {
@@ -470,6 +480,8 @@ public class MainController extends BaseController implements Initializable {
 
 	public void onPositionChanged(Position position) {
 		controller.loadSkeletons(position.id);
+		controller.viewState.setActiveColourTheme(position.templateColours);
+		controller.onColourThemeChanged(position.templateColours);
 	}
 	
 	public void onSkeletonsChanged(Collection<Skeleton> skeletons) {
@@ -498,7 +510,6 @@ public class MainController extends BaseController implements Initializable {
 
 	public void renderPreview() {
 		controller.displayPreview();
-		tabs.getSelectionModel().select(previewTab);
 	}
 
 	public Collection<VirtualDiagram> getDiagrams(Slot slot) {

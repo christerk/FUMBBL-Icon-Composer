@@ -8,6 +8,7 @@ import java.util.HashMap;
 import com.fumbbl.iconcomposer.ColourTheme.ColourType;
 import com.fumbbl.iconcomposer.model.Perspective;
 import com.fumbbl.iconcomposer.model.types.Diagram;
+import com.fumbbl.iconcomposer.model.types.Position;
 import com.fumbbl.iconcomposer.model.types.Skeleton;
 import com.fumbbl.iconcomposer.model.types.Skin;
 
@@ -20,8 +21,15 @@ public class ViewState {
 	private HashMap<Perspective, Diagram> activeDiagrams;
 	private ColourTheme activeColourTheme;
 	private HashMap<Perspective, Skeleton> activeSkeletons;
-	private HashMap<Perspective, BufferedImage> diagramImages;
-	private HashMap<Perspective, BufferedImage> skeletonImages;
+	private Position activePosition;
+
+	public Position getActivePosition() {
+		return activePosition;
+	}
+
+	public void setActivePosition(Position position) {
+		this.activePosition = position;
+	}
 
 	private enum ImageType {
 		SkeletonFront,
@@ -62,13 +70,6 @@ public class ViewState {
     public ViewState() {
 		activeSkeletons = new HashMap<>();
 		activeDiagrams = new HashMap<>();
-		diagramImages = new HashMap<>();
-		skeletonImages = new HashMap<>();
-
-		diagramImages.put(Perspective.Front, new BufferedImage(480, 480, BufferedImage.TYPE_INT_ARGB));
-		diagramImages.put(Perspective.Side, new BufferedImage(480, 480, BufferedImage.TYPE_INT_ARGB));
-		skeletonImages.put(Perspective.Front, new BufferedImage(480, 480, BufferedImage.TYPE_INT_ARGB));
-		skeletonImages.put(Perspective.Side, new BufferedImage(480, 480, BufferedImage.TYPE_INT_ARGB));
 
 		imageData = new HashMap<>();
 		imageData.put(ImageType.DiagramFront, new ImageData(480));
@@ -103,7 +104,7 @@ public class ViewState {
 	}
 
 	public Color getPixelRGB(Perspective perspective, int x, int y) {
-		int col = diagramImages.get(perspective).getRGB(x, y);
+		int col = imageData.get(ImageType.getDiagram(perspective)).image.getRGB(x, y);
 		int r = (col&0xff0000) >> 16;
 		int g = (col&0x00ff00) >> 8;
 		int b = (col&0x0000ff);

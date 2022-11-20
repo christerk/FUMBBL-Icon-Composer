@@ -8,41 +8,51 @@ import java.util.Map;
 import com.google.gson.annotations.Expose;
 
 public class ColourTheme {
-	public enum ColourType {
+    public enum ColourType {
 		NONE,
 		PRIMARY,
 		PRIMARYHI,
 		PRIMARYLO,
+		PRIMARYLINE,
 		SECONDARY,
 		SECONDARYHI,
 		SECONDARYLO,
+		SECONDARYLINE,
 		SKIN,
 		SKINHI,
 		SKINLO,
+		SKINLINE,
 		HAIR,
 		HAIRHI,
-		HAIRLO;
+		HAIRLO,
+		HAIRLINE;
 
 		public static ColourType fromString(String activeColour) {
 			switch (activeColour) {
+			case "primaryLine":
+				return PRIMARYLINE;
 			case "primaryLo":
 				return PRIMARYLO;
 			case "primaryMid":
 				return PRIMARY;
 			case "primaryHi":
 				return PRIMARYHI;
-			case "secondaryLo":
-				return SECONDARYLO;
+			case "secondaryLine":
+				return SECONDARYLINE;
 			case "secondaryMid":
 				return SECONDARY;
 			case "secondaryHi":
 				return SECONDARYHI;
+			case "skinLine":
+				return SKINLINE;
 			case "skinLo":
 				return SKINLO;
 			case "skinMid":
 				return SKIN;
 			case "skinHi":
 				return SKINHI;
+			case "hairLine":
+				return HAIRLINE;
 			case "hairLo":
 				return HAIRLO;
 			case "hairMid":
@@ -57,17 +67,20 @@ public class ColourTheme {
 	}
 	
 	public final String name;
-	
+
+
 	@Expose
 	private Map<ColourType,String> colourStringMap;
 	private Map<String,ColourType> reverseMap;
 	private Map<ColourType,Color> colourMap;
-	
+	private Map<Integer,ColourType> intMap;
+
 	public ColourTheme(String name) {
 		this.name = name;
 		colourStringMap = new HashMap<ColourType,String>();
 		colourMap = new HashMap<ColourType,Color>();
 		reverseMap = new HashMap<String,ColourType>();
+		intMap = new HashMap<>();
 	}
 
 	public void setColour(ColourType type, Color c) {
@@ -75,16 +88,28 @@ public class ColourTheme {
 		colourStringMap.put(type, colour);
 		colourMap.put(type, c);
 		reverseMap.put(colour, type);
-		
+		intMap.put(c.getRGB(), type);
 	}
 	
 	public void setColour(ColourType type, int r, int g, int b) {
 		String colour = "rgb("+r+","+g+","+b+")";
+		Color c = new Color(r,g,b);
 		colourStringMap.put(type, colour);
-		colourMap.put(type, new Color(r,g,b));
+		colourMap.put(type, c);
 		reverseMap.put(colour, type);
+		intMap.put(c.getRGB(), type);
 	}
-	
+
+	public int map(int pixel, ColourTheme target) {
+		if (intMap.containsKey(pixel)) {
+			Color newColor = target.getColour(intMap.get(pixel));
+			if (newColor != null) {
+				return newColor.getRGB();
+			}
+		}
+		return pixel;
+	}
+
 	public ColourType getTypeFor(String colour) {
 		return reverseMap.get(colour);
 	}

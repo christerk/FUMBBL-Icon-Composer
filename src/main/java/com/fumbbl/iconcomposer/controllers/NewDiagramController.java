@@ -6,7 +6,6 @@ import java.util.ResourceBundle;
 
 import com.fumbbl.iconcomposer.model.types.NamedImage;
 import com.fumbbl.iconcomposer.model.types.NamedItem;
-import com.fumbbl.iconcomposer.model.types.NamedSVG;
 import com.fumbbl.iconcomposer.ui.StageType;
 
 import javafx.collections.ObservableList;

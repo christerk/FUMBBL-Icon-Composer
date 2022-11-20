@@ -1,7 +1,6 @@
 package com.fumbbl.iconcomposer.image;
 
 import com.fumbbl.iconcomposer.model.Perspective;
-import com.kitfox.svg.SVGException;
 
 import java.awt.*;
 import java.awt.geom.AffineTransform;
@@ -24,15 +23,10 @@ public class ImageRenderer {
 
         g2.translate((renderer.width/scale - image.getWidth()) / 2, (renderer.height/scale - image.getHeight())/2);
 
-        try {
-            renderImage(g2, image);
-        } catch (SVGException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
-        }
+        renderImage(g2, image);
     }
 
-    public void renderImage(Graphics2D g2, BufferedImage image) throws SVGException {
+    public void renderImage(Graphics2D g2, BufferedImage image) {
         if (image == null) {
             return;
         }

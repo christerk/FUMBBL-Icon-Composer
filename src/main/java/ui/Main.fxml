@@ -3,6 +3,7 @@
 <?import javafx.geometry.Insets?>
 <?import javafx.geometry.Rectangle2D?>
 <?import javafx.scene.control.Accordion?>
+<?import javafx.scene.control.Button?>
 <?import javafx.scene.control.ChoiceBox?>
 <?import javafx.scene.control.ContextMenu?>
 <?import javafx.scene.control.Label?>
@@ -239,6 +240,7 @@
                                                       <FlowPane GridPane.rowIndex="1">
                                                          <children>
                                                             <Label maxWidth="75.0" minWidth="75.0" prefWidth="75.0" text="Primary" />
+                                                            <ImageView fx:id="primaryLine" fitHeight="20.0" fitWidth="20.0" layoutX="95.0" layoutY="15.0" onMouseClicked="#activateColour" pickOnBounds="true" preserveRatio="true" />
                                                             <ImageView fx:id="primaryLo" fitHeight="20.0" fitWidth="20.0" onMouseClicked="#activateColour" pickOnBounds="true" preserveRatio="true">
                                                                <FlowPane.margin>
                                                                   <Insets bottom="5.0" left="10.0" top="5.0" />
@@ -259,6 +261,7 @@
                                                       <FlowPane layoutX="10.0" layoutY="5.0" GridPane.rowIndex="2">
                                                          <children>
                                                             <Label maxWidth="75.0" minWidth="75.0" prefWidth="75.0" text="Secondary" />
+                                                            <ImageView fx:id="secondaryLine" fitHeight="20.0" fitWidth="20.0" layoutX="95.0" layoutY="15.0" onMouseClicked="#activateColour" pickOnBounds="true" preserveRatio="true" />
                                                             <ImageView fx:id="secondaryLo" fitHeight="20.0" fitWidth="20.0" onMouseClicked="#activateColour" pickOnBounds="true" preserveRatio="true">
                                                                <FlowPane.margin>
                                                                   <Insets bottom="5.0" left="10.0" top="5.0" />
@@ -279,6 +282,7 @@
                                                       <FlowPane layoutX="10.0" layoutY="15.0" GridPane.columnIndex="1" GridPane.rowIndex="1">
                                                          <children>
                                                             <Label text="Skin" />
+                                                            <ImageView fx:id="skinLine" fitHeight="20.0" fitWidth="20.0" layoutX="52.0" layoutY="10.0" onMouseClicked="#activateColour" pickOnBounds="true" preserveRatio="true" />
                                                             <ImageView fx:id="skinLo" fitHeight="20.0" fitWidth="20.0" onMouseClicked="#activateColour" pickOnBounds="true" preserveRatio="true">
                                                                <FlowPane.margin>
                                                                   <Insets left="10.0" />
@@ -299,6 +303,7 @@
                                                       <FlowPane layoutX="250.0" layoutY="15.0" GridPane.columnIndex="1" GridPane.rowIndex="2">
                                                          <children>
                                                             <Label text="Hair" />
+                                                            <ImageView fx:id="hairLine" fitHeight="20.0" fitWidth="20.0" layoutX="52.0" layoutY="10.0" onMouseClicked="#activateColour" pickOnBounds="true" preserveRatio="true" />
                                                             <ImageView fx:id="hairLo" fitHeight="20.0" fitWidth="20.0" onMouseClicked="#activateColour" pickOnBounds="true" preserveRatio="true">
                                                                <FlowPane.margin>
                                                                   <Insets left="10.0" />
@@ -333,9 +338,10 @@
                         <content>
                           <AnchorPane maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" minHeight="0.0" minWidth="0.0" style="-fx-background-color: rgb(60,63,69);">
                                  <children>
-                                    <VBox alignment="CENTER" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
+                                    <VBox alignment="CENTER" spacing="10.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
                                        <children>
                                           <ImageView fx:id="preview" fitHeight="265.0" fitWidth="915.0" pickOnBounds="true" preserveRatio="true" />
+                                          <Button mnemonicParsing="false" onAction="#renderPreview" text="Randomize" />
                                        </children>
                                     </VBox>
                                  </children>

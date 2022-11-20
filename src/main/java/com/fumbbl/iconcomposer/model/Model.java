@@ -18,11 +18,8 @@ import com.fumbbl.iconcomposer.dto.fumbbl.DtoDiagram;
 import com.fumbbl.iconcomposer.dto.fumbbl.DtoRoster;
 import com.fumbbl.iconcomposer.dto.fumbbl.DtoRuleset;
 import com.fumbbl.iconcomposer.dto.fumbbl.DtoSkeleton;
-import com.fumbbl.iconcomposer.dto.fumbbl.DtoSkin;
 import com.fumbbl.iconcomposer.dto.fumbbl.DtoSlot;
 import com.fumbbl.iconcomposer.model.types.*;
-import com.fumbbl.iconcomposer.image.SVGLoader;
-import com.kitfox.svg.SVGDiagram;
 
 import javafx.application.Platform;
 
@@ -33,14 +30,12 @@ public class Model {
 	
 	private Config cfg;
 	private DataLoader dataLoader;
-	private SVGLoader svgLoader;
-	
+
 	private Controller controller;
     
 	public Model() {
 		dataStore = new DataStore();
 		cfg = new Config();
-		svgLoader = new SVGLoader();
 		dataLoader = new DataLoader(cfg);
 	}
 	
@@ -61,21 +56,7 @@ public class Model {
 			}
 		};
 	}
-	private Runnable importSvg(Path path) throws FileNotFoundException, IOException {
-		String fileId = stripExtension(path.getFileName());
 
-		SVGDiagram svg = svgLoader.loadSVG(path);
-		
-		dataStore.addImage(new NamedSVG(fileId, svg));
-		return new Runnable() {
-
-			@Override
-			public void run() {
-				controller.onImagesChanged(dataStore.getImages());
-			}
-		};
-	}
-	
 	private String stripExtension(Path filename) {
 		String s = filename.toString();
 		
@@ -139,7 +120,6 @@ public class Model {
 		for (DtoDiagram d : diagrams) {
 			Diagram diagram = diagramMap.get(d.id);
 			diagram.setSlot(dataStore.getSlot(d.slotId));
-			diagram.templateColours = new ColourTheme("template");
 		}
 
 		dataStore.setDiagrams(skeleton.id, diagramMap.values());
@@ -182,19 +162,23 @@ public class Model {
 		homeColours.setColour(ColourType.PRIMARY, 255, 0, 0);
 		homeColours.setColour(ColourType.PRIMARYHI, 255, 128, 128);
 		homeColours.setColour(ColourType.PRIMARYLO, 128, 0, 0);
-		
+		homeColours.setColour(ColourType.PRIMARYLINE, 64, 0, 0);
+
 		homeColours.setColour(ColourType.SECONDARY, 166, 172, 186);
 		homeColours.setColour(ColourType.SECONDARYHI, 183, 190, 201);
 		homeColours.setColour(ColourType.SECONDARYLO, 139, 141, 153);
+		homeColours.setColour(ColourType.SECONDARYLINE, 69, 71, 78);
 
 		ColourTheme awayColours = new ColourTheme("away");
 		awayColours.setColour(ColourType.PRIMARY, 0, 0, 255);
 		awayColours.setColour(ColourType.PRIMARYHI, 128, 128, 255);
 		awayColours.setColour(ColourType.PRIMARYLO, 0, 0, 128);
-		
+		awayColours.setColour(ColourType.PRIMARYLINE, 0, 0, 64);
+
 		awayColours.setColour(ColourType.SECONDARY, 239, 193, 112);
 		awayColours.setColour(ColourType.SECONDARYHI, 194, 153, 92);
 		awayColours.setColour(ColourType.SECONDARYLO, 141, 109, 72);
+		awayColours.setColour(ColourType.SECONDARYLINE, 70, 54, 36);
 
 		ColourTheme templateColours = new ColourTheme("template");
 		
