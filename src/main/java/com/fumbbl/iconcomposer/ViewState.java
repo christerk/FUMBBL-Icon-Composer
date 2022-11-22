@@ -128,8 +128,8 @@ public class ViewState {
 		activeColourTheme = colourTheme;
 	}
 
-	public void setActiveSkeleton(Perspective perspective, Skeleton skeleton) {
-		activeSkeletons.put(perspective, skeleton);
+	public void setActiveSkeleton(Skeleton skeleton) {
+		activeSkeletons.put(skeleton.perspective, skeleton);
 	}
 
 	public ColourTheme getActiveColourTheme() {

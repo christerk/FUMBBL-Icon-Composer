@@ -3,8 +3,9 @@ package com.fumbbl.iconcomposer.model.types;
 import java.util.Comparator;
 
 import com.fumbbl.iconcomposer.controllers.Controller;
+import javafx.scene.control.TreeItem;
 
-public abstract class NamedItem {
+public class NamedItem {
 	public static Comparator<? super NamedItem> Comparator = new Comparator<NamedItem>() {
 		@Override
 		public int compare(NamedItem o1, NamedItem o2) {
@@ -13,10 +14,23 @@ public abstract class NamedItem {
 		
 	};
 
-	public void onRenamed(Controller controller) {
-		controller.onItemRenamed(this);
+	public static Comparator<TreeItem<NamedItem>> TreeItemComparator = new Comparator<TreeItem<NamedItem>>() {
+		@Override
+		public int compare(TreeItem<NamedItem> o1, TreeItem<NamedItem> o2) {
+			return NamedItem.Comparator.compare(o1.getValue(), o2.getValue());
+		}
+	};
+
+	private String name;
+
+	public void onRenamed(Controller controller, String oldName) {
+		controller.onItemRenamed(this, oldName);
 	}
 	
-	public abstract String getName();
-	public abstract void setName(String newName);
+	public String getName() {
+		return this.name;
+	}
+	public void setName(String newName) {
+		this.name = newName;
+	}
 }

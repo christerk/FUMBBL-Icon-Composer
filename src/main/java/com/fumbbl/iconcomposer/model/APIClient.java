@@ -77,7 +77,9 @@ public class APIClient {
 			}
 			postData.append(URLEncoder.encode(param.getKey(), "UTF-8"));
 			postData.append('=');
-			postData.append(URLEncoder.encode(param.getValue(), "UTF-8"));
+			if (param.getValue() != null) {
+				postData.append(URLEncoder.encode(param.getValue(), "UTF-8"));
+			}
 		}
 		byte[] postDataBytes = postData.toString().getBytes("UTF-8");
 		return postDataBytes;

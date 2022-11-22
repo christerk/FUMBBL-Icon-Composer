@@ -162,9 +162,9 @@ public class Controller extends BaseController {
 		viewState.setActiveColourTheme(model.getColourTheme(theme));
 	}
 	
-	public void setSkeleton(Perspective perspective, Skeleton skeleton) {
-		model.setPerspective(skeleton, perspective);
-		viewState.setActiveSkeleton(perspective, skeleton);
+	public void setSkeleton(Skeleton skeleton) {
+		model.setPerspective(skeleton);
+		viewState.setActiveSkeleton(skeleton);
 	}
 
 	public ColourTheme getColourTheme() {
@@ -291,8 +291,8 @@ public class Controller extends BaseController {
 		controllerManager.getMain().onProgressStart(description);
 	}
 
-	public void onItemRenamed(NamedItem item) {
-		model.onItemRenamed(item);
+	public void onItemRenamed(NamedItem item, String oldName) {
+		model.onItemRenamed(item, oldName);
 	}
 
 	public void startBatch() {
@@ -305,5 +305,9 @@ public class Controller extends BaseController {
 
 	public void clearDiagrams() {
 		model.clearDiagrams();
+	}
+
+	public Collection<NamedImage> getImagesForDiagram(VirtualDiagram d) {
+		return model.getImagesForDiagram(d);
 	}
 }

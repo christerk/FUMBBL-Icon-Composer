@@ -84,6 +84,7 @@ public class ColourTheme {
 	}
 
 	public void setColour(ColourType type, Color c) {
+		resetColour(type);
 		String colour = "rgb("+c.getRed()+","+c.getGreen()+","+c.getBlue()+")";
 		colourStringMap.put(type, colour);
 		colourMap.put(type, c);
@@ -94,10 +95,7 @@ public class ColourTheme {
 	public void setColour(ColourType type, int r, int g, int b) {
 		String colour = "rgb("+r+","+g+","+b+")";
 		Color c = new Color(r,g,b);
-		colourStringMap.put(type, colour);
-		colourMap.put(type, c);
-		reverseMap.put(colour, type);
-		intMap.put(c.getRGB(), type);
+		setColour(type, c);
 	}
 
 	public int map(int pixel, ColourTheme target) {
@@ -128,6 +126,9 @@ public class ColourTheme {
 			reverseMap.remove(current);
 		}
 		colourStringMap.remove(type);
-		colourMap.remove(type);
+		Color c = colourMap.remove(type);
+		if (c != null) {
+			intMap.remove(c.getRGB());
+		}
 	}
 }

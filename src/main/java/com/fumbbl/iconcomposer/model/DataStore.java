@@ -11,11 +11,11 @@ public class DataStore {
 	//private Map<Integer,Skin> skins;
 	private List<Skeleton> skeletons;
 	@Expose
-	private Map<String,Diagram> diagrams;
+	private Map<Integer, Map<String,Diagram>> diagrams;
 	@Expose
 	private Map<String,ColourTheme> colourThemes;
 
-	private Map<String, NamedImage> images;
+	private Map<String, NamedPng> images;
 	private Ruleset ruleset;
 	private Position position;
 	
@@ -28,7 +28,7 @@ public class DataStore {
 		skeletons = new LinkedList<Skeleton>();
 		diagrams = new HashMap<>();
 		colourThemes = new HashMap<String,ColourTheme>();
-		images = new HashMap<String,NamedImage>();
+		images = new HashMap<>();
 		skins = new HashMap<Integer,Skin>();
 		slots = new HashMap<Integer,Slot>();
 		bones = new HashMap<Integer,Bone>();
@@ -53,12 +53,12 @@ public class DataStore {
 	 * Image
 	 */
 
-	public void addImage(NamedImage image) {
+	public void addImage(NamedPng image) {
 		images.put(image.getName().toLowerCase(), image);
 	}
 
 	public Collection<NamedImage> getImages() {
-		return images.values();
+		return images.values().stream().collect(Collectors.toList());
 	}
 
 	public NamedItem getImage(String name) {
@@ -68,17 +68,32 @@ public class DataStore {
 	/*
 	 * Diagram
 	 */
-	
+
+	private Map<String, Diagram> getDiagramsForSkeleton(int skeletonId) {
+		Map<String, Diagram> result;
+		if (!diagrams.containsKey(skeletonId)) {
+			result = new HashMap<>();
+			diagrams.put(skeletonId, result);
+		} else {
+			result = diagrams.get(skeletonId);
+		}
+
+		return result;
+	}
+
 	public Diagram getDiagram(int skeletonId, String image) {
-		return diagrams.get(skeletonId+"::"+image.toLowerCase());
+		return getDiagramsForSkeleton(skeletonId).get(image.toLowerCase());
 	}
 	
 	public void addDiagram(Skeleton skeleton, String name, Diagram diagram) {
-		diagrams.put(skeleton.id+"::"+name.toLowerCase(), diagram);
+		getDiagramsForSkeleton(skeleton.id).put(name.toLowerCase(), diagram);
 	}
 
 	public Collection<String> getDiagramNames() {
-		return diagrams.keySet();
+		HashSet<String> result = new HashSet<>();
+
+		diagrams.forEach((skeletonId, map) -> result.addAll(map.keySet()));
+		return result;
 	}
 
 	public void clearDiagrams() {
@@ -86,11 +101,50 @@ public class DataStore {
 	}
 
 	public void setDiagrams(int skeletonId, Collection<Diagram> newDiagrams) {
-		for (Diagram d : newDiagrams) {
-			diagrams.put(skeletonId+"::"+d.name.toLowerCase(), d);
+		Map<String,Diagram> skeletonDiagrams = getDiagramsForSkeleton(skeletonId);
+
+		newDiagrams.forEach(d -> skeletonDiagrams.put(d.name.toLowerCase(), d));
+	}
+
+	private void renameDiagramImages(String prefix, String oldName, String newName) {
+		String oldKey = prefix+oldName.toLowerCase();
+		String newKey = prefix+newName.toLowerCase();
+
+		if (images.containsKey(oldKey)) {
+			NamedPng image = images.remove(oldKey);
+			image.setName(prefix+newName);
+			images.put(newKey, image);
 		}
 	}
-	
+
+	public void renameDiagramImages(String oldName, String newName) {
+		renameDiagramImages("front_", oldName, newName);
+		renameDiagramImages("side_", oldName, newName);
+	}
+
+	public void renameImage(String oldName, String newName) {
+		String oldKey = oldName.toLowerCase();
+		String newKey = newName.toLowerCase();
+
+		if (images.containsKey(oldKey)) {
+			NamedPng image = images.remove(oldKey);
+			image.setName(newName);
+			images.put(newKey, image);
+		}
+	}
+
+	public void renameDiagram(String oldName, String name) {
+		String oldKey = oldName.toLowerCase();
+		String newKey = name.toLowerCase();
+		diagrams.forEach((skeletonId, map) -> {
+			if (map.containsKey(oldKey)) {
+				Diagram d = map.remove(oldKey);
+				d.setName(name);
+				map.put(newKey, d);
+			}
+		});
+	}
+
 	/*
 	 * Skin
 	 */

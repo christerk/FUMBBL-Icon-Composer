@@ -6,5 +6,6 @@ public enum StageType {
 	openRoster,
 	newDiagram,
 	about,
+    rename,
 	licenses
 }

@@ -16,6 +16,9 @@ public class ImageRenderer {
     }
 
     public void renderImage(Perspective perspective, BufferedImage image) {
+        if (image == null) {
+            return;
+        }
         Graphics2D g2 = renderer.controller.viewState.getDiagramGraphics2D(perspective);
         g2.setColor(renderer.renderBackground);
         g2.fillRect(0, 0, renderer.width, renderer.height);

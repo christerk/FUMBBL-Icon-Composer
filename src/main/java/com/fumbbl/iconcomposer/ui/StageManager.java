@@ -13,6 +13,7 @@ import com.fumbbl.iconcomposer.model.Model;
 import com.sun.applet2.AppletParameters;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.control.ContextMenu;
+import javafx.stage.Stage;
 
 public class StageManager {
 
@@ -31,6 +32,7 @@ public class StageManager {
 		stages.put(StageType.newDiagram, new NewDiagramStage());
 		stages.put(StageType.about, new AboutStage());
 		stages.put(StageType.licenses, new LicenseStage());
+		stages.put(StageType.rename, new RenameStage());
 		
 		for (Entry<StageType, BaseStage> entry: stages.entrySet()) {
 			StageType type = entry.getKey();
@@ -45,7 +47,10 @@ public class StageManager {
 	}
 
 	public void show(StageType type) {
-		stages.get(type).show();
+		show(type, null);
+	}
+	public void show(StageType type, Object data) {
+		stages.get(type).show(data);
 	}
 
 	public void hide(StageType type) {

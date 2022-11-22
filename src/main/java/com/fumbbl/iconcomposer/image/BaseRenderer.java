@@ -254,6 +254,10 @@ public class BaseRenderer {
 	private void renderDiagram(Graphics2D g2, Diagram diagram, ColourTheme theme) {
 		BufferedImage image = model.getImage(diagram.perspective.name()+"_"+diagram.getName());
 
+		if (image == null) {
+			return;
+		}
+
 		Position p = controller.viewState.getActivePosition();
 		ColourTheme template = p.templateColours;
 

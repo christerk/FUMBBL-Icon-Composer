@@ -125,14 +125,17 @@ public class DataLoader {
 		controller.runInBackground(task);
 	}
 
-	public void setPerspective(Position position, Skeleton skeleton, Perspective perspective)
+	public void setPerspective(Position position, Skeleton skeleton)
 	{
+		if (skeleton == null) {
+			return;
+		}
 		Runnable task = new Runnable() {
 			@Override
 			public void run() {
 				Map<String, String> params = new HashMap<String, String>();
 				params.put("skeletonId", Integer.toString(skeleton.id));
-				params.put("perspective", perspective.name());
+				params.put("perspective", skeleton.perspective.name());
 				params.put("positionId", Integer.toString(position.id));
 				String content = apiClient.post("/iconskeleton/setPerspective", params, true);
 			}

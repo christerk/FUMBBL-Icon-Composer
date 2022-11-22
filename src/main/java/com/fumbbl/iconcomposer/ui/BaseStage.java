@@ -69,11 +69,21 @@ public class BaseStage {
 	public void setMainController(Controller controller) {
 		this.mainController = controller;
 	}
-	
+
 	public void show() {
+		show(null);
+	}
+	public void show(Object data) {
+		if (data != null) {
+			stage.setUserData(data);
+		}
 		stage.show();
 	}
-	
+
+	public Object getUserData() {
+		return stage.getUserData();
+	}
+
 	public void hide() {
 		stage.hide();
 	}
