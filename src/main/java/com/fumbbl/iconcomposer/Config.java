@@ -8,16 +8,19 @@ public class Config {
 	private String clientSecret;
 
 	private String apiBase;
-	
+	private String siteBase;
+
 	private static final String KEY_CLIENT_ID = "client_id";
 	private static final String KEY_CLIENT_SECRET = "client_secret";
 	private static final String KEY_API_BASE = "api_base";
-	
+	private static final String KEY_SITE_BASE = "site_base";
+
 	public Config() {
 		prefs = Preferences.userNodeForPackage(this.getClass());
 		this.clientId = prefs.get(KEY_CLIENT_ID, "");
 		this.clientSecret = prefs.get(KEY_CLIENT_SECRET, "");
 		this.apiBase = prefs.get(KEY_API_BASE, "https://fumbbl.com/api");
+		this.siteBase = prefs.get(KEY_SITE_BASE, "https://fumbbl.com");
 	}
 
 	public String getClientId() {
@@ -40,5 +43,9 @@ public class Config {
 	
 	public String getApiBase() {
 		return apiBase;
+	}
+
+	public String getSiteBase() {
+		return siteBase;
 	}
 }

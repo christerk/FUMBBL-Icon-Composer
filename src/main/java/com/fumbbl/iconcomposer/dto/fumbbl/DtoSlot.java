@@ -6,7 +6,6 @@ public class DtoSlot {
 	public int id;
 	public int boneId;
 	public String name;
-	public String attachment;
 	public int order;
 	
 	public Slot toSlot() {
@@ -14,7 +13,6 @@ public class DtoSlot {
 		
 		s.id = id;
 		s.name = name;
-		s.attachment = attachment;
 		s.order = order;
 		
 		return s;

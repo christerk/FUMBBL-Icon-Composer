@@ -1,25 +1,25 @@
 package com.fumbbl.iconcomposer.model;
 
+import java.awt.*;
 import java.awt.image.BufferedImage;
+import java.io.ByteArrayInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.PathMatcher;
 import java.nio.file.Paths;
 import java.util.*;
+import java.util.List;
 import java.util.stream.Collectors;
 
 import com.fumbbl.iconcomposer.ColourTheme;
 import com.fumbbl.iconcomposer.ColourTheme.ColourType;
 import com.fumbbl.iconcomposer.Config;
 import com.fumbbl.iconcomposer.controllers.Controller;
-import com.fumbbl.iconcomposer.dto.fumbbl.DtoDiagram;
-import com.fumbbl.iconcomposer.dto.fumbbl.DtoRoster;
-import com.fumbbl.iconcomposer.dto.fumbbl.DtoRuleset;
-import com.fumbbl.iconcomposer.dto.fumbbl.DtoSkeleton;
-import com.fumbbl.iconcomposer.dto.fumbbl.DtoSlot;
+import com.fumbbl.iconcomposer.dto.fumbbl.*;
 import com.fumbbl.iconcomposer.model.types.*;
 
 import javafx.application.Platform;
@@ -44,18 +44,51 @@ public class Model {
 		return cfg;
 	}
 
-	private Runnable importPng(Path path) throws FileNotFoundException, IOException {
+	private Runnable importPng(Path path, byte[] bytes) throws FileNotFoundException, IOException {
 		String fileId = stripExtension(path.getFileName());
+		int diagramId = 0;
 
-		BufferedImage image = ImageIO.read(path.toFile());
+		if (fileId.startsWith("front_")) {
+			fileId = fileId.substring(6);
+			diagramId = getDiagram(Perspective.Front, fileId);
+		} else if (fileId.startsWith("side_")) {
+			fileId = fileId.substring(5);
+			diagramId = getDiagram(Perspective.Side, fileId);
+		}
 
-		dataStore.addImage(new NamedPng(fileId, image));
-		return new Runnable() {
-			@Override
-			public void run() {
-				controller.onImagesChanged(dataStore.getImages());
+		if (diagramId == 0) {
+			return () -> {};
+		}
+
+		InputStream is = new ByteArrayInputStream(bytes);
+		BufferedImage image = ImageIO.read(is);
+
+		NamedPng newImage = new NamedPng(fileId, image);
+		dataStore.addImage(newImage);
+		dataLoader.uploadFile(diagramId, fileId, bytes);
+
+		return () -> controller.addImage(newImage);
+	}
+
+	private void loadImage(Diagram diagram) {
+		dataLoader.loadImage(diagram.imageId, image -> {
+			String prefix = diagram.perspective == Perspective.Front ? "front_" : "side_";
+			NamedPng newImage = new NamedPng(prefix+diagram.getName(), image);
+			dataStore.addImage(newImage);
+			controller.addImage(newImage);
+			return image;
+		});
+	}
+
+	private int getDiagram(Perspective perspective, String slotName) {
+		Skeleton s = controller.viewState.getActiveSkeleton(perspective);
+		if (s != null) {
+			Diagram diagram = controller.getDiagram(s.id, slotName);
+			if (diagram != null) {
+				return diagram.id;
 			}
-		};
+		}
+		return 0;
 	}
 
 	private String stripExtension(Path filename) {
@@ -80,10 +113,12 @@ public class Model {
 		dataStore.clearSkeletons();
 		dataStore.clearDiagrams();
 		dataStore.clearSkins();
-		
-		dataStore.setPosition(dataLoader.getPosition(positionId).toPosition());
-		
+
+		Position position = dataLoader.getPosition(positionId).toPosition();
+		dataStore.setPosition(position);
+
 		controller.onPositionChanged(dataStore.getPosition());
+		controller.viewState.setActivePosition(position);
 	}
 	
 	public Collection<Ruleset> loadRulesets() {
@@ -98,29 +133,39 @@ public class Model {
 		controller.onRulesetLoaded(dataStore.getRuleset());
 	}
 	
-	public void loadSkeletons(int positionId) {
-		Collection<DtoSkeleton> list = dataLoader.getSkeletons(positionId);
+	public void loadSkeletons(Position position) {
+		DtoPositionData list = dataLoader.getPositionData(position.id);
 		Collection<Skeleton> skeletons = new LinkedList<Skeleton>();
 		
-		list.forEach(s -> {
+		list.skeletons.forEach(s -> {
 			Skeleton skeleton = s.toSkeleton();
 			skeletons.add(skeleton);
 		});
-		
+
+		list.data.forEach((col, rgb) -> {
+			ColourType type = ColourTheme.ColourType.valueOf(col);
+			position.templateColours.setColour(type, Color.decode(rgb));
+		});
+
 		dataStore.setSkeletons(skeletons);
 		controller.onSkeletonsChanged(dataStore.getSkeletons());
 	}
 	
 	public void loadDiagrams(Perspective perspective, Skeleton skeleton) {
-		Map<Integer,Diagram> diagramMap = new HashMap<Integer,Diagram>();
+		Map<Integer,Diagram> diagramMap = new HashMap<>();
 		
 		Collection<DtoDiagram> diagrams = dataLoader.getDiagrams(skeleton);
 
+		List<Runnable> delayed = new ArrayList<Runnable>();
 		diagrams.forEach(d -> {
 			Diagram diagram = d.toDiagram(perspective);
-			diagramMap.put(d.id, d.toDiagram(perspective));
+
+			if (diagram.imageId > 0) {
+				delayed.add(() -> loadImage(diagram));
+			}
+			diagramMap.put(d.id, diagram);
 		});
-		
+
 		for (DtoDiagram d : diagrams) {
 			Diagram diagram = diagramMap.get(d.id);
 			diagram.setSlot(dataStore.getSlot(d.slotId));
@@ -128,6 +173,10 @@ public class Model {
 
 		dataStore.setDiagrams(skeleton.id, diagramMap.values());
 		controller.onDiagramsChanged(diagramMap.values());
+
+		delayed.forEach(t -> {
+			t.run();
+		});
 	}
 	
 	public Collection<Bone> loadBones(Skeleton skeleton) {
@@ -282,7 +331,7 @@ public class Model {
 								controller.getMainController().onProgressComplete();
 							}
 						} else if (pngMatcher.matches(p)) {
-							delayedTasks.add(importPng(p));
+							delayedTasks.add(importPng(p, bytes));
 						}
 					}
 
@@ -364,5 +413,9 @@ public class Model {
 
 	public Collection<NamedImage> getImagesForDiagram(VirtualDiagram d) {
 		return dataStore.getImages().stream().filter(i->i.getName().endsWith(d.getName())).collect(Collectors.toList());
+	}
+
+	public void setPositionColour(Position p, ColourType type, String rgb) {
+		dataLoader.setPositionVariable(p, type.name(), rgb);
 	}
 }

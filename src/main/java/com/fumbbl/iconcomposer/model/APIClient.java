@@ -1,9 +1,7 @@
 package com.fumbbl.iconcomposer.model;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.UnsupportedEncodingException;
+import java.awt.image.BufferedImage;
+import java.io.*;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.ProtocolException;
@@ -16,6 +14,17 @@ import java.util.Map;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import javafx.util.Callback;
+import org.apache.hc.client5.http.classic.methods.HttpGet;
+import org.apache.hc.client5.http.classic.methods.HttpPost;
+import org.apache.hc.client5.http.entity.mime.*;
+import org.apache.hc.client5.http.impl.classic.CloseableHttpClient;
+import org.apache.hc.client5.http.impl.classic.HttpClients;
+import org.apache.hc.core5.http.ContentType;
+import org.apache.hc.core5.http.HttpEntity;
+import org.apache.hc.core5.http.io.entity.EntityUtils;
+
+import javax.imageio.ImageIO;
 
 public class APIClient {
 	private String accessToken;
@@ -23,10 +32,12 @@ public class APIClient {
 	private String clientId;
 	private String clientSecret;
 
+	private String siteBase;
 	private String apiBase;
 	private boolean authenticated;
 	
-	public APIClient(String apiBase) {
+	public APIClient(String siteBase, String apiBase) {
+		this.siteBase = siteBase;
 		this.apiBase = apiBase;
 	}
 	
@@ -130,8 +141,62 @@ public class APIClient {
 		}
 		return authenticated;
 	}
-	
+
+	public void uploadIconGraphic(int diagramId, String fileId, byte[] image) {
+		CloseableHttpClient client = HttpClients.createDefault();
+		HttpPost post = new HttpPost(apiBase + "/iconskeleton/image");
+
+		if (authenticated) {
+			if (LocalDateTime.now().isAfter(tokenExpiry)) {
+				authenticate(this.clientId, this.clientSecret);
+			}
+			post.addHeader("Authorization", "Bearer "+accessToken);
+		}
+
+		ByteArrayBody file = new ByteArrayBody(image, fileId);
+		StringBody skeleton = new StringBody(Integer.toString(diagramId), ContentType.TEXT_PLAIN);
+
+		HttpEntity reqEntity = MultipartEntityBuilder.create()
+				.addPart("file", file)
+				.addPart("diagramId", skeleton)
+				.build();
+
+		post.setEntity(reqEntity);
+
+		try {
+			client.execute(post, response -> {
+				HttpEntity resEntity = response.getEntity();
+				EntityUtils.consume(response.getEntity());
+				return null;
+			});
+		}
+		catch(IOException ioe)
+		{
+		}
+	}
+
 	public boolean isAuthenticated() {
 		return authenticated;
+	}
+
+	public void loadImage(int imageId, Callback<BufferedImage, BufferedImage> callback) {
+		CloseableHttpClient client = HttpClients.createDefault();
+		HttpGet get = new HttpGet(siteBase+"/i/"+imageId);
+		try {
+			client.execute(get, response -> {
+				HttpEntity resEntity = response.getEntity();
+
+				try {
+					BufferedImage image = ImageIO.read(resEntity.getContent());
+					EntityUtils.consume(response.getEntity());
+					return callback.call(image);
+				} catch (Exception e) {
+
+				}
+				return null;
+			});
+		} catch (IOException ioe) {
+
+		}
 	}
 }

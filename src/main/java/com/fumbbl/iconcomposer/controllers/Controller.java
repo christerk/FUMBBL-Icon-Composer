@@ -136,6 +136,10 @@ public class Controller extends BaseController {
 		((NewDiagramController)controllerManager.get(StageType.newDiagram)).setImages(images);
 	}
 
+	public void addImage(NamedImage newImage) {
+		controllerManager.getMain().addImage(newImage);
+	}
+
 	public void onDiagramsChanged(Collection<Diagram> diagrams) {
 		Collection<VirtualDiagram> virtualDiagrams = new HashSet<>();
 
@@ -187,8 +191,8 @@ public class Controller extends BaseController {
 		model.loadRuleset(id);
 	}
 	
-	public void loadSkeletons(int positionId) {
-		model.loadSkeletons(positionId);
+	public void loadSkeletons(Position position) {
+		model.loadSkeletons(position);
 	}
 
 	public void loadDiagrams(Perspective perspective, Skeleton skeleton) {
@@ -309,5 +313,13 @@ public class Controller extends BaseController {
 
 	public Collection<NamedImage> getImagesForDiagram(VirtualDiagram d) {
 		return model.getImagesForDiagram(d);
+	}
+
+	public void setPositionColour(Position p, ColourTheme.ColourType type, String rgb) {
+		model.setPositionColour(p, type, rgb);
+	}
+
+	public Diagram getDiagram(int skeletonId, String diagramName) {
+		return model.getDiagram(skeletonId, diagramName);
 	}
 }

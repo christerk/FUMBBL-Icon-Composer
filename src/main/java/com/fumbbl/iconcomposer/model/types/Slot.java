@@ -5,7 +5,6 @@ import java.util.Comparator;
 public class Slot extends NamedItem {
 	public int id;
 	public String name;
-	public String attachment;
 	public int order;
 	
 	private Bone bone;

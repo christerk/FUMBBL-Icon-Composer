@@ -14,6 +14,7 @@ public class Diagram extends NamedItem {
 	public double height;
 	public NamedImage image;
     public Perspective perspective;
+	public int imageId;
 
     private Slot slot;
 

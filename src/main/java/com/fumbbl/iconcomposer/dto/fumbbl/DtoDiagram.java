@@ -11,8 +11,8 @@ public class DtoDiagram {
 	public double y;
 	public double width;
 	public double height;
-	public String svg;
-	
+	public int image;
+
 	public Diagram toDiagram(Perspective perspective) {
 		Diagram d = new Diagram();
 		d.id = id;
@@ -21,8 +21,8 @@ public class DtoDiagram {
 		d.y = y;
 		d.width = width;
 		d.height = height;
-		d.setName(svg);
 		d.perspective = perspective;
+		d.imageId = image;
 		
 		return d;
 	}

@@ -10,7 +10,6 @@ public class DtoSlot {
 	public Slot toSlot() {
 		Slot s = new Slot();
 		s.name = name;
-		s.attachment = attachment;
 		return s;
 	}
 }

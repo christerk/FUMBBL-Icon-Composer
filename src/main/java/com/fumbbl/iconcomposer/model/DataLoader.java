@@ -1,5 +1,6 @@
 package com.fumbbl.iconcomposer.model;
 
+import java.awt.image.BufferedImage;
 import java.lang.reflect.Type;
 import java.util.Collection;
 import java.util.HashMap;
@@ -9,14 +10,7 @@ import java.util.Map;
 
 import com.fumbbl.iconcomposer.Config;
 import com.fumbbl.iconcomposer.controllers.Controller;
-import com.fumbbl.iconcomposer.dto.fumbbl.DtoBone;
-import com.fumbbl.iconcomposer.dto.fumbbl.DtoDiagram;
-import com.fumbbl.iconcomposer.dto.fumbbl.DtoPosition;
-import com.fumbbl.iconcomposer.dto.fumbbl.DtoRoster;
-import com.fumbbl.iconcomposer.dto.fumbbl.DtoRuleset;
-import com.fumbbl.iconcomposer.dto.fumbbl.DtoSkeleton;
-import com.fumbbl.iconcomposer.dto.fumbbl.DtoSkin;
-import com.fumbbl.iconcomposer.dto.fumbbl.DtoSlot;
+import com.fumbbl.iconcomposer.dto.fumbbl.*;
 import com.fumbbl.iconcomposer.model.types.Bone;
 import com.fumbbl.iconcomposer.model.types.Diagram;
 import com.fumbbl.iconcomposer.model.types.Position;
@@ -25,6 +19,7 @@ import com.fumbbl.iconcomposer.model.types.Skin;
 import com.fumbbl.iconcomposer.model.types.Slot;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
+import javafx.util.Callback;
 
 public class DataLoader {
 	private APIClient apiClient;
@@ -39,7 +34,7 @@ public class DataLoader {
 	private static final Type skinListType = new TypeToken<List<DtoSkin>>() {}.getType();
 
 	public DataLoader(Config cfg) {
-		apiClient = new APIClient(cfg.getApiBase());
+		apiClient = new APIClient(cfg.getSiteBase(), cfg.getApiBase());
 		gson = new Gson();
 	}
 
@@ -104,9 +99,9 @@ public class DataLoader {
 		return apiClient.isAuthenticated();
 	}
 
-	public Collection<DtoSkeleton> getSkeletons(int positionId) {
+	public DtoPositionData getPositionData(int positionId) {
 		String content = apiClient.get("/iconskeleton/list/" + positionId);
-		return gson.fromJson(content, skeletonListType);
+		return gson.fromJson(content, DtoPositionData.class);
 	}
 
 	public void saveSkeleton(Position position, Skeleton skeleton) {
@@ -138,6 +133,25 @@ public class DataLoader {
 				params.put("perspective", skeleton.perspective.name());
 				params.put("positionId", Integer.toString(position.id));
 				String content = apiClient.post("/iconskeleton/setPerspective", params, true);
+			}
+		};
+		controller.runInBackground(task);
+	}
+
+	public void setPositionVariable(Position position, String variable, String value)
+	{
+		if (position == null) {
+			return;
+		}
+
+		Runnable task = new Runnable() {
+			@Override
+			public void run() {
+				Map<String, String> params = new HashMap<String, String>();
+				params.put("positionId", Integer.toString(position.id));
+				params.put("variable", variable);
+				params.put("value", value);
+				String result = apiClient.post("/iconskeleton/setPositionVariable", params, true);
 			}
 		};
 		controller.runInBackground(task);
@@ -197,7 +211,6 @@ public class DataLoader {
 				params.put("skeletonId", Integer.toString(slot.getSkeleton().id));
 				params.put("name", slot.name);
 				params.put("boneId", Integer.toString(slot.getBone().id));
-				params.put("attachment", slot.attachment);
 				params.put("order", Integer.toString(slot.order));
 				String content = apiClient.post("/iconskeleton/setSlot", params, true);
 				slot.id = gson.fromJson(content, Integer.class);
@@ -219,7 +232,6 @@ public class DataLoader {
 				params.put("y", Double.toString(diagram.y));
 				params.put("width", Double.toString(diagram.width));
 				params.put("height", Double.toString(diagram.height));
-				params.put("svg", diagram.name);
 				String content = apiClient.post("/iconskeleton/setDiagram", params, true);
 				diagram.id = gson.fromJson(content, Integer.class);
 			}
@@ -256,7 +268,16 @@ public class DataLoader {
 		controller.runInBackground(task);
 	}
 
+	public void uploadFile(int diagramId, String fileId, byte[] image)
+	{
+		apiClient.uploadIconGraphic(diagramId, fileId, image);
+	}
+
 	public void setController(Controller controller) {
 		this.controller = controller;
+	}
+
+	public void loadImage(int imageId, Callback<BufferedImage, BufferedImage> callback) {
+		apiClient.loadImage(imageId, callback);
 	}
 }

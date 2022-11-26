@@ -95,10 +95,8 @@ public class MainController extends BaseController implements Initializable {
 	public ProgressBar progressBar;
 	
 	public ListView<Skeleton> skeletonList;
-	public ListView<NamedPng> imageList;
 
 	public TitledPane skeletonPane;
-	public TitledPane imagePane;
 
 	public Menu menuColourThemes;
 	public ContextMenu treeContext;
@@ -106,6 +104,7 @@ public class MainController extends BaseController implements Initializable {
 	private ObservableList<VirtualDiagram> masterDiagrams;
 	private ObservableList<Position> masterPositions;
 	private ObservableList<Slot> masterSlots;
+	private ObservableList<NamedImage> masterImages;
 
 	private LongProperty numCombinations;
 
@@ -113,7 +112,7 @@ public class MainController extends BaseController implements Initializable {
 		masterDiagrams = FXCollections.observableArrayList();
 		masterPositions = FXCollections.observableArrayList();
 		masterSlots = FXCollections.observableArrayList();
-
+		masterImages = FXCollections.observableArrayList();
 	}
 	
 	@Override
@@ -124,7 +123,6 @@ public class MainController extends BaseController implements Initializable {
 		combinationsLabel.textProperty().bind(numCombinations.asString());
 
 		new CellFactory<Skeleton>().apply(skeletonList, Skeleton.class, this);
-		new CellFactory<NamedPng>().apply(imageList, NamedPng.class, this);
 
 		positionChoice.setItems(masterPositions);
 		positionChoice.setConverter(new StringConverter<Position>() {
@@ -153,9 +151,13 @@ public class MainController extends BaseController implements Initializable {
 			}
 		});
 
-		new CellFactory<NamedItem>().apply(treeView, NamedItem.class, this);
-
+		TreeItem<NamedItem> root = new TreeItem<NamedItem>(new NamedItem());
+		treeView.setRoot(root);
+		root.setExpanded(true);
+		treeView.setShowRoot(false);
 		treeView.setContextMenu(treeContext);
+
+		new CellFactory<NamedItem>().apply(treeView, NamedItem.class, this);
 
 		treeView.addEventFilter(ContextMenuEvent.CONTEXT_MENU_REQUESTED, new EventHandler<ContextMenuEvent>() {
 			@Override
@@ -193,13 +195,7 @@ public class MainController extends BaseController implements Initializable {
 				
 				controller.loadPosition(newValue.id);
 				skeletonPane.setExpanded(true);
-				controller.viewState.setActivePosition(newValue);
-			}
-		});
-
-		imageList.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> {
-			if (newValue != null) {
-				controller.displayImage(Perspective.Front, newValue);
+				//controller.viewState.setActivePosition(newValue);
 			}
 		});
 	}
@@ -230,6 +226,7 @@ public class MainController extends BaseController implements Initializable {
 			
 			p.templateColours.setColour(type, c);
 			d.refreshColours(d.getImage());
+			controller.setPositionColour(p, type, "#"+Integer.toHexString(c.getRGB()).substring(2));
 			controller.onColourThemeChanged(p.templateColours);
 		} else if (button == MouseButton.SECONDARY) {
 			Point2D point = controller.getRenderer().getImageOffset(x, y);
@@ -411,9 +408,12 @@ public class MainController extends BaseController implements Initializable {
 	}
 	
 	public void setImages(Collection<NamedImage> images) {
-		ObservableList<NamedPng> list = imageList.getItems();
-		list.setAll(images.stream().map(i->(NamedPng)i).collect(Collectors.toList()));
-		list.sort(NamedItem.Comparator);
+		masterImages.setAll(images);
+		refreshImages();
+	}
+
+	public void addImage(NamedImage newImage) {
+		masterImages.add(newImage);
 		refreshImages();
 	}
 
@@ -435,16 +435,13 @@ public class MainController extends BaseController implements Initializable {
 			masterDiagrams.clear();
 			return;
 		}
-
+		TreeItem<NamedItem> root = treeView.getRoot();
 		masterDiagrams.setAll(diagrams);
-
-		treeView.setShowRoot(false);
-		TreeItem<NamedItem> root = new TreeItem<NamedItem>(new Slot());
-		root.setExpanded(true);
 
 		HashSet<Slot> slotList = new HashSet<>();
 
 		slotList.addAll(masterDiagrams.stream().map(d -> d.getSlot()).collect(Collectors.toList()));
+		root.getChildren().clear();
 
 		for (Slot s : slotList) {
 			TreeItem slotItem = new TreeItem(s);
@@ -456,8 +453,6 @@ public class MainController extends BaseController implements Initializable {
 
 			root.getChildren().add(slotItem);
 		}
-
-		treeView.setRoot(root);
 
 		refreshDiagrams();
 		countCombinations();
@@ -480,12 +475,11 @@ public class MainController extends BaseController implements Initializable {
 		for (TreeItem<NamedItem> slot : slots) {
 			ObservableList<TreeItem<NamedItem>> diagrams = slot.getChildren();
 			for (TreeItem<NamedItem> diagram : diagrams) {
-				diagram.getChildren().clear();
 				Collection images = controller.getImagesForDiagram((VirtualDiagram) diagram.getValue()).stream().map(i->new TreeItem(i)).collect(Collectors.toList());
+				diagram.getChildren().clear();
 				diagram.getChildren().addAll(images);
 			}
 		}
-
 	}
 
 	public void setBones(Collection<Bone> bones) {
@@ -512,7 +506,7 @@ public class MainController extends BaseController implements Initializable {
 	}
 
 	public void onPositionChanged(Position position) {
-		controller.loadSkeletons(position.id);
+		controller.loadSkeletons(position);
 		controller.viewState.setActiveColourTheme(position.templateColours);
 		controller.onColourThemeChanged(position.templateColours);
 	}
@@ -586,11 +580,6 @@ public class MainController extends BaseController implements Initializable {
 	public void deleteSkeleton(ActionEvent e) {
 		Skeleton s = skeletonList.getSelectionModel().getSelectedItem();
 		controller.deleteSkeleton(s);
-	}
-
-	public void renameImage(ActionEvent e) {
-		NamedItem item = imageList.getSelectionModel().getSelectedItem();
-		controller.getStageManager().show(StageType.rename, item);
 	}
 
 	public void renameItem(ActionEvent e) {

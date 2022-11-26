@@ -77,18 +77,6 @@
                               </TreeView>
                            </content>
                         </TitledPane>
-                        <TitledPane fx:id="imagePane" prefHeight="200.0" prefWidth="200.0" text="Images">
-                           <content>
-                              <ListView fx:id="imageList" prefHeight="200.0" prefWidth="200.0">
-                                 <contextMenu>
-                                    <ContextMenu>
-                                       <items>
-                                          <MenuItem mnemonicParsing="false" onAction="#renameImage" text="Rename" />
-                                       </items>
-                                    </ContextMenu>
-                                 </contextMenu></ListView>
-                           </content>
-                        </TitledPane>
                     </panes>
                   </Accordion>
                   <StackPane>
@@ -243,7 +231,7 @@
                                                          <children>
                                                             <FlowPane>
                                                                <children>
-                                                                  <Label maxWidth="75.0" minWidth="75.0" prefWidth="75.0" text="Slot" />
+                                                                  <Label maxWidth="100.0" minWidth="100.0" prefWidth="100.0" text="Slot" />
                                                                   <ChoiceBox fx:id="slotChoices" prefWidth="150.0">
                                                                      <FlowPane.margin>
                                                                         <Insets left="10.0" />
@@ -256,7 +244,7 @@
                                                             </FlowPane>
                                                             <FlowPane GridPane.rowIndex="1">
                                                                <children>
-                                                                  <Label maxWidth="75.0" minWidth="75.0" prefWidth="75.0" text="Primary" />
+                                                                  <Label maxWidth="100.0" minWidth="100.0" prefWidth="100.0" text="Primary" />
                                                                   <ImageView fx:id="primaryLine" fitHeight="20.0" fitWidth="20.0" layoutX="95.0" layoutY="15.0" onMouseClicked="#activateColour" pickOnBounds="true" preserveRatio="true" />
                                                                   <ImageView fx:id="primaryLo" fitHeight="20.0" fitWidth="20.0" onMouseClicked="#activateColour" pickOnBounds="true" preserveRatio="true">
                                                                      <FlowPane.margin>
@@ -277,7 +265,7 @@
                                                             </FlowPane>
                                                             <FlowPane layoutX="10.0" layoutY="5.0" GridPane.rowIndex="2">
                                                                <children>
-                                                                  <Label maxWidth="75.0" minWidth="75.0" prefWidth="75.0" text="Secondary" />
+                                                                  <Label maxWidth="100.0" minWidth="100.0" prefWidth="100.0" text="Secondary" />
                                                                   <ImageView fx:id="secondaryLine" fitHeight="20.0" fitWidth="20.0" layoutX="95.0" layoutY="15.0" onMouseClicked="#activateColour" pickOnBounds="true" preserveRatio="true" />
                                                                   <ImageView fx:id="secondaryLo" fitHeight="20.0" fitWidth="20.0" onMouseClicked="#activateColour" pickOnBounds="true" preserveRatio="true">
                                                                      <FlowPane.margin>
@@ -298,7 +286,7 @@
                                                             </FlowPane>
                                                             <FlowPane layoutX="10.0" layoutY="15.0" GridPane.columnIndex="1" GridPane.rowIndex="1">
                                                                <children>
-                                                                  <Label text="Skin" />
+                                                                  <Label maxWidth="100.0" minWidth="100.0" prefWidth="100.0" text="Skin" />
                                                                   <ImageView fx:id="skinLine" fitHeight="20.0" fitWidth="20.0" layoutX="52.0" layoutY="10.0" onMouseClicked="#activateColour" pickOnBounds="true" preserveRatio="true" />
                                                                   <ImageView fx:id="skinLo" fitHeight="20.0" fitWidth="20.0" onMouseClicked="#activateColour" pickOnBounds="true" preserveRatio="true">
                                                                      <FlowPane.margin>
@@ -319,7 +307,7 @@
                                                             </FlowPane>
                                                             <FlowPane layoutX="250.0" layoutY="15.0" GridPane.columnIndex="1" GridPane.rowIndex="2">
                                                                <children>
-                                                                  <Label text="Hair" />
+                                                                  <Label maxWidth="100.0" minWidth="100.0" prefWidth="100.0" text="Hair" />
                                                                   <ImageView fx:id="hairLine" fitHeight="20.0" fitWidth="20.0" layoutX="52.0" layoutY="10.0" onMouseClicked="#activateColour" pickOnBounds="true" preserveRatio="true" />
                                                                   <ImageView fx:id="hairLo" fitHeight="20.0" fitWidth="20.0" onMouseClicked="#activateColour" pickOnBounds="true" preserveRatio="true">
                                                                      <FlowPane.margin>
