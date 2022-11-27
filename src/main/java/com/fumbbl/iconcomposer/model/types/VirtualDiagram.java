@@ -2,13 +2,20 @@ package com.fumbbl.iconcomposer.model.types;
 
 public class VirtualDiagram extends NamedItem {
     private String name;
-    private Slot slot;
+    private VirtualSlot slot;
 
     public VirtualDiagram(Diagram d) {
         super();
 
         this.name = d.getName();
-        this.slot = d.getSlot();
+        this.slot = new VirtualSlot(d.getSlot());
+    }
+
+    public VirtualDiagram(VirtualSlot slot, String name) {
+        super();
+
+        this.slot = slot;
+        this.name = name;
     }
 
     @Override
@@ -21,7 +28,7 @@ public class VirtualDiagram extends NamedItem {
         name = newName;
     }
 
-    public Slot getSlot() {
+    public VirtualSlot getSlot() {
         return slot;
     }
 }

@@ -34,8 +34,6 @@ public class BaseRenderer {
 	}
 
 	public void renderPreview() {
-		Skin skin = new Skin();
-
 		ColourTheme theme = controller.viewState.getActiveColourTheme();
 
 		Graphics2D g2 = controller.viewState.getPreviewGraphics2D();
@@ -48,7 +46,9 @@ public class BaseRenderer {
 		for (int y=0; y<2; y++) {
 			for (int x = 0; x < 14; x++) {
 				MainController mainController = controller.getMainController();
-				for (Slot slot : model.getSlots()) {
+				Skin skin = new Skin();
+
+				for (VirtualSlot slot : model.masterSlots) {
 					Collection<VirtualDiagram> diagrams = mainController.getDiagrams(slot);
 					VirtualDiagram randomDiagram = random(diagrams);
 					skin.setDiagram(slot, randomDiagram);
@@ -70,7 +70,7 @@ public class BaseRenderer {
 	}
 
 	public void renderSkin(Perspective perspective, Skin skin, int x, int y) {
-		Skeleton skeleton = controller.viewState.getActiveSkeleton(perspective);
+		Skeleton skeleton = model.getSkeleton(perspective);
 
 		if (skin == null || skeleton == null) {
 			return;
@@ -101,39 +101,41 @@ public class BaseRenderer {
 		g2.drawLine(this.width / 2 - 1, 0, this.width / 2 - 1, this.height);
 		g2.drawLine(0, this.height / 2 - 1, this.width, this.height / 2 - 1);
 
-		g2.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BICUBIC);
-		g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-
-		applyPixelTransform(diagram, g2);
-
 		//controller.onColourThemeChanged(diagram.getTheme());
-		render(perspective, diagram);
+		if (diagram != null) {
+			g2.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BICUBIC);
+			g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+
+			applyPixelTransform(diagram, g2);
+			render(perspective, diagram);
+		}
 		g2.setTransform(at);
 	}
 
 	private void applyPixelTransform(Diagram diagram, Graphics2D g2) {
-		double xFix = diagram.width % 2 == 0 ? 0.0 : 0.5;
-		double yFix = diagram.height % 2 == 0 ? 0.0 : 0.5;
-		g2.translate(30- diagram.width/2 - xFix,30- diagram.height/2 - yFix);
+		if (diagram != null) {
+			double xFix = diagram.width % 2 == 0 ? 0.0 : 0.5;
+			double yFix = diagram.height % 2 == 0 ? 0.0 : 0.5;
+			g2.translate(30 - diagram.width / 2 - xFix, 30 - diagram.height / 2 - yFix);
+		}
 	}
 
 
 	public void renderSkeleton(Perspective perspective, Skeleton skeleton, String currentBone) {
+		int scale = 8;
+
 		Graphics2D g2 = controller.viewState.getSkeletonGraphics2D(perspective);
 		g2.setColor(renderBackground);
 		g2.fillRect(0, 0, width, height);
 
 		g2.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BICUBIC);
 		g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-		
+
+		g2.setColor(gridColor);
+		g2.drawRect(this.width / 2 + -scale*45/2, this.height / 2 - scale*45/2, scale*45, scale*45);
+
 		if (skeleton == null) {
 			return;
-		}
-
-		int scale = 8;
-
-		if (skeleton.width != 0) {
-			scale = 8;
 		}
 
 		// Find center; should correspond to "root" bone.
@@ -145,9 +147,6 @@ public class BaseRenderer {
 		}
 
 		skeleton.updateTransforms();
-
-		g2.setColor(gridColor);
-		g2.drawRect(this.width / 2 + -scale*45/2, this.height / 2 - scale*45/2, scale*45, scale*45);
 
 		for (Bone b : skeleton.getBones()) {
 			int cx = (int) (this.width/2 + scale*b.worldX/2);
@@ -220,10 +219,11 @@ public class BaseRenderer {
 		AffineTransform at = g2.getTransform();
 		ColourTheme theme = controller.getColourTheme();
 
-		for (Slot slot : model.getSlots().stream().sorted(Slot.ReverseComparator).collect(Collectors.toList())) {
-			VirtualDiagram virtualDiagram = skin.getDiagram(slot);
+		for (VirtualSlot virtualSlot : model.masterSlots.stream().sorted(VirtualSlot.ReverseComparator).collect(Collectors.toList())) {
+			VirtualDiagram virtualDiagram = skin.getDiagram(virtualSlot);
 			if (virtualDiagram != null) {
 				Diagram diagram = model.getDiagram(skeleton.id, virtualDiagram.getName());
+				Slot slot = model.getSlot(skeleton.id, virtualSlot.getName());
 
 				if (diagram != null) {
 					//diagram.setColour(controller.getSvg(diagram.getImage().getName()), theme);

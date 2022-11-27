@@ -83,18 +83,6 @@ public class Controller extends BaseController {
 		controllerManager.getMain().setBones(bones);
 	}
 
-	public void onSlotsChanged(Collection<Slot> slots) {
-		controllerManager.getMain().setSlots(slots);
-	}
-
-	public void onSkeletonsChanged(Collection<Skeleton> skeletons) {
-		controllerManager.getMain().onSkeletonsChanged(skeletons);
-	}
-
-	public void onSkeletonChanged(Skeleton skeleton) {
-		//controllerManager.getMain().setSkeleton(skeleton);
-	}
-	
 	public void onColourThemesChanged(Collection<ColourTheme> themes) {
 		controllerManager.getMain().setColourThemes(themes);
 	}
@@ -126,49 +114,17 @@ public class Controller extends BaseController {
 	public void onAuthenticateChange(boolean success) {
 		controllerManager.getMain().setApiStatus(success ? "Authorized" : "Not Authorized");
 	}
-	
-	public void onPositionsChanged(Collection<Position> positions) {
-		controllerManager.getMain().onPositionsChanged(positions);
-	}
-	
-	public void onImagesChanged(Collection<NamedImage> images) {
-		controllerManager.getMain().setImages(images);
-		((NewDiagramController)controllerManager.get(StageType.newDiagram)).setImages(images);
-	}
-
-	public void addImage(NamedImage newImage) {
-		controllerManager.getMain().addImage(newImage);
-	}
-
-	public void onDiagramsChanged(Collection<Diagram> diagrams) {
-		Collection<VirtualDiagram> virtualDiagrams = new HashSet<>();
-
-		for (Diagram d : diagrams) {
-			virtualDiagrams.add(new VirtualDiagram(d));
-		}
-
-		controllerManager.getMain().setDiagrams(virtualDiagrams);
-	}
 
 	/*
 	 * ViewState updates
 	 */
 	
-	public void setBones(Perspective perspective, Collection<Bone> bones) {
-		viewState.getActiveSkeleton(perspective).setBones(bones);
-	}
-
-	public void setSlots(Perspective perspective, Collection<Slot> slots) {
-		viewState.getActiveSkeleton(perspective).setSlots(slots);
-	}
-
 	public void setColourTheme(String theme) {
 		viewState.setActiveColourTheme(model.getColourTheme(theme));
 	}
 	
 	public void setSkeleton(Skeleton skeleton) {
 		model.setPerspective(skeleton);
-		viewState.setActiveSkeleton(skeleton);
 	}
 
 	public ColourTheme getColourTheme() {
@@ -179,9 +135,6 @@ public class Controller extends BaseController {
 	 * Model
 	 */
 
-	public void loadPosition(int id) {
-		model.loadPosition(id);
-	}
 
 	public Collection<Ruleset> loadRulesets() {
 		return model.loadRulesets();
@@ -195,24 +148,12 @@ public class Controller extends BaseController {
 		model.loadSkeletons(position);
 	}
 
-	public void loadDiagrams(Perspective perspective, Skeleton skeleton) {
-		model.loadDiagrams(perspective, skeleton);
-	}
-	
 	public boolean isAuthorized() {
 		return model.isAuthorized();
 	}
 
 	public Config getConfig() {
 		return model.getConfig();
-	}
-
-	public Collection<Bone> loadBones(Skeleton skeleton) {
-		return model.loadBones(skeleton);
-	}
-	
-	public Collection<Slot> loadSlots(Skeleton skeleton) {
-		return model.loadSlots(skeleton);
 	}
 
 	public void handleDroppedFile(String path) {
@@ -227,59 +168,59 @@ public class Controller extends BaseController {
 		model.loadRoster(selectedItem.id);
 	}
 	
-	public void createDiagram(NamedImage image) {
-		model.addDiagram(image);
-	}
-	
-	public void deleteSkeleton(Skeleton skeleton) {
-		model.deleteSkeleton(skeleton);
+	public void createDiagram(VirtualSlot slot, String name) {
+		if (!name.startsWith(slot.getName() + "-")) {
+			name = slot.getName() + "-" + name;
+		}
+		model.createDiagram(slot, name);
 	}
 	
 	/*
 	 * Renderer
 	 */
 
-	public void displayImage(Perspective perspective, NamedImage image) {
-		controllerManager.getMain().hideColourPane();
-		renderer.render(perspective, image);
-		onDiagramImageChanged();
-	}
-	
 	public void displayPreview() {
 		renderer.renderPreview();
 		onPreviewImageChanged();
 	}
 
 	public void displayDiagrams(String diagramName) {
-
-		Diagram d = model.getDiagram(viewState.getActiveSkeleton(Perspective.Front).id, diagramName);
+		Diagram d = model.getDiagram(model.frontSkeleton.get().id, diagramName);
 		displayDiagram(d);
 
-		d = model.getDiagram(viewState.getActiveSkeleton(Perspective.Side).id, diagramName);
+		d = model.getDiagram(model.sideSkeleton.get().id, diagramName);
 		displayDiagram(d);
 	}
 
 	public void displayDiagram(Diagram d) {
-		if (d == null) {
-			return;
+		if (d != null) {
+			//return;
+			viewState.setActiveDiagram(Perspective.Front, null);
+			viewState.setActiveDiagram(Perspective.Side, null);
+		} else {
+			viewState.setActiveDiagram(Perspective.Unknown, d);
 		}
-		viewState.setActiveDiagram(d.perspective, d);
 		controllerManager.getMain().showColourPane();
 
-		renderer.renderDiagram(d.perspective, d);
+		if (d != null) {
+			renderer.renderDiagram(d.perspective, d);
 
-		Slot slot = d.getSlot();
-		
-		controllerManager.getMain().setSlotInfo(d.perspective, slot, d.x, d.y);
+			Slot slot = d.getSlot();
 
-		renderer.renderCursor(d.perspective, d.x, d.y);
+			controllerManager.getMain().setSlotInfo(d.perspective, new VirtualSlot(slot), d.x, d.y);
+
+			renderer.renderCursor(d.perspective, d.x, d.y);
+		} else {
+			renderer.renderDiagram(Perspective.Front, null);
+			renderer.renderDiagram(Perspective.Side, null);
+		}
 		onDiagramImageChanged();
 	}
 
 	public void displayBones(String value) {
 		controllerManager.getMain().hideColourPane();
-		renderer.renderSkeleton(Perspective.Front, viewState.getActiveSkeleton(Perspective.Front), value);
-		renderer.renderSkeleton(Perspective.Side, viewState.getActiveSkeleton(Perspective.Side), value);
+		renderer.renderSkeleton(Perspective.Front, model.frontSkeleton.get(), value);
+		renderer.renderSkeleton(Perspective.Side, model.sideSkeleton.get(), value);
 		onSkeletonImageChanged();
 	}
 	
@@ -321,5 +262,15 @@ public class Controller extends BaseController {
 
 	public Diagram getDiagram(int skeletonId, String diagramName) {
 		return model.getDiagram(skeletonId, diagramName);
+	}
+
+	public void showNewComponentDialog(VirtualSlot slot) {
+		NewDiagramController ctrl = (NewDiagramController)controllerManager.get(StageType.newDiagram);
+		ctrl.setSlot(slot);
+		getStageManager().show(StageType.newDiagram);
+	}
+
+	public Model getModel() {
+		return model;
 	}
 }

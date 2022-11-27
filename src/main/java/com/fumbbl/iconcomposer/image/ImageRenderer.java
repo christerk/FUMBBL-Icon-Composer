@@ -20,8 +20,8 @@ public class ImageRenderer {
             return;
         }
         Graphics2D g2 = renderer.controller.viewState.getDiagramGraphics2D(perspective);
-        g2.setColor(renderer.renderBackground);
-        g2.fillRect(0, 0, renderer.width, renderer.height);
+        //g2.setColor(renderer.renderBackground);
+        //g2.fillRect(0, 0, renderer.width, renderer.height);
         g2.scale(scale, scale);
 
         g2.translate((renderer.width/scale - image.getWidth()) / 2, (renderer.height/scale - image.getHeight())/2);

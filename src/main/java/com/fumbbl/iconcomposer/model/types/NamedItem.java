@@ -22,6 +22,7 @@ public class NamedItem {
 	};
 
 	private String name;
+	private boolean dirty;
 
 	public void onRenamed(Controller controller, String oldName) {
 		controller.onItemRenamed(this, oldName);
@@ -32,5 +33,17 @@ public class NamedItem {
 	}
 	public void setName(String newName) {
 		this.name = newName;
+	}
+
+	public void setDirty() {
+		this.dirty = true;
+	}
+
+	public void setClean() {
+		this.dirty = false;
+	}
+
+	public boolean isDirty() {
+		return this.dirty;
 	}
 }

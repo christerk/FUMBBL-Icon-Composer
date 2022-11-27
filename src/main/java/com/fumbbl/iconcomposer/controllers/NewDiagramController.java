@@ -6,26 +6,33 @@ import java.util.ResourceBundle;
 
 import com.fumbbl.iconcomposer.model.types.NamedImage;
 import com.fumbbl.iconcomposer.model.types.NamedItem;
+import com.fumbbl.iconcomposer.model.types.Slot;
+import com.fumbbl.iconcomposer.model.types.VirtualSlot;
 import com.fumbbl.iconcomposer.ui.StageType;
 
+import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
+import javafx.collections.ObservableListBase;
 import javafx.fxml.Initializable;
 import javafx.scene.control.ChoiceBox;
+import javafx.scene.control.TextField;
 import javafx.util.StringConverter;
 
 public class NewDiagramController extends BaseController implements Initializable {
-	public ChoiceBox<NamedImage> imageChoiceBox;
+	public ChoiceBox<VirtualSlot> slotChoice;
+	public TextField componentName;
 
 	@Override
 	public void initialize(URL location, ResourceBundle resources) {
-		imageChoiceBox.setConverter(new StringConverter<NamedImage>() {
+
+		slotChoice.setConverter(new StringConverter<VirtualSlot>() {
 			@Override
-			public String toString(NamedImage object) {
+			public String toString(VirtualSlot object) {
 				return object.getName();
 			}
 
 			@Override
-			public NamedImage fromString(String string) {
+			public VirtualSlot fromString(String string) {
 				return null;
 			}
 		});
@@ -33,18 +40,15 @@ public class NewDiagramController extends BaseController implements Initializabl
 	
 	@Override
 	public void onShow() {
-		
+		slotChoice.setItems(model.masterSlots);
 	}
 	
 	public void createDiagram() {
-		NamedImage image = imageChoiceBox.getSelectionModel().selectedItemProperty().getValue();
-		//controller.createDiagram(image);
+		controller.createDiagram(slotChoice.getSelectionModel().getSelectedItem(), componentName.getText());
 		controller.getStageManager().hide(StageType.newDiagram);
 	}
 
-	public void setImages(Collection<NamedImage> images) {
-		ObservableList<NamedImage> list = imageChoiceBox.getItems();
-		list.setAll(images);
-		list.sort(NamedItem.Comparator);
+	public void setSlot(VirtualSlot slot) {
+		slotChoice.setValue(slot);
 	}
 }

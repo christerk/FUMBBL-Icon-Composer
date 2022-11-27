@@ -182,6 +182,10 @@ public class APIClient {
 	public void loadImage(int imageId, Callback<BufferedImage, BufferedImage> callback) {
 		CloseableHttpClient client = HttpClients.createDefault();
 		HttpGet get = new HttpGet(siteBase+"/i/"+imageId);
+		if (imageId==702252) {
+			System.out.println();
+		}
+		get.addHeader("Authorization", "Bearer "+accessToken);
 		try {
 			client.execute(get, response -> {
 				HttpEntity resEntity = response.getEntity();
@@ -191,12 +195,12 @@ public class APIClient {
 					EntityUtils.consume(response.getEntity());
 					return callback.call(image);
 				} catch (Exception e) {
-
+					System.out.println(e.getMessage());
 				}
 				return null;
 			});
 		} catch (IOException ioe) {
-
+			System.out.println(ioe.getMessage());
 		}
 	}
 }

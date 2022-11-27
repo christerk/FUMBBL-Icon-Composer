@@ -20,18 +20,20 @@ public class DataStore {
 	private Position position;
 	
 	private Map<Integer,Skin> skins;
-	private Map<Integer,Slot> slots;
+	private Map<Integer,Map<String,Slot>> slotsByName;
 	private Map<Integer,Bone> bones;
-	
+	private Map<Integer,Slot> slots;
+
 	public DataStore() {
 		//skins = new HashMap<Integer,Skin>();
 		skeletons = new LinkedList<Skeleton>();
 		diagrams = new HashMap<>();
 		colourThemes = new HashMap<String,ColourTheme>();
 		images = new HashMap<>();
+		slotsByName = new HashMap<>();
 		skins = new HashMap<Integer,Skin>();
-		slots = new HashMap<Integer,Slot>();
 		bones = new HashMap<Integer,Bone>();
+		slots = new HashMap<Integer, Slot>();
 	}
 
 	/*
@@ -63,6 +65,10 @@ public class DataStore {
 
 	public NamedItem getImage(String name) {
 		return images.get(name.toLowerCase());
+	}
+
+	public void clearImages() {
+		images.clear();
 	}
 
 	/*
@@ -101,10 +107,15 @@ public class DataStore {
 	}
 
 	public void setDiagrams(int skeletonId, Collection<Diagram> newDiagrams) {
-		Map<String,Diagram> skeletonDiagrams = getDiagramsForSkeleton(skeletonId);
+		this.diagrams.clear();
+		this.addDiagrams(skeletonId, newDiagrams);
+	}
 
+	public void addDiagrams(int skeletonId, Collection<Diagram> newDiagrams) {
+		Map<String,Diagram> skeletonDiagrams = getDiagramsForSkeleton(skeletonId);
 		newDiagrams.forEach(d -> skeletonDiagrams.put(d.name.toLowerCase(), d));
 	}
+
 
 	private void renameDiagramImages(String prefix, String oldName, String newName) {
 		String oldKey = prefix+oldName.toLowerCase();
@@ -146,53 +157,48 @@ public class DataStore {
 	}
 
 	/*
-	 * Skin
-	 */
-	
-	public Collection<String> getSkinNames() {
-		return skins.values().stream().map(s -> s.name).collect(Collectors.toList());
-	}
-
-	public Skin getSkin(int skinId) {
-		return skins.get(skinId);
-	}
-
-	public void addSkin(Skin skin) {
-		skins.put(skin.id, skin);
-	}
-
-	public void clearSkins() {
-		skins.clear();
-	}
-	
-	public Collection<Skin> getSkins() {
-		return skins.values();
-	}
-	
-	public void setSkins(Collection<Skin> skins) {
-		this.skins.clear();
-		skins.forEach(s -> this.skins.put(s.id, s));
-	}
-
-	/*
 	 * Slot
 	 */
 
-	public void setSlots(Collection<Slot> slots) {
-		this.slots.clear();
-		slots.forEach(s -> this.slots.put(s.id, s));
+	private Map<String, Slot> getSlotsForSkeleton(int skeletonId) {
+		Map<String, Slot> result;
+		if (!slotsByName.containsKey(skeletonId)) {
+			result = new HashMap<>();
+			slotsByName.put(skeletonId, result);
+		} else {
+			result = slotsByName.get(skeletonId);
+		}
+
+		return result;
+	}
+
+	public Slot getSlot(int skeletonId, String slotName) {
+		return getSlotsForSkeleton(skeletonId).get(slotName);
 	}
 
 	public Slot getSlot(int slotId) {
 		return slots.get(slotId);
 	}
 
-	public Collection<Slot> getSlots() {
-		return slots.values();
+	public void setSlots(Collection<Slot> slots) {
+		this.slotsByName.clear();
+		this.slots.clear();
+		this.addSlots(slots);
 	}
-	
+
+	public void addSlots(Collection<Slot> slots) {
+		slots.forEach(s -> {
+			int skeletonId = s.getSkeleton().id;
+			if (!this.slotsByName.containsKey(skeletonId)) {
+				this.slotsByName.put(skeletonId, new HashMap<>());
+			}
+			this.slotsByName.get(skeletonId).put(s.getName(), s);
+			this.slots.put(s.id, s);
+		});
+	}
+
 	public void clearSlots() {
-		slots.clear();
+		slotsByName.clear();
 	}
 
 	/*
@@ -204,46 +210,22 @@ public class DataStore {
 	}
 
 	public void setBones(Collection<Bone> bones) {
-		this.bones.clear();
+		clearBones();
+		addBones(bones);
+	}
+
+	public void addBones(Collection<Bone> bones) {
 		bones.forEach(b -> this.bones.put(b.id, b));
+	}
+
+	public void clearBones() {
+		this.bones.clear();
 	}
 
 	/*
 	 * Skeleton 
 	 */
 	
-	public void clearSkeletons() {
-		skeletons.clear();
-	}
-
-	public void addSkeleton(Skeleton s) {
-		skeletons.add(s);
-	}
-
-	public Collection<Skeleton> getSkeletons() {
-		return skeletons;
-	}
-	
-	public void setSkeletons(Collection<Skeleton> skeletons) {
-		this.skeletons.clear();
-		if (skeletons != null) {
-			this.skeletons.addAll(skeletons);
-		}
-	}
-	
-	public void removeSkeleton(Skeleton skeleton) {
-		skeletons.remove(skeleton);
-	}
-	
-	public Skeleton getSkeleton(int skeletonId) {
-		for (Skeleton s : skeletons) {
-			if (s.id == skeletonId) {
-				return s;
-			}
-		}
-		return null;
-	}
-
 	/*
 	 * Ruleset 
 	 */

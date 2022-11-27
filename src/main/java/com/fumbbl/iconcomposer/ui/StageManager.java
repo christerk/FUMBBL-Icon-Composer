@@ -18,21 +18,23 @@ import javafx.stage.Stage;
 public class StageManager {
 
 	private final Controller controller;
+	private final Model model;
 	private Map<StageType,BaseStage> stages;
 
 	public StageManager(Model model, Controller controller, ControllerManager controllerManager) throws IOException {
+		this.model = model;
 		stages = new HashMap<StageType,BaseStage>();
 		this.controller = controller;
 
 		controller.setStageManager(this);
 
-		stages.put(StageType.main, new MainStage());
-		stages.put(StageType.prefs, new PrefsStage());
-		stages.put(StageType.openRoster, new OpenRosterStage());
-		stages.put(StageType.newDiagram, new NewDiagramStage());
-		stages.put(StageType.about, new AboutStage());
-		stages.put(StageType.licenses, new LicenseStage());
-		stages.put(StageType.rename, new RenameStage());
+		stages.put(StageType.main, new MainStage(model));
+		stages.put(StageType.prefs, new PrefsStage(model));
+		stages.put(StageType.openRoster, new OpenRosterStage(model));
+		stages.put(StageType.newDiagram, new NewDiagramStage(model));
+		stages.put(StageType.about, new AboutStage(model));
+		stages.put(StageType.licenses, new LicenseStage(model));
+		stages.put(StageType.rename, new RenameStage(model));
 		
 		for (Entry<StageType, BaseStage> entry: stages.entrySet()) {
 			StageType type = entry.getKey();
@@ -50,6 +52,8 @@ public class StageManager {
 		show(type, null);
 	}
 	public void show(StageType type, Object data) {
+		BaseStage stage = stages.get(type);
+		stage.getController().setModel(model);
 		stages.get(type).show(data);
 	}
 

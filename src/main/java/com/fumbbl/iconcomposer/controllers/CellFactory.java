@@ -1,10 +1,7 @@
 package com.fumbbl.iconcomposer.controllers;
 
-import com.fumbbl.iconcomposer.model.types.NamedImage;
-import com.fumbbl.iconcomposer.model.types.NamedItem;
+import com.fumbbl.iconcomposer.model.types.*;
 
-import com.fumbbl.iconcomposer.model.types.Slot;
-import com.fumbbl.iconcomposer.model.types.VirtualDiagram;
 import com.fumbbl.iconcomposer.ui.MenuType;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.TextFieldListCell;
@@ -80,7 +77,7 @@ public class CellFactory<T extends NamedItem> {
 						setContextMenu(null);
 					} else {
 						setText(item.getName());
-						if (item instanceof Slot) {
+						if (item instanceof VirtualSlot) {
 							setGraphic(new ImageView(slotIcon));
 						} else if (item instanceof VirtualDiagram) {
 							setGraphic(new ImageView(diagramIcon));

@@ -39,6 +39,8 @@ public class ColourTheme {
 				return PRIMARYHI;
 			case "secondaryLine":
 				return SECONDARYLINE;
+			case "secondaryLo":
+				return SECONDARYLO;
 			case "secondaryMid":
 				return SECONDARY;
 			case "secondaryHi":

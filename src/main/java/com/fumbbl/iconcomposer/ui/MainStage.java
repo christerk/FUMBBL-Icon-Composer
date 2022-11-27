@@ -3,6 +3,7 @@ package com.fumbbl.iconcomposer.ui;
 import java.io.File;
 import java.io.IOException;
 
+import com.fumbbl.iconcomposer.model.Model;
 import javafx.event.EventHandler;
 import javafx.scene.input.DragEvent;
 import javafx.scene.input.Dragboard;
@@ -10,8 +11,8 @@ import javafx.scene.input.TransferMode;
 import javafx.stage.WindowEvent;
 
 public class MainStage extends BaseStage {
-	public MainStage() throws IOException {
-		super("FUMBBL Icon Composer");
+	public MainStage(Model model) throws IOException {
+		super(model,"FUMBBL Icon Composer");
 		setFxml("/ui/Main.fxml");
 
 		scene.setOnDragOver(new EventHandler<DragEvent>() {

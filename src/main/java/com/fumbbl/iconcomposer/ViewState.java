@@ -20,7 +20,6 @@ public class ViewState {
 	private ColourType activeColourType;
 	private HashMap<Perspective, Diagram> activeDiagrams;
 	private ColourTheme activeColourTheme;
-	private HashMap<Perspective, Skeleton> activeSkeletons;
 	private Position activePosition;
 
 	public Position getActivePosition() {
@@ -68,7 +67,6 @@ public class ViewState {
 	private HashMap<ImageType, ImageData> imageData;
 
     public ViewState() {
-		activeSkeletons = new HashMap<>();
 		activeDiagrams = new HashMap<>();
 
 		imageData = new HashMap<>();
@@ -120,16 +118,8 @@ public class ViewState {
 		return activeDiagrams.get(perspective);
 	}
 
-	public Skeleton getActiveSkeleton(Perspective perspective) {
-		return activeSkeletons.get(perspective);
-	}
-
 	public void setActiveColourTheme(ColourTheme colourTheme) {
 		activeColourTheme = colourTheme;
-	}
-
-	public void setActiveSkeleton(Skeleton skeleton) {
-		activeSkeletons.put(skeleton.perspective, skeleton);
 	}
 
 	public ColourTheme getActiveColourTheme() {

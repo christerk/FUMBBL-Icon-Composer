@@ -7,6 +7,7 @@ import java.util.HashMap;
 import com.fumbbl.iconcomposer.controllers.BaseController;
 import com.fumbbl.iconcomposer.controllers.Controller;
 
+import com.fumbbl.iconcomposer.model.Model;
 import javafx.event.EventHandler;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Node;
@@ -19,6 +20,7 @@ import javafx.stage.Stage;
 import javafx.stage.WindowEvent;
 
 public class BaseStage {
+	private final Model model;
 	protected Stage stage;
 	protected Scene scene;
 	protected BaseController controller;
@@ -27,7 +29,8 @@ public class BaseStage {
 	private Parent root;
 	private HashMap<String, ContextMenu> childControls;
 
-	public BaseStage(String title) {
+	public BaseStage(Model model, String title) {
+		this.model = model;
 		stage = new Stage();
 		stage.setTitle(title);
 		childControls = new HashMap<>();

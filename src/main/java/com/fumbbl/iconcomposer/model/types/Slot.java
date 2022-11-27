@@ -21,17 +21,6 @@ public class Slot extends NamedItem {
 		}
 	};
 
-	public static Comparator<Slot> ReverseComparator = new Comparator<Slot>() {
-		@Override
-		public int compare(Slot o1, Slot o2) {
-			int r = o1.order-o2.order;
-			if (r == 0) {
-				r = o2.getName().compareTo(o1.getName());
-			}
-			return r;
-		}
-	};
-	
 	public Slot() {
 		this.id = -1;
 	}

@@ -12,7 +12,6 @@ public class Diagram extends NamedItem {
 	public double rotation = 0;
 	public double width;
 	public double height;
-	public NamedImage image;
     public Perspective perspective;
 	public int imageId;
 
@@ -32,27 +31,17 @@ public class Diagram extends NamedItem {
 
 	public Diagram() {
 	}
-	
-	public Diagram(NamedImage image) {
-		this.image = image;
 
-		this.width = ((NamedPng)image).image.getWidth();
-		this.height = ((NamedPng)image).image.getHeight();
-	}
-	
-	public NamedImage getImage() {
-		return image;
-	}
-	
-	public void refreshColours(NamedImage image) {
-	}
-	
 	public void setSlot(Slot slot) {
 		this.slot = slot;
 	}
 	
 	public Slot getSlot() {
 		return this.slot;
+	}
+
+	public void updateTransform() {
+		updateTransform(slot.getBone());
 	}
 
 	public void updateTransform(Bone bone) {
