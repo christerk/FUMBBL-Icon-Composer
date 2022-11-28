@@ -15,10 +15,10 @@ import com.fumbbl.iconcomposer.model.types.*;
 import com.google.gson.Gson;
 
 public class SpineImporter {
-	private Map<String,Slot> slotMap = new HashMap<String,Slot>();
-	private Map<String,Bone> boneMap = new HashMap<String,Bone>();
-	private Map<String, Diagram> diagramMap = new HashMap<>();
-	private Map<String,Skin> skinMap = new HashMap<String,Skin>();
+	private final Map<String,Slot> slotMap = new HashMap<>();
+	private final Map<String,Bone> boneMap = new HashMap<>();
+	private final Map<String, Diagram> diagramMap = new HashMap<>();
+	private final Map<String,Skin> skinMap = new HashMap<>();
 	private Skeleton skeleton;
 
 	public SpineImporter() {

@@ -3,47 +3,33 @@ package com.fumbbl.iconcomposer.model.types;
 import java.util.Comparator;
 
 import com.fumbbl.iconcomposer.controllers.Controller;
+import javafx.beans.property.SimpleStringProperty;
+import javafx.beans.property.StringProperty;
 import javafx.scene.control.TreeItem;
 
 public class NamedItem {
-	public static Comparator<? super NamedItem> Comparator = new Comparator<NamedItem>() {
-		@Override
-		public int compare(NamedItem o1, NamedItem o2) {
-			return o1.getName().compareTo(o2.getName());
-		}
-		
-	};
+	public static final Comparator<? super NamedItem> Comparator = (java.util.Comparator<NamedItem>) (o1, o2) -> o1.getName().compareTo(o2.getName());
 
-	public static Comparator<TreeItem<NamedItem>> TreeItemComparator = new Comparator<TreeItem<NamedItem>>() {
-		@Override
-		public int compare(TreeItem<NamedItem> o1, TreeItem<NamedItem> o2) {
-			return NamedItem.Comparator.compare(o1.getValue(), o2.getValue());
-		}
-	};
+	public static Comparator<TreeItem<NamedItem>> TreeItemComparator = (o1, o2) -> NamedItem.Comparator.compare(o1.getValue(), o2.getValue());
 
-	private String name;
-	private boolean dirty;
+	private final StringProperty name;
+
+	public NamedItem() {
+		this.name = new SimpleStringProperty();
+	}
 
 	public void onRenamed(Controller controller, String oldName) {
 		controller.onItemRenamed(this, oldName);
 	}
-	
-	public String getName() {
+
+	public StringProperty nameProperty() {
 		return this.name;
 	}
+
+	public String getName() {
+		return this.name.get();
+	}
 	public void setName(String newName) {
-		this.name = newName;
-	}
-
-	public void setDirty() {
-		this.dirty = true;
-	}
-
-	public void setClean() {
-		this.dirty = false;
-	}
-
-	public boolean isDirty() {
-		return this.dirty;
+		this.name.set(newName);
 	}
 }

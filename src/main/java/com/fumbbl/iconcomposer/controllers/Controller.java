@@ -1,7 +1,6 @@
 package com.fumbbl.iconcomposer.controllers;
 
 import java.util.Collection;
-import java.util.HashSet;
 
 import com.fumbbl.iconcomposer.ColourTheme;
 import com.fumbbl.iconcomposer.Config;
@@ -17,12 +16,12 @@ import javafx.application.Platform;
 import javafx.scene.image.WritableImage;
 
 public class Controller extends BaseController {
-	private Model model;
-	private BaseRenderer renderer;
+	private final Model model;
+	private final BaseRenderer renderer;
 	private StageManager stageManager;
 	private ControllerManager controllerManager;
-	public ViewState viewState;
-	TaskQueue taskQueue;
+	public final ViewState viewState;
+	final TaskQueue taskQueue;
 	
 	public Controller(Model model) {
 		this.model = model;
@@ -198,7 +197,7 @@ public class Controller extends BaseController {
 			viewState.setActiveDiagram(Perspective.Front, null);
 			viewState.setActiveDiagram(Perspective.Side, null);
 		} else {
-			viewState.setActiveDiagram(Perspective.Unknown, d);
+			viewState.setActiveDiagram(Perspective.Unknown, null);
 		}
 		controllerManager.getMain().showColourPane();
 
@@ -226,10 +225,6 @@ public class Controller extends BaseController {
 	
 	public void onRulesetLoaded(Ruleset ruleset) {
 		((OpenRosterController)controllerManager.get(StageType.openRoster)).onRulesetLoaded(ruleset);
-	}
-
-	public void onPositionChanged(Position position) {
-		controllerManager.getMain().onPositionChanged(position);
 	}
 
 	public void onProgressStart(String description) {

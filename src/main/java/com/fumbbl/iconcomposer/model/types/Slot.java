@@ -10,15 +10,12 @@ public class Slot extends NamedItem {
 	private Bone bone;
 	private Skeleton skeleton;
 	
-	public static Comparator<Slot> Comparator = new Comparator<Slot>() {
-		@Override
-		public int compare(Slot o1, Slot o2) {
-			int r = o2.order-o1.order;
-			if (r == 0) {
-				r = o1.getName().compareTo(o2.getName());
-			}
-			return r;
+	public static Comparator<Slot> Comparator = (o1, o2) -> {
+		int r = o2.order-o1.order;
+		if (r == 0) {
+			r = o1.getName().compareTo(o2.getName());
 		}
+		return r;
 	};
 
 	public Slot() {
@@ -72,4 +69,12 @@ public class Slot extends NamedItem {
 	public int hashCode() {
 		return this.id + (name != null ? name.hashCode() : 0);
 	}
+
+	public static final java.util.Comparator<Slot> ReverseComparator = (o1, o2) -> {
+		int r = o1.order-o2.order;
+		if (r == 0) {
+			r = o2.getName().compareTo(o1.getName());
+		}
+		return r;
+	};
 }

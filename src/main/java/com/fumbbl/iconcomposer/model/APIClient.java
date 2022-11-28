@@ -7,6 +7,7 @@ import java.net.MalformedURLException;
 import java.net.ProtocolException;
 import java.net.URL;
 import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
@@ -32,8 +33,8 @@ public class APIClient {
 	private String clientId;
 	private String clientSecret;
 
-	private String siteBase;
-	private String apiBase;
+	private final String siteBase;
+	private final String apiBase;
 	private boolean authenticated;
 	
 	public APIClient(String siteBase, String apiBase) {
@@ -45,9 +46,7 @@ public class APIClient {
 		try {
 			HttpURLConnection con = openConnection(uri, "GET");
 	
-			String content = getResult(con);
-			
-			return content;
+			return getResult(con);
 		} catch (IOException ioe) {
 			
 		}
@@ -71,9 +70,8 @@ public class APIClient {
 				con.setRequestProperty("Content-Length", String.valueOf(postDataBytes.length));
 				con.getOutputStream().write(postDataBytes);
 			}
-			
-			String content = getResult(con);
-			return content;
+
+			return getResult(con);
 		} catch (IOException ioe) {
 			
 		}
@@ -92,11 +90,10 @@ public class APIClient {
 				postData.append(URLEncoder.encode(param.getValue(), "UTF-8"));
 			}
 		}
-		byte[] postDataBytes = postData.toString().getBytes("UTF-8");
-		return postDataBytes;
+		return postData.toString().getBytes(StandardCharsets.UTF_8);
 	}
 
-	private HttpURLConnection openConnection(String uri, String method) throws MalformedURLException, IOException, ProtocolException {
+	private HttpURLConnection openConnection(String uri, String method) throws IOException {
 		URL url = new URL(apiBase + uri);
 		HttpURLConnection con = (HttpURLConnection) url.openConnection();
 		con.setRequestMethod(method);
@@ -108,7 +105,7 @@ public class APIClient {
 		con.getResponseCode();
 		BufferedReader in = new BufferedReader(new InputStreamReader(con.getInputStream()));
 		String inputLine;
-		StringBuffer content = new StringBuffer();
+		StringBuilder content = new StringBuilder();
 		while ((inputLine = in.readLine()) != null) {
 			content.append(inputLine);
 		}
@@ -120,7 +117,7 @@ public class APIClient {
 		this.clientId = clientId;
 		this.clientSecret = clientSecret;
 		
-		Map<String,String> params = new HashMap<String,String>();
+		Map<String,String> params = new HashMap<>();
 		params.put("grant_type", "client_credentials");
 		params.put("client_id", clientId);
 		params.put("client_secret", clientSecret);

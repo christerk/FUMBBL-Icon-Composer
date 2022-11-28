@@ -10,9 +10,4 @@ public class RenameStage extends BaseStage {
         super(model,"Rename");
         setFxml("/ui/Rename.fxml");
     }
-
-    @FXML
-    private void receiveData(Object o) {
-
-    }
 }

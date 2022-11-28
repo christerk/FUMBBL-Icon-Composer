@@ -1,7 +1,5 @@
 package com.fumbbl.iconcomposer.controllers;
 
-import com.fumbbl.iconcomposer.Main;
-import com.fumbbl.iconcomposer.model.types.NamedImage;
 import com.fumbbl.iconcomposer.model.types.NamedItem;
 import com.fumbbl.iconcomposer.ui.StageType;
 import javafx.scene.control.TextField;

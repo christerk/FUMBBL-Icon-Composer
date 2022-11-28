@@ -9,8 +9,6 @@ import com.fumbbl.iconcomposer.ColourTheme.ColourType;
 import com.fumbbl.iconcomposer.model.Perspective;
 import com.fumbbl.iconcomposer.model.types.Diagram;
 import com.fumbbl.iconcomposer.model.types.Position;
-import com.fumbbl.iconcomposer.model.types.Skeleton;
-import com.fumbbl.iconcomposer.model.types.Skin;
 
 import javafx.embed.swing.SwingFXUtils;
 import javafx.scene.image.WritableImage;
@@ -18,7 +16,7 @@ import javafx.scene.image.WritableImage;
 public class ViewState {
 
 	private ColourType activeColourType;
-	private HashMap<Perspective, Diagram> activeDiagrams;
+	private final HashMap<Perspective, Diagram> activeDiagrams;
 	private ColourTheme activeColourTheme;
 	private Position activePosition;
 
@@ -47,7 +45,7 @@ public class ViewState {
 	}
 
 	private class ImageData {
-		public BufferedImage image;
+		public final BufferedImage image;
 
 		public ImageData(int size) {
 			this(size, size);
@@ -64,7 +62,7 @@ public class ViewState {
 		}
 	}
 
-	private HashMap<ImageType, ImageData> imageData;
+	private final HashMap<ImageType, ImageData> imageData;
 
     public ViewState() {
 		activeDiagrams = new HashMap<>();

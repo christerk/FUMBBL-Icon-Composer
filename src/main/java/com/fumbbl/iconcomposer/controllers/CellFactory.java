@@ -2,7 +2,6 @@ package com.fumbbl.iconcomposer.controllers;
 
 import com.fumbbl.iconcomposer.model.types.*;
 
-import com.fumbbl.iconcomposer.ui.MenuType;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.TextFieldListCell;
 import javafx.scene.control.cell.TextFieldTreeCell;
@@ -15,9 +14,9 @@ public class CellFactory<T extends NamedItem> {
 	private Class<T> c;
 	private static Controller controller;
 
-	private Image slotIcon;
-	private Image diagramIcon;
-	private Image imageIcon;
+	private final Image slotIcon;
+	private final Image diagramIcon;
+	private final Image imageIcon;
 
 	public CellFactory() {
 		slotIcon = new Image("/ui/Slot.png");
@@ -70,13 +69,17 @@ public class CellFactory<T extends NamedItem> {
 			TextFieldTreeCell<T> cell = new TextFieldTreeCell<T>() {
 				@Override
 				public void updateItem(T item, boolean empty) {
+					textProperty().unbind();
 					super.updateItem(item, empty);
 
 					if (empty || item == null) {
-						setText(null);
+						//textProperty().unbind();
+						setText("");
 						setContextMenu(null);
 					} else {
-						setText(item.getName());
+						textProperty().bind(item.nameProperty());
+
+						//setText(item.getName());
 						if (item instanceof VirtualSlot) {
 							setGraphic(new ImageView(slotIcon));
 						} else if (item instanceof VirtualDiagram) {
@@ -87,6 +90,7 @@ public class CellFactory<T extends NamedItem> {
 					}
 				}
 			};
+
 
 			cell.setConverter(new StringConverter<T>() {
 				@Override
@@ -111,6 +115,7 @@ public class CellFactory<T extends NamedItem> {
 					return null;
 				}
 			});
+
 
 			return cell;
 		};

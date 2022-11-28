@@ -1,14 +1,13 @@
 package com.fumbbl.iconcomposer.model.types;
 
-import java.awt.*;
 import java.awt.image.BufferedImage;
 
 public class NamedPng extends NamedImage {
-	public int id;
-	public String name;
+	public final int id;
 	public BufferedImage image;
 
 	public NamedPng() {
+		super();
 		id = -1;
 	}
 
@@ -18,17 +17,7 @@ public class NamedPng extends NamedImage {
 
 	public NamedPng(int id, String name, BufferedImage image) {
 		this.id = id;
-		this.name = name;
+		setName(name);
 		this.image = image;
-	}
-
-	@Override
-	public String getName() {
-		return name;
-	}
-
-	@Override
-	public void setName(String newName) {
-		this.name = newName;
 	}
 }

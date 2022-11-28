@@ -17,7 +17,7 @@ public class DtoRuleset {
 		r.id = id;
 		r.name = value;
 		
-		Collection<Roster> list = new HashSet<Roster>();
+		Collection<Roster> list = new HashSet<>();
 		if (rosters != null) {
 			rosters.forEach(roster -> list.add(roster.toRoster()));
 		}

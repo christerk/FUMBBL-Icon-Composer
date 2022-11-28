@@ -25,10 +25,11 @@ public class Bone extends NamedItem {
 	public Bone parentBone;
 	
 	private boolean dirty;
-	private Set<Bone> childBones;
+	private final Set<Bone> childBones;
 
 	public Bone() {
-		childBones = new HashSet<Bone>();
+		super();
+		childBones = new HashSet<>();
 	}
 	
 	public void setSkeleton(Skeleton skeleton) {

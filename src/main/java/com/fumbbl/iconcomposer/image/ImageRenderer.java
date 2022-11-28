@@ -7,7 +7,6 @@ import java.awt.geom.AffineTransform;
 import java.awt.image.BufferedImage;
 
 public class ImageRenderer {
-    private final int scale = 8;
 
     private final BaseRenderer renderer;
 
@@ -22,9 +21,10 @@ public class ImageRenderer {
         Graphics2D g2 = renderer.controller.viewState.getDiagramGraphics2D(perspective);
         //g2.setColor(renderer.renderBackground);
         //g2.fillRect(0, 0, renderer.width, renderer.height);
+        int scale = 8;
         g2.scale(scale, scale);
 
-        g2.translate((renderer.width/scale - image.getWidth()) / 2, (renderer.height/scale - image.getHeight())/2);
+        g2.translate((renderer.width/ scale - image.getWidth()) / 2, (renderer.height/ scale - image.getHeight())/2);
 
         renderImage(g2, image);
     }

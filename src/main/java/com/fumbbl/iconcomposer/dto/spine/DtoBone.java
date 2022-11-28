@@ -8,11 +8,11 @@ public class DtoBone {
 	public double x;
 	public double y;
 	public double length;
-	public double rotation = 0;
-	public double scaleX = 1;
-	public double scaleY = 1;
-	public double shearX = 0;
-	public double shearY = 0;
+	public final double rotation = 0;
+	public final double scaleX = 1;
+	public final double scaleY = 1;
+	public final double shearX = 0;
+	public final double shearY = 0;
 	
 	public Bone toBone() {
 		Bone b = new Bone();

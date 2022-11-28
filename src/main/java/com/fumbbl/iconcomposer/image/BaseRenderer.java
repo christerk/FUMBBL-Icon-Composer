@@ -4,6 +4,7 @@ import java.awt.*;
 import java.awt.geom.AffineTransform;
 import java.awt.image.BufferedImage;
 import java.util.Collection;
+import java.util.List;
 import java.util.stream.Collectors;
 
 import com.fumbbl.iconcomposer.ColourTheme;
@@ -17,15 +18,15 @@ import javafx.geometry.Point2D;
 import javafx.scene.image.WritableImage;
 
 public class BaseRenderer {
-	protected int width = 480;
-	protected int height = 480;
-	private Model model;
-	protected Controller controller;
-	protected double imageScale = 8.0;
-	protected Color renderBackground = new Color(148,158,148);
-	protected Color iconBackground = new Color(70, 125, 80);
-	private Color gridColor = new Color(160,89,179);
-	private ImageRenderer imageRenderer;
+	protected final int width = 480;
+	protected final int height = 480;
+	private final Model model;
+	protected final Controller controller;
+	protected final double imageScale = 8.0;
+	protected final Color renderBackground = new Color(148,158,148);
+	protected final Color iconBackground = new Color(70, 125, 80);
+	private final Color gridColor = new Color(160,89,179);
+	private final ImageRenderer imageRenderer;
 	
 	public BaseRenderer(Model model, Controller controller) {
 		this.model = model;
@@ -51,7 +52,7 @@ public class BaseRenderer {
 				for (VirtualSlot slot : model.masterSlots) {
 					Collection<VirtualDiagram> diagrams = mainController.getDiagrams(slot);
 					VirtualDiagram randomDiagram = random(diagrams);
-					skin.setDiagram(slot, randomDiagram);
+					skin.setDiagram(slot.getName(), randomDiagram);
 				}
 
 				renderSkin(Perspective.Front, skin, x, y * 2);
@@ -88,6 +89,9 @@ public class BaseRenderer {
 	}
 
 	public void renderDiagram(Perspective perspective, Diagram diagram) {
+		if (diagram == null) {
+			return;
+		}
 		Graphics2D g2 = controller.viewState.getDiagramGraphics2D(perspective);
 		AffineTransform at = g2.getTransform();
 		g2.setColor(renderBackground);
@@ -95,11 +99,8 @@ public class BaseRenderer {
 
 		g2.setColor(gridColor);
 		g2.setStroke(new BasicStroke(1, BasicStroke.CAP_BUTT, BasicStroke.JOIN_MITER, 1f, new float[] {5,3}, 0f));
-		g2.drawLine(this.width / 2, 0, this.width / 2, this.height);
-		g2.drawLine(0, this.height / 2, this.width, this.height / 2);
-
-		g2.drawLine(this.width / 2 - 1, 0, this.width / 2 - 1, this.height);
-		g2.drawLine(0, this.height / 2 - 1, this.width, this.height / 2 - 1);
+		g2.drawLine(this.width / 2 - (int)(diagram.x * imageScale), 0, this.width / 2 - (int)(diagram.x * imageScale), this.height);
+		g2.drawLine(0, this.height / 2 + (int)(diagram.y * imageScale), this.width, this.height / 2 + (int)(diagram.y * imageScale));
 
 		//controller.onColourThemeChanged(diagram.getTheme());
 		if (diagram != null) {
@@ -219,11 +220,11 @@ public class BaseRenderer {
 		AffineTransform at = g2.getTransform();
 		ColourTheme theme = controller.getColourTheme();
 
-		for (VirtualSlot virtualSlot : model.masterSlots.stream().sorted(VirtualSlot.ReverseComparator).collect(Collectors.toList())) {
-			VirtualDiagram virtualDiagram = skin.getDiagram(virtualSlot);
+		List<Slot> orderedSlots = model.masterSlots.stream().map(vs->model.getSlot(skeleton.id,vs.getName())).sorted(Slot.ReverseComparator).collect(Collectors.toList());
+		for (Slot slot : orderedSlots) {
+			VirtualDiagram virtualDiagram = skin.getDiagram(slot.getName());
 			if (virtualDiagram != null) {
 				Diagram diagram = model.getDiagram(skeleton.id, virtualDiagram.getName());
-				Slot slot = model.getSlot(skeleton.id, virtualSlot.getName());
 
 				if (diagram != null) {
 					//diagram.setColour(controller.getSvg(diagram.getImage().getName()), theme);

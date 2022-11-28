@@ -1,18 +1,11 @@
 package com.fumbbl.iconcomposer.controllers;
 
 import java.net.URL;
-import java.util.Collection;
 import java.util.ResourceBundle;
 
-import com.fumbbl.iconcomposer.model.types.NamedImage;
-import com.fumbbl.iconcomposer.model.types.NamedItem;
-import com.fumbbl.iconcomposer.model.types.Slot;
 import com.fumbbl.iconcomposer.model.types.VirtualSlot;
 import com.fumbbl.iconcomposer.ui.StageType;
 
-import javafx.collections.FXCollections;
-import javafx.collections.ObservableList;
-import javafx.collections.ObservableListBase;
 import javafx.fxml.Initializable;
 import javafx.scene.control.ChoiceBox;
 import javafx.scene.control.TextField;

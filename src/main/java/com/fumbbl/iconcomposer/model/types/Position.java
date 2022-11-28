@@ -12,6 +12,7 @@ public class Position extends NamedItem {
 	}
 	
 	public Position(ColourTheme colours) {
+		super();
 		this.templateColours = colours;
 	}
 	

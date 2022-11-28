@@ -33,9 +33,7 @@ public class OpenRosterController extends BaseController implements Initializabl
 		
 		ObservableList<Ruleset> items = rulesetList.getItems();
 		items.clear();
-		for (Ruleset r : rulesets) {
-			items.add(r);
-		}
+		items.addAll(rulesets);
 		items.sort(NamedItem.Comparator);
 		rosterList.getSelectionModel().clearSelection();
 		rulesetList.getSelectionModel().clearSelection();
@@ -44,24 +42,9 @@ public class OpenRosterController extends BaseController implements Initializabl
 
 	@Override
 	public void initialize(URL location, ResourceBundle resources) {
-		rulesetList.getSelectionModel().selectedItemProperty().addListener(new ChangeListener<Ruleset>() {
-			@Override
-			public void changed(ObservableValue<? extends Ruleset> observable, Ruleset oldValue, Ruleset newValue) {
-				loadRosters(newValue);
-			}
-		});
+		rulesetList.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> loadRosters(newValue));
 		
-		rosterList.getSelectionModel().selectedItemProperty().addListener(new ChangeListener<Roster>() {
-
-			@Override
-			public void changed(ObservableValue<? extends Roster> observable, Roster oldValue, Roster newValue) {
-				if (newValue != null) {
-					openButton.setDisable(false);
-				} else {
-					openButton.setDisable(true);
-				}
-			}
-		});
+		rosterList.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> openButton.setDisable(newValue == null));
 		
 		rulesetList.setCellFactory(p -> new ListCell<Ruleset>() {
 			@Override

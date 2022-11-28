@@ -72,16 +72,16 @@ public class ColourTheme {
 
 
 	@Expose
-	private Map<ColourType,String> colourStringMap;
-	private Map<String,ColourType> reverseMap;
-	private Map<ColourType,Color> colourMap;
-	private Map<Integer,ColourType> intMap;
+	private final Map<ColourType,String> colourStringMap;
+	private final Map<String,ColourType> reverseMap;
+	private final Map<ColourType,Color> colourMap;
+	private final Map<Integer,ColourType> intMap;
 
 	public ColourTheme(String name) {
 		this.name = name;
-		colourStringMap = new HashMap<ColourType,String>();
-		colourMap = new HashMap<ColourType,Color>();
-		reverseMap = new HashMap<String,ColourType>();
+		colourStringMap = new HashMap<>();
+		colourMap = new HashMap<>();
+		reverseMap = new HashMap<>();
 		intMap = new HashMap<>();
 	}
 

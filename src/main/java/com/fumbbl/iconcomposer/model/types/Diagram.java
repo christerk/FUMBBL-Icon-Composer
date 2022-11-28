@@ -1,6 +1,5 @@
 package com.fumbbl.iconcomposer.model.types;
 
-import com.fumbbl.iconcomposer.ColourTheme;
 import com.fumbbl.iconcomposer.model.Perspective;
 
 public class Diagram extends NamedItem {
@@ -30,6 +29,7 @@ public class Diagram extends NamedItem {
 	public double worldY;
 
 	public Diagram() {
+		super();
 	}
 
 	public void setSlot(Slot slot) {

@@ -6,11 +6,11 @@ public class Skin extends NamedItem {
 	public int id;
 	public String name;
 
-	public Map<VirtualSlot, VirtualDiagram> diagrams;
+	public final Map<String, VirtualDiagram> diagrams;
 	public Position position;
 
 	public Skin() {
-		diagrams = new HashMap<VirtualSlot, VirtualDiagram>();
+		diagrams = new HashMap<>();
 	}
 	
 	@Override
@@ -23,15 +23,15 @@ public class Skin extends NamedItem {
 		this.name = newName;
 	}
 
-	public void setDiagram(VirtualSlot slot, VirtualDiagram diagram) {
-		diagrams.put(slot, diagram);
+	public void setDiagram(String slotName, VirtualDiagram diagram) {
+		diagrams.put(slotName, diagram);
 	}
 
-	public VirtualDiagram getDiagram(VirtualSlot slot) {
-		return diagrams.get(slot);
+	public VirtualDiagram getDiagram(String slotName) {
+		return diagrams.get(slotName);
 	}
 
-	public void removeDiagram(VirtualSlot slot) {
-		diagrams.remove(slot);
+	public void removeDiagram(String slotName) {
+		diagrams.remove(slotName);
 	}
 }

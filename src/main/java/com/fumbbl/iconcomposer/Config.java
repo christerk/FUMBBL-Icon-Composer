@@ -3,12 +3,12 @@ package com.fumbbl.iconcomposer;
 import java.util.prefs.Preferences;
 
 public class Config {
-	private Preferences prefs;
+	private final Preferences prefs;
 	private String clientId;
 	private String clientSecret;
 
-	private String apiBase;
-	private String siteBase;
+	private final String apiBase;
+	private final String siteBase;
 
 	private static final String KEY_CLIENT_ID = "client_id";
 	private static final String KEY_CLIENT_SECRET = "client_secret";

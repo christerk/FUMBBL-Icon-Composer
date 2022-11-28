@@ -22,51 +22,68 @@ import com.fumbbl.iconcomposer.dto.fumbbl.*;
 import com.fumbbl.iconcomposer.model.types.*;
 
 import javafx.application.Platform;
+import javafx.beans.Observable;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.collections.FXCollections;
+import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
 
 import javax.imageio.ImageIO;
 
 public class Model {
-	private DataStore dataStore;
+	private final DataStore dataStore;
 	
-	private Config cfg;
-	private DataLoader dataLoader;
+	private final Config cfg;
+	private final DataLoader dataLoader;
 
 	private Controller controller;
 
-	public ObservableList<VirtualDiagram> masterDiagrams;
-	public ObservableList<Position> masterPositions;
-	public ObservableList<VirtualSlot> masterSlots;
-	public ObservableList<NamedImage> masterImages;
-	public ObservableList<Bone> masterBones;
+	public final ObservableList<VirtualDiagram> masterDiagrams;
+	public final ObservableList<Position> masterPositions;
+	public final ObservableList<VirtualSlot> masterSlots;
+	public final ObservableList<NamedImage> masterImages;
+	public final ObservableList<Bone> masterBones;
 
-	public SimpleObjectProperty<Skeleton> frontSkeleton;
-	public SimpleObjectProperty<Skeleton> sideSkeleton;
+	public final SimpleObjectProperty<Skeleton> frontSkeleton;
+	public final SimpleObjectProperty<Skeleton> sideSkeleton;
 
-	public SimpleObjectProperty<Position> selectedPosition;
+	public final SimpleObjectProperty<Position> selectedPosition;
 
 	public Model() {
 		dataStore = new DataStore();
 		cfg = new Config();
 		dataLoader = new DataLoader(cfg);
 
-		masterDiagrams = FXCollections.observableArrayList();
-		masterPositions = FXCollections.observableArrayList();
-		masterSlots = FXCollections.observableArrayList();
-		masterImages = FXCollections.observableArrayList();
-		masterBones = FXCollections.observableArrayList();
+		masterPositions = FXCollections.observableArrayList(item -> new Observable[] { item.nameProperty() });
+		masterBones = FXCollections.observableArrayList(item -> new Observable[] { item.nameProperty() });
+		masterSlots = FXCollections.observableArrayList(item -> new Observable[] { item.nameProperty() });
+		masterDiagrams = FXCollections.observableArrayList(item -> new Observable[] { item.nameProperty() });
+		masterImages = FXCollections.observableArrayList(item -> new Observable[] { item.nameProperty() });
 
-		frontSkeleton = new SimpleObjectProperty<Skeleton>();
-		sideSkeleton = new SimpleObjectProperty<Skeleton>();
-		selectedPosition = new SimpleObjectProperty<Position>();
+		frontSkeleton = new SimpleObjectProperty<>();
+		sideSkeleton = new SimpleObjectProperty<>();
+		selectedPosition = new SimpleObjectProperty<>();
 
-		selectedPosition.addListener((o, oldValue, newValue) -> {
-			loadPosition(newValue);
-		});
+		sortByName(masterPositions);
+		sortByName(masterBones);
+		sortByName(masterSlots);
+		sortByName(masterDiagrams);
+
+		selectedPosition.addListener((o, oldValue, newValue) -> loadPosition(newValue));
 	}
-	
+
+	private <T extends NamedItem> void sortByName(ObservableList<T> list) {
+		list.addListener(getChangeListener(list));
+	}
+
+	private <T extends NamedItem> ListChangeListener<T> getChangeListener(ObservableList<T> list) {
+		return (ListChangeListener.Change<? extends T> c) -> {
+			if (c.next() && (c.wasAdded() || c.wasRemoved())) {
+				FXCollections.sort(list, NamedItem.Comparator);
+			}
+		};
+	}
+
 	public Config getConfig() {
 		return cfg;
 	}
@@ -76,16 +93,26 @@ public class Model {
 			String fileId = stripExtension(path.getFileName());
 			Diagram diagram = null;
 
+			String originalName = fileId;
+			Skeleton skeleton = null;
+			Perspective perspective = Perspective.Unknown;
+
 			if (fileId.startsWith("front_")) {
+				perspective = Perspective.Front;
 				fileId = fileId.substring(6);
-				diagram = getDiagram(Perspective.Front, fileId);
 			} else if (fileId.startsWith("side_")) {
+				perspective = Perspective.Side;
 				fileId = fileId.substring(5);
-				diagram = getDiagram(Perspective.Side, fileId);
 			}
+			diagram = getDiagram(perspective, fileId);
 
 			if (diagram == null) {
-				return;
+				String finalFileId = fileId;
+				VirtualSlot vSlot = masterSlots.stream().filter(s -> finalFileId.startsWith(s.getName())).findFirst().get();
+
+				diagram = GenerateDiagram(perspective, vSlot, fileId);
+				dataStore.addDiagram(getSkeleton(perspective), fileId, diagram);
+				dataLoader.saveDiagram(diagram);
 			}
 
 			InputStream is = new ByteArrayInputStream(bytes);
@@ -95,11 +122,11 @@ public class Model {
 			diagram.height = image.getHeight();
 			dataLoader.saveDiagram(diagram);
 
-			NamedPng newImage = new NamedPng(fileId, image);
+			NamedPng newImage = new NamedPng(originalName, image);
 			dataStore.addImage(newImage);
-			dataLoader.uploadFile(diagram.id, fileId, bytes);
+			dataLoader.uploadFile(diagram.id, originalName, bytes);
 
-			masterImages.add(newImage);
+			masterImages.add(dataStore.getImage(newImage.getName()));
 		} catch (IOException ioe) {
 
 		}
@@ -118,10 +145,7 @@ public class Model {
 	private Diagram getDiagram(Perspective perspective, String slotName) {
 		Skeleton s = getSkeleton(perspective);
 		if (s != null) {
-			Diagram diagram = controller.getDiagram(s.id, slotName);
-			if (diagram != null) {
-				return diagram;
-			}
+			return controller.getDiagram(s.id, slotName);
 		}
 		return null;
 	}
@@ -136,7 +160,7 @@ public class Model {
 		dataStore.clearDiagrams();
 		dataStore.clearSlots();
 		dataStore.clearPosition();
-		
+
 		DtoRoster roster = dataLoader.getRoster(rosterId);
 
 		masterPositions.setAll(roster.toRoster().positions);
@@ -152,11 +176,17 @@ public class Model {
 		dataStore.clearSlots();
 		dataStore.clearDiagrams();
 		dataStore.clearBones();
+		dataStore.clearImages();
 
 		loadSkeletons(position);
 
+		controller.onProgressStart("Loading images");
+		controller.startBatch();
+
 		loadParts(frontSkeleton.get());
 		loadParts(sideSkeleton.get());
+
+		controller.runBatch();
 
 		controller.viewState.setActivePosition(position);
 	}
@@ -182,7 +212,7 @@ public class Model {
 
 	public Collection<Ruleset> loadRulesets() {
 		Collection<DtoRuleset> list = dataLoader.getRulesets();
-		Set<Ruleset> rulesets = new HashSet<Ruleset>();
+		Set<Ruleset> rulesets = new HashSet<>();
 		list.forEach(r -> rulesets.add(r.toRuleset()));
 		return rulesets;
 	}
@@ -193,6 +223,9 @@ public class Model {
 	}
 	
 	public void loadSkeletons(Position position) {
+		if (position == null) {
+			return;
+		}
 		DtoPositionData list = dataLoader.getPositionData(position.id);
 
 		list.skeletons.forEach(s -> setSkeleton(s.toSkeleton()));
@@ -205,9 +238,6 @@ public class Model {
 	
 	private void loadDiagrams(Skeleton skeleton) {
 		Map<Integer,Diagram> diagramMap = new HashMap<>();
-
-		controller.onProgressStart("Loading images");
-		controller.startBatch();
 
 		Collection<DtoDiagram> diagrams = dataLoader.getDiagrams(skeleton);
 
@@ -227,10 +257,8 @@ public class Model {
 
 		dataStore.addDiagrams(skeleton.id, diagramMap.values());
 
-		HashSet<String> existing = new HashSet<>(masterDiagrams.stream().map(s->s.getName()).collect(Collectors.toList()));
-		masterDiagrams.addAll(diagramMap.values().stream().filter(d->!existing.contains(d.getName())).map(d->new VirtualDiagram(d)).collect(Collectors.toList()));
-
-		controller.runBatch();
+		HashSet<String> existing = masterDiagrams.stream().map(NamedItem::getName).collect(Collectors.toCollection(HashSet::new));
+		masterDiagrams.addAll(diagramMap.values().stream().filter(d -> !existing.contains(d.getName())).map(VirtualDiagram::new).collect(Collectors.toList()));
 	}
 	
 	private void loadBones(Skeleton skeleton) {
@@ -248,7 +276,7 @@ public class Model {
 		if (skeleton == null) {
 			return;
 		}
-		Map<Integer,Slot> slots = new HashMap<Integer,Slot>();
+		Map<Integer,Slot> slots = new HashMap<>();
 		Collection<DtoSlot> list = dataLoader.getSlots(skeleton.id);
 
 		list.forEach(s -> slots.put(s.id, s.toSlot()));
@@ -259,8 +287,8 @@ public class Model {
 			slot.setSkeleton(skeleton);
 		}
 
-		HashSet<String> existing = new HashSet<>(masterSlots.stream().map(s->s.getName()).collect(Collectors.toList()));
-		masterSlots.addAll(slots.values().stream().filter(s->!existing.contains(s.getName())).map(s->new VirtualSlot(s)).collect(Collectors.toList()));
+		HashSet<String> existing = masterSlots.stream().map(NamedItem::getName).collect(Collectors.toCollection(HashSet::new));
+		masterSlots.addAll(slots.values().stream().filter(s->!existing.contains(s.getName())).map(VirtualSlot::new).collect(Collectors.toList()));
 		dataStore.addSlots(slots.values());
 	}
 
@@ -328,95 +356,82 @@ public class Model {
 	}
 
 	public void handleDroppedFile(String path) {
-		Runnable task = new Runnable() {
-			@Override
-			public void run() {
-				try {
-					Path p = Paths.get(path);
-					PathMatcher jsonMatcher = FileSystems.getDefault().getPathMatcher("glob:**.json");
-					PathMatcher pngMatcher = FileSystems.getDefault().getPathMatcher("glob:**.png");
+		Runnable task = () -> {
+			try {
+				Path p = Paths.get(path);
+				PathMatcher jsonMatcher = FileSystems.getDefault().getPathMatcher("glob:**.json");
+				PathMatcher pngMatcher = FileSystems.getDefault().getPathMatcher("glob:**.png");
 
-					if (!Files.isReadable(p)) {
-						return;
-					}
-					
-					List<Runnable> delayedTasks = new LinkedList<Runnable>();
-					
-					long size = Files.size(p);
-					if (size > 0 && size < 1024*1024*10) {
-						byte[] bytes = Files.readAllBytes(p);
-						
-						if (jsonMatcher.matches(p)) {
-							controller.onProgressStart("Importing Spine");
-							try {
-								SpineImporter importer = new SpineImporter();
-								importer.importSkeleton(new String(bytes));
-
-								Position pos = dataStore.getPosition();
-								Skeleton skeleton = importer.getSkeleton();
-
-								if (p.getFileName().toString().contains("_front_")) {
-									skeleton.perspective = Perspective.Front;
-								} else if (p.getFileName().toString().contains("_side_")) {
-									skeleton.perspective = Perspective.Side;
-								} else {
-									return;
-								}
-
-								setSkeleton(skeleton);
-
-								dataStore.setSlots(skeleton.getSlots());
-								dataStore.setBones(skeleton.getBones());
-
-								controller.startBatch();
-								dataLoader.saveSkeleton(pos, skeleton);
-								dataLoader.saveBones(skeleton);
-								dataLoader.saveSlots(skeleton);
-
-								Collection<Diagram> diagrams = importer.getDiagrams();
-								dataStore.setDiagrams(skeleton.id, diagrams);
-								diagrams.forEach(d -> dataLoader.saveDiagram(d));
-
-								Collection<Skin> skins = importer.getSkins();
-
-								controller.runBatch();
-
-								delayedTasks.add(new Runnable() {
-									@Override
-									public void run() {
-										controller.onBonesChanged(skeleton.getBones());
-										masterSlots.setAll(skeleton.getSlots().stream().map(s->new VirtualSlot(s)).collect(Collectors.toList()));
-
-										masterDiagrams.clear();
-										masterDiagrams.addAll(diagrams.stream().map(d -> new VirtualDiagram(d)).collect(Collectors.toList()));
-									}
-								});
-
-							} catch (Exception e) {
-								controller.getMainController().onProgressComplete();
-								controller.stopProgress();
-							}
-						} else if (pngMatcher.matches(p)) {
-							controller.runInBackground(() -> importPng(p, bytes));
-						}
-					}
-
-					controller.runInBackground(new Runnable() {
-						@Override
-						public void run() {
-							Platform.runLater(new Runnable() {
-								@Override
-								public void run() {
-									for (Runnable task : delayedTasks) {
-										task.run();
-									}
-								}						
-							});
-						}
-					});
-				} catch (IOException e) {
-					controller.onProgress(1, true);
+				if (!Files.isReadable(p)) {
+					return;
 				}
+
+				List<Runnable> delayedTasks = new LinkedList<>();
+
+				long size = Files.size(p);
+				if (size > 0 && size < 1024*1024*10) {
+					byte[] bytes = Files.readAllBytes(p);
+
+					if (jsonMatcher.matches(p)) {
+						controller.onProgressStart("Importing Spine");
+						try {
+							SpineImporter importer = new SpineImporter();
+							importer.importSkeleton(new String(bytes));
+
+							Position pos = selectedPosition.get();
+							Skeleton skeleton = importer.getSkeleton();
+
+							if (p.getFileName().toString().contains("_front_")) {
+								skeleton.perspective = Perspective.Front;
+							} else if (p.getFileName().toString().contains("_side_")) {
+								skeleton.perspective = Perspective.Side;
+							} else {
+								return;
+							}
+
+							setSkeleton(skeleton);
+
+							dataStore.setSlots(skeleton.getSlots());
+							dataStore.setBones(skeleton.getBones());
+
+							controller.startBatch();
+							dataLoader.saveSkeleton(pos, skeleton);
+							dataLoader.setPerspective(pos, skeleton);
+							dataLoader.saveBones(skeleton);
+							dataLoader.saveSlots(skeleton);
+
+							Collection<Diagram> diagrams = importer.getDiagrams();
+							dataStore.setDiagrams(skeleton.id, diagrams);
+							diagrams.forEach(d -> dataLoader.saveDiagram(d));
+
+							Collection<Skin> skins = importer.getSkins();
+
+							controller.runBatch();
+
+							delayedTasks.add(() -> {
+								controller.onBonesChanged(skeleton.getBones());
+								masterSlots.setAll(skeleton.getSlots().stream().map(s -> new VirtualSlot(s)).collect(Collectors.toList()));
+
+								masterDiagrams.clear();
+								masterDiagrams.addAll(diagrams.stream().map(d -> new VirtualDiagram(d)).collect(Collectors.toList()));
+							});
+
+						} catch (Exception e) {
+							controller.getMainController().onProgressComplete();
+							controller.stopProgress();
+						}
+					} else if (pngMatcher.matches(p)) {
+						controller.runInBackground(() -> importPng(p, bytes));
+					}
+				}
+
+				controller.runInBackground(() -> Platform.runLater(() -> {
+					for (Runnable task1 : delayedTasks) {
+						task1.run();
+					}
+				}));
+			} catch (IOException e) {
+				controller.onProgress(1, true);
 			}
 		};
 		
@@ -431,14 +446,6 @@ public class Model {
 		return null;
 	}
 
-	public void setSkinDiagram(Skin skin, VirtualSlot slot, VirtualDiagram diagram) {
-		if (diagram != null) {
-			skin.setDiagram(slot, diagram);
-		} else {
-			skin.removeDiagram(slot);
-		}
-	}
-
 	public void onItemRenamed(NamedItem item, String oldName) {
 		if (item instanceof Skeleton) {
 			dataLoader.saveSkeleton(dataStore.getPosition(), (Skeleton)item);
@@ -446,9 +453,13 @@ public class Model {
 			dataStore.renameImage(oldName, item.getName());
 			//controller.onImagesChanged(dataStore.getImages());
 		} else if (item instanceof Slot) {
+			dataStore.renameSlot(oldName, item.getName());
+			dataLoader.saveSlot((Slot)item);
 		} else if (item instanceof VirtualDiagram) {
 			dataStore.renameDiagram(oldName, item.getName());
 			dataStore.renameDiagramImages(oldName, item.getName());
+			dataLoader.saveDiagram(dataStore.getDiagram(getSkeleton(Perspective.Front).id, item.getName()));
+			dataLoader.saveDiagram(dataStore.getDiagram(getSkeleton(Perspective.Side).id, item.getName()));
 		}
 	}
 

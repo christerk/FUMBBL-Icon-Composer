@@ -16,7 +16,6 @@ import javafx.application.Platform;
 import javafx.beans.binding.Bindings;
 import javafx.beans.binding.BooleanBinding;
 import javafx.beans.binding.LongBinding;
-import javafx.beans.binding.ObjectBinding;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
 import javafx.collections.ListChangeListener;
@@ -121,36 +120,38 @@ public class MainController extends BaseController implements Initializable {
 			}
 		});
 
-		TreeItem<NamedItem> root = new TreeItem<NamedItem>(new NamedItem());
+		TreeItem<NamedItem> root = new TreeItem<>(new NamedItem());
 		treeView.setRoot(root);
 		root.setExpanded(true);
 		treeView.setShowRoot(false);
 		treeView.setContextMenu(treeContext);
 
-		new CellFactory<NamedItem>().apply(treeView, NamedItem.class, this);
+		new CellFactory<>().apply(treeView, NamedItem.class, this);
 
-		treeView.addEventFilter(ContextMenuEvent.CONTEXT_MENU_REQUESTED, new EventHandler<ContextMenuEvent>() {
-			@Override
-			public void handle(ContextMenuEvent event) {
-				NamedItem item = treeView.getSelectionModel().getSelectedItem().getValue();
+		treeView.addEventFilter(ContextMenuEvent.CONTEXT_MENU_REQUESTED, event -> {
+			TreeItem<NamedItem> selectedItem = treeView.getSelectionModel().getSelectedItem();
+			if (selectedItem != null) {
+				NamedItem item = selectedItem.getValue();
 				if (item instanceof NamedImage) {
 					event.consume();
 				}
 				treeContextNewComponent.setVisible(item instanceof VirtualSlot);
+			} else {
+				event.consume();
 			}
 		});
 
 		treeView.setEditable(false);
 		treeView.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> {
-			if (((TreeItem)newValue).getValue() instanceof VirtualDiagram) {
-				if (newValue != null) {
-					VirtualDiagram diagram = (VirtualDiagram) ((TreeItem) newValue).getValue();
+			if (newValue != null) {
+				if (((TreeItem<NamedItem>)newValue).getValue() instanceof VirtualDiagram) {
+					VirtualDiagram diagram = (VirtualDiagram) ((TreeItem<NamedItem>) newValue).getValue();
 					controller.displayDiagrams(diagram.getName());
 					slotChoices.getSelectionModel().select(slotChoices.getItems().stream().filter(s->s.getName().equals(diagram.getSlot().getName())).findFirst().get());
-				} else {
-					controller.displayDiagrams(null);
-				}
 				tabs.getSelectionModel().select(diagramTab);
+			}
+			} else {
+				controller.displayDiagrams(null);
 			}
 		});
 
@@ -166,9 +167,7 @@ public class MainController extends BaseController implements Initializable {
 			}
 		});
 
-		positionChoice.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> {
-			model.selectedPosition.set(newValue);
-		});
+		positionChoice.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> model.selectedPosition.set(newValue));
 	}
 
 	public void onShow() {
@@ -185,14 +184,12 @@ public class MainController extends BaseController implements Initializable {
 
 		slotChoices.setItems(model.masterSlots);
 
-		model.selectedPosition.addListener((o, oldValue, newValue) -> {
-			setColourTheme(newValue.templateColours);
-		});
+		model.selectedPosition.addListener((o, oldValue, newValue) -> setColourTheme(newValue.templateColours));
 
 		LongBinding b = Bindings.createLongBinding(() -> {
 			long combinations = 1;
 			for (VirtualSlot slot : model.masterSlots) {
-				long count = getDiagrams(slot).stream().count();
+				long count = getDiagrams(slot).size();
 				if (count > 0) {
 					combinations *= count;
 				}
@@ -201,132 +198,109 @@ public class MainController extends BaseController implements Initializable {
 		}, model.masterSlots, model.masterDiagrams);
 		combinationsLabel.textProperty().bind(Bindings.format("%d", b));
 
-		model.masterBones.addListener(new ListChangeListener<Bone>() {
-			@Override
-			public void onChanged(Change<? extends Bone> c) {
-				renderSkeleton(model.frontSkeleton.get());
-				renderSkeleton(model.sideSkeleton.get());
+		model.masterBones.addListener((ListChangeListener<Bone>) c -> {
+			renderSkeleton(model.frontSkeleton.get());
+			renderSkeleton(model.sideSkeleton.get());
+		});
+
+		model.frontSkeleton.addListener((observable, oldValue, newValue) -> renderSkeleton(newValue));
+
+		model.sideSkeleton.addListener((observable, oldValue, newValue) -> renderSkeleton(newValue));
+
+		model.masterSlots.addListener((ListChangeListener<VirtualSlot>) c -> {
+			TreeItem<NamedItem> root = treeView.getRoot();
+			ObservableList<TreeItem<NamedItem>> children = root.getChildren();
+			while (c.next()) {
+				if (c.wasPermutated()) {
+					for (int i = c.getFrom(); i < c.getTo(); ++i) {
+						//permutate
+					}
+				} else if (c.wasUpdated()) {
+				} else {
+					for (VirtualSlot remitem : c.getRemoved()) {
+						List<TreeItem<NamedItem>> x = children.stream().filter(s -> s.getValue() == remitem).collect(Collectors.toList());
+
+						children.removeAll(x);
+					}
+					for (VirtualSlot additem : c.getAddedSubList()) {
+						children.add(new TreeItem<>(additem));
+					}
+				}
 			}
 		});
 
-		model.frontSkeleton.addListener(new ChangeListener<Skeleton>() {
-			@Override
-			public void changed(ObservableValue<? extends Skeleton> observable, Skeleton oldValue, Skeleton newValue) {
-				renderSkeleton(newValue);
-			}
-		});
+		model.masterDiagrams.addListener((ListChangeListener<VirtualDiagram>) c -> {
+			TreeItem<NamedItem> root = treeView.getRoot();
+			ObservableList<TreeItem<NamedItem>> children = root.getChildren();
+			while (c.next()) {
+				if (c.wasPermutated()) {
+					for (int i = c.getFrom(); i < c.getTo(); ++i) {
+						//permutate
+					}
+				} else if (c.wasUpdated()) {
+					//update item
+				} else {
+					for (VirtualDiagram remitem : c.getRemoved()) {
+						VirtualSlot slot = remitem.getSlot();
+						Optional<TreeItem<NamedItem>> opt = children.stream().filter(s -> s.getValue().getName().equals(slot.getName())).findFirst();
+						if (opt.isPresent()) {
+							TreeItem<NamedItem> parent = opt.get();
 
-		model.sideSkeleton.addListener(new ChangeListener<Skeleton>() {
-			@Override
-			public void changed(ObservableValue<? extends Skeleton> observable, Skeleton oldValue, Skeleton newValue) {
-				renderSkeleton(newValue);
-			}
-		});
-
-		model.masterSlots.addListener(new ListChangeListener<VirtualSlot>() {
-			@Override
-			public void onChanged(Change<? extends VirtualSlot> c) {
-				TreeItem<NamedItem> root = treeView.getRoot();
-				ObservableList<TreeItem<NamedItem>> children = root.getChildren();
-				while (c.next()) {
-					if (c.wasPermutated()) {
-						for (int i = c.getFrom(); i < c.getTo(); ++i) {
-							//permutate
-						}
-					} else if (c.wasUpdated()) {
-						//update item
-					} else {
-						for (VirtualSlot remitem : c.getRemoved()) {
 							List<TreeItem<NamedItem>> x = children.stream().filter(s -> s.getValue() == remitem).collect(Collectors.toList());
+							parent.getChildren().removeAll(x);
+						}
+					}
+					for (VirtualDiagram additem : c.getAddedSubList()) {
+						VirtualSlot slot = additem.getSlot();
+						Optional<TreeItem<NamedItem>> opt = children.stream().filter(s -> s.getValue().getName().equals(slot.getName())).findFirst();
+						if (opt.isPresent()) {
+							TreeItem<NamedItem> parent = opt.get();
+							parent.getChildren().add(new TreeItem<>(additem));
+						}
 
-							children.removeAll(x);
-						}
-						for (VirtualSlot additem : c.getAddedSubList()) {
-							children.add(new TreeItem<NamedItem>(additem));
-						}
 					}
 				}
 			}
 		});
 
-		model.masterDiagrams.addListener(new ListChangeListener<VirtualDiagram>() {
-			@Override
-			public void onChanged(Change<? extends VirtualDiagram> c) {
-				TreeItem<NamedItem> root = treeView.getRoot();
-				ObservableList<TreeItem<NamedItem>> children = root.getChildren();
-				while (c.next()) {
-					if (c.wasPermutated()) {
-						for (int i = c.getFrom(); i < c.getTo(); ++i) {
-							//permutate
-						}
-					} else if (c.wasUpdated()) {
-						//update item
-					} else {
-						for (VirtualDiagram remitem : c.getRemoved()) {
-							VirtualSlot slot = remitem.getSlot();
-							Optional<TreeItem<NamedItem>> opt = children.stream().filter(s -> s.getValue().getName().equals(slot.getName())).findFirst();
-							if (opt.isPresent()) {
-								TreeItem<NamedItem> parent = opt.get();
+		model.masterImages.addListener((ListChangeListener<NamedImage>) c -> {
+			TreeItem<NamedItem> root = treeView.getRoot();
+			ObservableList<TreeItem<NamedItem>> children = root.getChildren();
+			while (c.next()) {
+				if (c.wasPermutated()) {
+					for (int i = c.getFrom(); i < c.getTo(); ++i) {
+						//permutate
+					}
+				} else if (c.wasUpdated()) {
+					//update item
+				} else {
+					for (NamedImage remitem : c.getRemoved()) {
+						String diagramName = remitem.getName().replaceFirst("(front_|side_)", "");
 
-								List<TreeItem<NamedItem>> x = children.stream().filter(s -> s.getValue() == remitem).collect(Collectors.toList());
-								parent.getChildren().removeAll(x);
-							}
-						}
-						for (VirtualDiagram additem : c.getAddedSubList()) {
-							VirtualSlot slot = additem.getSlot();
-							Optional<TreeItem<NamedItem>> opt = children.stream().filter(s -> s.getValue().getName().equals(slot.getName())).findFirst();
-							if (opt.isPresent()) {
-								TreeItem<NamedItem> parent = opt.get();
-								parent.getChildren().add(new TreeItem<NamedItem>(additem));
-							}
+						Optional<TreeItem<NamedItem>> opt = children.stream().filter(s -> diagramName.startsWith(s.getValue().getName())).findFirst();
+						if (opt.isPresent()) {
+							TreeItem<NamedItem> parentSlot = opt.get();
 
+							Optional<TreeItem<NamedItem>> opt2 = parentSlot.getChildren().stream().filter(i -> i.getValue().getName().equals(diagramName)).findFirst();
+							if (opt2.isPresent()) {
+								TreeItem<NamedItem> parentDiagram = opt2.get();
+
+								List<TreeItem<NamedItem>> x = parentDiagram.getChildren().stream().filter(s -> s.getValue() == remitem).collect(Collectors.toList());
+								parentDiagram.getChildren().removeAll(x);
+							}
 						}
 					}
-				}
-			}
-		});
+					for (NamedImage additem : c.getAddedSubList()) {
+						String diagramName = additem.getName().replaceFirst("(front_|side_)", "");
 
-		model.masterImages.addListener(new ListChangeListener<NamedImage>() {
-			@Override
-			public void onChanged(Change<? extends NamedImage> c) {
-				TreeItem<NamedItem> root = treeView.getRoot();
-				ObservableList<TreeItem<NamedItem>> children = root.getChildren();
-				while (c.next()) {
-					if (c.wasPermutated()) {
-						for (int i = c.getFrom(); i < c.getTo(); ++i) {
-							//permutate
-						}
-					} else if (c.wasUpdated()) {
-						//update item
-					} else {
-						for (NamedImage remitem : c.getRemoved()) {
-							String diagramName = remitem.getName().replaceFirst("(front_|side_)", "");
+						Optional<TreeItem<NamedItem>> opt = children.stream().filter(s -> diagramName.startsWith(s.getValue().getName())).findFirst();
+						if (opt.isPresent()) {
+							TreeItem<NamedItem> parentSlot = opt.get();
 
-							Optional<TreeItem<NamedItem>> opt = children.stream().filter(s -> diagramName.startsWith(s.getValue().getName())).findFirst();
-							if (opt.isPresent()) {
-								TreeItem<NamedItem> parentSlot = opt.get();
-
-								Optional<TreeItem<NamedItem>> opt2 = parentSlot.getChildren().stream().filter(i -> i.getValue().getName().equals(diagramName)).findFirst();
-								if (opt2.isPresent()) {
-									TreeItem<NamedItem> parentDiagram = opt2.get();
-
-									List<TreeItem<NamedItem>> x = parentDiagram.getChildren().stream().filter(s -> s.getValue() == remitem).collect(Collectors.toList());
-									parentDiagram.getChildren().removeAll(x);
-								}
-							}
-						}
-						for (NamedImage additem : c.getAddedSubList()) {
-							String diagramName = additem.getName().replaceFirst("(front_|side_)", "");
-
-							Optional<TreeItem<NamedItem>> opt = children.stream().filter(s -> diagramName.startsWith(s.getValue().getName())).findFirst();
-							if (opt.isPresent()) {
-								TreeItem<NamedItem> parentSlot = opt.get();
-
-								Optional<TreeItem<NamedItem>> opt2 = parentSlot.getChildren().stream().filter(i -> i.getValue().getName().equals(diagramName)).findFirst();
-								if (opt2.isPresent()) {
-									TreeItem<NamedItem> parentDiagram = opt2.get();
-									parentDiagram.getChildren().add(new TreeItem<NamedItem>(additem));
-								}
+							Optional<TreeItem<NamedItem>> opt2 = parentSlot.getChildren().stream().filter(i -> i.getValue().getName().equals(diagramName)).findFirst();
+							if (opt2.isPresent()) {
+								TreeItem<NamedItem> parentDiagram = opt2.get();
+								parentDiagram.getChildren().add(new TreeItem<>(additem));
 							}
 						}
 					}
@@ -498,13 +472,10 @@ public class MainController extends BaseController implements Initializable {
 
 	public void setColourThemes(Collection<ColourTheme> themes) {
 		ObservableList<MenuItem> menuItems = menuColourThemes.getItems();
-		EventHandler<ActionEvent> action = new EventHandler<ActionEvent>() {
-			@Override
-			public void handle(ActionEvent event) {
-				String theme = ((MenuItem) event.getSource()).getText();
-				controller.setColourTheme(theme);
-				renderPreview();
-			}
+		EventHandler<ActionEvent> action = event -> {
+			String theme = ((MenuItem) event.getSource()).getText();
+			controller.setColourTheme(theme);
+			renderPreview();
 		};
 		for (ColourTheme s : themes) {
 			MenuItem item = new MenuItem(s.name);
@@ -517,56 +488,28 @@ public class MainController extends BaseController implements Initializable {
 		model.masterImages.setAll(images);
 	}
 
-	public void addImage(NamedImage newImage) {
-		model.masterImages.add(newImage);
-	}
-
-	public void setDiagrams(Collection<VirtualDiagram> diagrams) {
-		if (diagrams == null) {
-			model.masterDiagrams.clear();
-			return;
-		}
-		model.masterDiagrams.setAll(diagrams);
-	}
-
 	public void setBones(Collection<Bone> bones) {
 		if (bones == null) {
 			return;
 		}
-		Map<String,Bone> boneMap = new HashMap<String,Bone>();
-		Map<String,TreeItem<String>> itemMap = new HashMap<String,TreeItem<String>>();
+		Map<String,Bone> boneMap = new HashMap<>();
+		Map<String,TreeItem<String>> itemMap = new HashMap<>();
 
 		for (Bone b : bones) {
 			boneMap.put(b.name, b);
-			itemMap.put(b.name, new TreeItem<String>(b.name));
+			itemMap.put(b.name, new TreeItem<>(b.name));
 		}
 	}
 
-	public void onPositionsChanged(Collection<Position> positions) {
-		positionChoice.getSelectionModel().clearSelection();
-		model.masterPositions.clear();
-		model.masterPositions.setAll(positions);
-		positionChoice.setVisible(true);
-	}
-
-	public void onPositionChanged(Position position) {
-		controller.loadSkeletons(position);
-		controller.viewState.setActiveColourTheme(position.templateColours);
-		controller.onColourThemeChanged(position.templateColours);
-	}
-	
 	public void onProgressStart(String description) {
-		Platform.runLater(new Runnable() {
-			@Override
-			public void run() {
-				labelProgress.setText(description);
-				progressPane.setVisible(true);
-			}
+		Platform.runLater(() -> {
+			labelProgress.setText(description);
+			progressPane.setVisible(true);
 		});
 	}
 
 	public void onProgressComplete() {
-		progressPane.setVisible(false);
+		Platform.runLater(() -> progressPane.setVisible(false));
 	}
 
 	public void onProgress(double progress, boolean complete) {
@@ -600,5 +543,11 @@ public class MainController extends BaseController implements Initializable {
 	public void newComponent(ActionEvent e) {
 		VirtualSlot slot = (VirtualSlot) treeView.getSelectionModel().getSelectedItem().getValue();
 		controller.showNewComponentDialog(slot);
+	}
+
+	public void deleteItem(ActionEvent e) {
+		NamedItem item = treeView.getSelectionModel().getSelectedItem().getValue();
+
+
 	}
 }

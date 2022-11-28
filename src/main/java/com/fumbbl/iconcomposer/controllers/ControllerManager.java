@@ -8,12 +8,12 @@ import com.fumbbl.iconcomposer.model.Model;
 import com.fumbbl.iconcomposer.ui.StageType;
 
 public class ControllerManager {
-	private Controller controller;
-	private Map<StageType,BaseController> controllers;
+	private final Controller controller;
+	private final Map<StageType,BaseController> controllers;
 	
-	public ControllerManager(Model model, Controller controller) throws IOException {
+	public ControllerManager(Model model, Controller controller) {
 		this.controller = controller;
-		controllers = new HashMap<StageType,BaseController>();
+		controllers = new HashMap<>();
 		
 		controller.setControllerManager(this);
 	}

@@ -1,7 +1,6 @@
 package com.fumbbl.iconcomposer.ui;
 
 import java.io.IOException;
-import java.net.URL;
 import java.util.HashMap;
 
 import com.fumbbl.iconcomposer.controllers.BaseController;
@@ -10,36 +9,24 @@ import com.fumbbl.iconcomposer.controllers.Controller;
 import com.fumbbl.iconcomposer.model.Model;
 import javafx.event.EventHandler;
 import javafx.fxml.FXMLLoader;
-import javafx.scene.Node;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.ContextMenu;
-import javafx.scene.control.Control;
 import javafx.scene.image.Image;
 import javafx.stage.Stage;
 import javafx.stage.WindowEvent;
 
 public class BaseStage {
-	private final Model model;
-	protected Stage stage;
+	protected final Stage stage;
 	protected Scene scene;
 	protected BaseController controller;
 	protected Controller mainController;
 	protected FXMLLoader loader;
-	private Parent root;
-	private HashMap<String, ContextMenu> childControls;
 
 	public BaseStage(Model model, String title) {
-		this.model = model;
 		stage = new Stage();
 		stage.setTitle(title);
-		childControls = new HashMap<>();
-		stage.setOnShown(new EventHandler<WindowEvent>() {
-			@Override
-			public void handle(WindowEvent event) {
-				controller.onShow();
-			}
-		});
+		stage.setOnShown(event -> controller.onShow());
 	}
 	
 	protected void applyTheme() {
@@ -59,7 +46,7 @@ public class BaseStage {
 	
 	public void setFxml(String path) throws IOException {
 		loader = new FXMLLoader(getClass().getResource(path));
-		root = loader.load();
+		Parent root = loader.load();
 		scene = new Scene(root);
 		controller = (BaseController) loader.getController();
 		controller.setStage(this);
@@ -89,9 +76,5 @@ public class BaseStage {
 
 	public void hide() {
 		stage.hide();
-	}
-
-	public ContextMenu getChildControl(String s) {
-		return childControls.get(s);
 	}
 }

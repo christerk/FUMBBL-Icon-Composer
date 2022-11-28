@@ -2,10 +2,6 @@ package com.fumbbl.iconcomposer.controllers;
 
 import com.fumbbl.iconcomposer.model.Model;
 import com.fumbbl.iconcomposer.ui.BaseStage;
-import com.fumbbl.iconcomposer.ui.MenuType;
-import javafx.scene.control.ContextMenu;
-
-import java.util.HashMap;
 
 public class BaseController {
 	protected Controller controller;

@@ -17,7 +17,7 @@ public class DtoRoster {
 		r.id = id;
 		r.name = value;
 
-		Collection<Position> positions = new HashSet<Position>();
+		Collection<Position> positions = new HashSet<>();
 		if (this.positions != null) {
 			this.positions.forEach(p -> positions.add(p.toPosition()));
 		}

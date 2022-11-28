@@ -8,32 +8,30 @@ import com.fumbbl.iconcomposer.model.types.*;
 import com.google.gson.annotations.Expose;
 
 public class DataStore {
-	//private Map<Integer,Skin> skins;
-	private List<Skeleton> skeletons;
 	@Expose
-	private Map<Integer, Map<String,Diagram>> diagrams;
+	private final Map<Integer, Map<String,Diagram>> diagrams;
 	@Expose
-	private Map<String,ColourTheme> colourThemes;
+	private final Map<String,ColourTheme> colourThemes;
 
-	private Map<String, NamedPng> images;
+	private final Map<String, NamedPng> images;
 	private Ruleset ruleset;
 	private Position position;
-	
-	private Map<Integer,Skin> skins;
-	private Map<Integer,Map<String,Slot>> slotsByName;
-	private Map<Integer,Bone> bones;
-	private Map<Integer,Slot> slots;
+
+	private final Map<Integer,Map<String,Slot>> slotsByName;
+	private final Map<Integer,Bone> bones;
+	private final Map<Integer,Slot> slots;
 
 	public DataStore() {
 		//skins = new HashMap<Integer,Skin>();
-		skeletons = new LinkedList<Skeleton>();
+		//private Map<Integer,Skin> skins;
+		List<Skeleton> skeletons = new LinkedList<>();
 		diagrams = new HashMap<>();
-		colourThemes = new HashMap<String,ColourTheme>();
+		colourThemes = new HashMap<>();
 		images = new HashMap<>();
 		slotsByName = new HashMap<>();
-		skins = new HashMap<Integer,Skin>();
-		bones = new HashMap<Integer,Bone>();
-		slots = new HashMap<Integer, Slot>();
+		Map<Integer, Skin> skins = new HashMap<>();
+		bones = new HashMap<>();
+		slots = new HashMap<>();
 	}
 
 	/*
@@ -63,7 +61,7 @@ public class DataStore {
 		return images.values().stream().collect(Collectors.toList());
 	}
 
-	public NamedItem getImage(String name) {
+	public NamedImage getImage(String name) {
 		return images.get(name.toLowerCase());
 	}
 
@@ -93,13 +91,6 @@ public class DataStore {
 	
 	public void addDiagram(Skeleton skeleton, String name, Diagram diagram) {
 		getDiagramsForSkeleton(skeleton.id).put(name.toLowerCase(), diagram);
-	}
-
-	public Collection<String> getDiagramNames() {
-		HashSet<String> result = new HashSet<>();
-
-		diagrams.forEach((skeletonId, map) -> result.addAll(map.keySet()));
-		return result;
 	}
 
 	public void clearDiagrams() {
@@ -201,6 +192,15 @@ public class DataStore {
 		slotsByName.clear();
 	}
 
+	public void renameSlot(String oldName, String name) {
+		String oldKey = oldName.toLowerCase();
+		String newKey = name.toLowerCase();
+		slots.forEach((skeletonId, slot) -> {
+			slotsByName.get(skeletonId).remove(oldName);
+			slot.setName(name);
+			slotsByName.get(skeletonId).put(name, slot);
+		});
+	}
 	/*
 	 * Bone
 	 */

@@ -1,31 +1,28 @@
 package com.fumbbl.iconcomposer.controllers;
 
-import java.util.Collection;
 import java.util.LinkedList;
+import java.util.Stack;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
 
 public class TaskQueue {
 
-	private ExecutorService threadPool;
-	private Collection<Runnable> queue;
+	private final ExecutorService threadPool;
+	private final Stack<LinkedList<Runnable>> queue;
 
-	private Controller controller;
-	
-	private long completeTasks = 0;
-	private long numTasks = 0;
+	private final Controller controller;
 	
 	public TaskQueue(Controller controller) {
 		this.controller = controller;
 		threadPool = Executors.newSingleThreadExecutor();
+		queue = new Stack<>();
 	}
 	
 	public void execute(Runnable task) {
-		if (queue == null) {
+		if (queue.empty()) {
 			threadPool.execute(task);
 		} else {
-			queue.add(task);
+			queue.elementAt(0).add(task);
 		}
 	}
 
@@ -34,12 +31,7 @@ public class TaskQueue {
 	}
 
 	public void startProgress() {
-		execute(new Runnable() {
-
-			@Override
-			public void run() {
-			}
-			
+		execute(() -> {
 		});
 	}
 
@@ -51,29 +43,32 @@ public class TaskQueue {
 	}
 
 	public void startBatch() {
-		queue =  new LinkedList<Runnable>();
+		queue.push(new LinkedList<>());
 	}
 
 	public void runBatch() {
-		if (queue != null) {
-			numTasks = queue.size();
+		if (!queue.empty()) {
+			LinkedList<Runnable> currentBatch = queue.pop();
+
+			int numTasks = currentBatch.size();
 			if (numTasks == 0) {
+				controller.onProgress(1, true);
 				return;
 			}
 
-			completeTasks = 0;
-			for (Runnable r : queue) {
-				threadPool.execute(new Runnable() {
-					@Override
-					public void run() {
+			final int[] completeTasks = {0};
+			for (Runnable r : currentBatch) {
+				threadPool.execute(() -> {
+					try {
 						r.run();
-						completeTasks++;
-						controller.onProgress(((double)completeTasks) / ((double)numTasks), completeTasks >= numTasks);
+					} catch (Exception e)
+					{
+						System.out.println(e.getMessage());
 					}
-					
+					completeTasks[0]++;
+					controller.onProgress(((double) completeTasks[0]) / ((double)numTasks), completeTasks[0] >= numTasks);
 				});
 			}
-			queue = null;
 		}
 	}
 }

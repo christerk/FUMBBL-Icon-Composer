@@ -12,16 +12,18 @@ public class Skeleton extends NamedItem {
 	public String name;
 	public Perspective perspective;
 
-	private Map<String,Bone> bones;
-	private Map<String,Slot> slots;
+	private final Map<String,Bone> bones;
+	private final Map<String,Slot> slots;
 	
 	public double x = 0, y = 0;
-	public double scaleX = 1, scaleY = 1;
+	public final double scaleX = 1;
+	public final double scaleY = 1;
 	public double width = 0, height = 0;
 	
 	public Skeleton() {
-		bones = new HashMap<String,Bone>();
-		slots = new HashMap<String,Slot>();
+		super();
+		bones = new HashMap<>();
+		slots = new HashMap<>();
 		id = -1;
 		perspective = Perspective.Unknown;
 	}
@@ -51,7 +53,7 @@ public class Skeleton extends NamedItem {
 	}
 	
 	public Collection<Bone> getBones() {
-		return new ArrayList<Bone>(bones.values());
+		return new ArrayList<>(bones.values());
 	}
 	
 	public void setSlots(Collection<Slot> slots) {
@@ -80,7 +82,7 @@ public class Skeleton extends NamedItem {
 	}
 	
 	public void updateTransform(Bone bone) {
-		if (bone == null || !bone.isDirty()) {
+		if (bone == null) {
 			return;
 		}
 		
