@@ -38,14 +38,11 @@ public class Model extends EventHandlerManager {
 	private final Config cfg;
 	public final DataLoader dataLoader;
 
-	public final ObservableList<VirtualDiagram> masterDiagrams;
 	public final ObservableList<Position> masterPositions;
 	public final ObservableList<VirtualSlot> masterSlots;
 	public final ObservableList<NamedImage> masterImages;
-	public final ObservableList<Bone> masterBones;
 
-	public final SimpleObjectProperty<Skeleton> frontSkeleton;
-	public final SimpleObjectProperty<Skeleton> sideSkeleton;
+	public final SimpleObjectProperty<VirtualSkeleton> masterSkeleton;
 
 	public final SimpleObjectProperty<Position> selectedPosition;
 	public final SimpleObjectProperty<Ruleset> loadedRuleset;
@@ -61,20 +58,15 @@ public class Model extends EventHandlerManager {
 		this.taskManager = taskManager;
 
 		masterPositions = FXCollections.observableArrayList(item -> new Observable[] { item.nameProperty() });
-		masterBones = FXCollections.observableArrayList(item -> new Observable[] { item.nameProperty() });
 		masterSlots = FXCollections.observableArrayList(item -> new Observable[] { item.nameProperty() });
-		masterDiagrams = FXCollections.observableArrayList(item -> new Observable[] { item.nameProperty() });
 		masterImages = FXCollections.observableArrayList(item -> new Observable[] { item.nameProperty() });
 
-		frontSkeleton = new SimpleObjectProperty<>();
-		sideSkeleton = new SimpleObjectProperty<>();
 		selectedPosition = new SimpleObjectProperty<>();
 		loadedRuleset = new SimpleObjectProperty<>();
+		masterSkeleton = new SimpleObjectProperty<>(new VirtualSkeleton());
 
 		sortByName(masterPositions);
-		sortByName(masterBones);
 		sortByName(masterSlots);
-		sortByName(masterDiagrams);
 
 		selectedPosition.addListener((o, oldValue, newValue) -> loadPosition(newValue));
 	}
@@ -101,7 +93,6 @@ public class Model extends EventHandlerManager {
 			Diagram diagram = null;
 
 			String originalName = fileId;
-			Skeleton skeleton = null;
 			Perspective perspective = Perspective.Unknown;
 
 			if (fileId.startsWith("front_")) {
@@ -143,6 +134,12 @@ public class Model extends EventHandlerManager {
 		dataLoader.loadImage(diagram.imageId, image -> {
 			String prefix = diagram.perspective == Perspective.Front ? "front_" : "side_";
 			NamedPng newImage = new NamedPng(prefix+diagram.getName(), image);
+			VirtualDiagram vDiagram = findVirtualDiagram(diagram);
+
+			VirtualImage vImage = new VirtualImage(vDiagram, newImage.getName());
+			vImage.set(newImage);
+			vDiagram.addImage(vImage);
+
 			dataStore.addImage(newImage);
 			masterImages.add(newImage);
 			return image;
@@ -173,30 +170,30 @@ public class Model extends EventHandlerManager {
 	}
 
 	private void loadPosition(Position position) {
-		frontSkeleton.set(null);
-		sideSkeleton.set(null);
-		masterDiagrams.clear();
 		masterImages.clear();
 		masterSlots.clear();
-		masterBones.clear();
-		dataStore.clearSlots();
-		dataStore.clearDiagrams();
-		dataStore.clearBones();
+
 		dataStore.clearImages();
+		dataStore.clearDiagrams();
+		dataStore.clearSlots();
+		dataStore.clearBones();
+
+		taskManager.onProgressStart("Loading");
+		taskManager.startBatch();
 
 		loadSkeletons(position);
 
-		taskManager.onProgressStart("Loading images");
-		taskManager.startBatch();
+		masterSkeleton.get().realSkeletons.values().forEach(s->loadParts(s));
 
-		loadParts(frontSkeleton.get());
-		loadParts(sideSkeleton.get());
+		SkeletonChanged();
 
+		taskManager.runBatch();
+	}
+
+	private void SkeletonChanged() {
 		taskManager.runInBackground(() -> {
 			dispatchBubblingEvent(new SkeletonChangedEvent(SkeletonChangedEvent.SKELETON_CHANGED));
 		});
-
-		taskManager.runBatch();
 	}
 
 	private void loadParts(Skeleton skeleton) {
@@ -204,17 +201,6 @@ public class Model extends EventHandlerManager {
 			loadBones(skeleton);
 			loadSlots(skeleton);
 			loadDiagrams(skeleton);
-		}
-	}
-
-	public void setSkeleton(Skeleton skeleton) {
-		switch (skeleton.perspective) {
-			case Front:
-				frontSkeleton.set(skeleton);
-				break;
-			case Side:
-				sideSkeleton.set(skeleton);
-				break;
 		}
 	}
 
@@ -233,14 +219,22 @@ public class Model extends EventHandlerManager {
 		if (position == null) {
 			return;
 		}
+		VirtualSkeleton newSkeleton = new VirtualSkeleton();
+
 		DtoPositionData list = dataLoader.getPositionData(position.id);
 
-		list.skeletons.forEach(s -> setSkeleton(s.toSkeleton()));
+		list.skeletons.forEach(s -> {
+			Skeleton realSkeleton = s.toSkeleton();
+			//setSkeleton(s.toSkeleton());
+			newSkeleton.set(realSkeleton);
+		});
 
 		list.data.forEach((col, rgb) -> {
 			ColourType type = ColourTheme.ColourType.valueOf(col);
 			position.templateColours.setColour(type, Color.decode(rgb));
 		});
+
+		masterSkeleton.set(newSkeleton);
 	}
 	
 	private void loadDiagrams(Skeleton skeleton) {
@@ -248,35 +242,95 @@ public class Model extends EventHandlerManager {
 
 		Collection<DtoDiagram> diagrams = dataLoader.getDiagrams(skeleton);
 
-		diagrams.forEach(d -> {
-			Diagram diagram = d.toDiagram(skeleton.perspective);
-
-			if (diagram.imageId > 0) {
-				taskManager.runInBackground(() -> loadImage(diagram));
-			}
-			diagramMap.put(d.id, diagram);
-		});
+		diagrams.forEach(d -> diagramMap.put(d.id, d.toDiagram(skeleton.perspective)));
 
 		for (DtoDiagram d : diagrams) {
 			Diagram diagram = diagramMap.get(d.id);
 			diagram.setSlot(dataStore.getSlot(d.slotId));
 		}
 
-		dataStore.addDiagrams(skeleton.id, diagramMap.values());
+		updateDiagrams(diagramMap.values());
 
-		HashSet<String> existing = masterDiagrams.stream().map(NamedItem::getName).collect(Collectors.toCollection(HashSet::new));
-		masterDiagrams.addAll(diagramMap.values().stream().filter(d -> !existing.contains(d.getName())).map(VirtualDiagram::new).collect(Collectors.toList()));
+		diagramMap.values().forEach(diagram -> {
+			if (diagram.imageId > 0) {
+				taskManager.runInBackground(() -> loadImage(diagram));
+			}
+		});
+
+		dataStore.addDiagrams(skeleton.id, diagramMap.values());
 	}
-	
+
+	private void updateDiagrams(Collection<Diagram> diagramMap) {
+		VirtualSkeleton virtualSkeleton = masterSkeleton.get();
+		diagramMap.forEach(d -> {
+			String boneName = d.getSlot().getBone().getName();
+			if (virtualSkeleton.hasBone(boneName)) {
+				VirtualBone vBone = virtualSkeleton.bones.get(boneName);
+				String slotName = d.getSlot().getName();
+				if (vBone.hasSlot(slotName)) {
+					VirtualSlot vSlot = vBone.slots.get(slotName);
+					String diagramName = d.getName();
+					VirtualDiagram vDiagram;
+					if (!vSlot.hasDiagram(diagramName)) {
+						vDiagram = new VirtualDiagram(vSlot, diagramName);
+						vSlot.addDiagram(vDiagram);
+					} else {
+						vDiagram = vSlot.diagrams.get(diagramName);
+					}
+					vDiagram.set(d);
+				}
+			}
+		});
+	}
+
+	private VirtualBone findVirtualBone(Bone bone) {
+		VirtualSkeleton virtualSkeleton = masterSkeleton.get();
+		String boneName = bone.getName();
+		if (virtualSkeleton.hasBone(boneName)) {
+			return virtualSkeleton.bones.get(boneName);
+		}
+		return null;
+	}
+
+	private VirtualSlot findVirtualSlot(Slot slot) {
+		VirtualSkeleton virtualSkeleton = masterSkeleton.get();
+		String boneName = slot.getBone().getName();
+		if (virtualSkeleton.hasBone(boneName)) {
+			VirtualBone vBone = virtualSkeleton.bones.get(boneName);
+			String slotName = slot.getName();
+			if (vBone.hasSlot(slotName)) {
+				return vBone.slots.get(slotName);
+			}
+		}
+		return null;
+	}
+
+	private VirtualDiagram findVirtualDiagram(Diagram diagram) {
+		VirtualSkeleton virtualSkeleton = masterSkeleton.get();
+		String boneName = diagram.getSlot().getBone().getName();
+		if (virtualSkeleton.hasBone(boneName)) {
+			VirtualBone vBone = virtualSkeleton.bones.get(boneName);
+			String slotName = diagram.getSlot().getName();
+			if (vBone.hasSlot(slotName)) {
+				VirtualSlot vSlot = vBone.slots.get(slotName);
+				String diagramName = diagram.getName();
+				if (vSlot.hasDiagram(diagramName)) {
+					return vSlot.diagrams.get(diagramName);
+				}
+			}
+		}
+		return null;
+	}
+
 	private void loadBones(Skeleton skeleton) {
 		if (skeleton == null) {
 			return;
 		}
 		Collection<Bone> bones = dataLoader.getBones(skeleton.id);
-
 		skeleton.setBones(bones);
 		dataStore.addBones(bones);
-		masterBones.addAll(bones);
+
+		updateBones(skeleton);
 	}
 
 	private void loadSlots(Skeleton skeleton) {
@@ -294,9 +348,28 @@ public class Model extends EventHandlerManager {
 			slot.setSkeleton(skeleton);
 		}
 
-		HashSet<String> existing = masterSlots.stream().map(NamedItem::getName).collect(Collectors.toCollection(HashSet::new));
-		masterSlots.addAll(slots.values().stream().filter(s->!existing.contains(s.getName())).map(VirtualSlot::new).collect(Collectors.toList()));
+		updateSlots(slots.values());
 		dataStore.addSlots(slots.values());
+	}
+
+	private void updateSlots(Collection<Slot> slots) {
+		VirtualSkeleton virtualSkeleton = masterSkeleton.get();
+		slots.forEach(s -> {
+			String boneName = s.getBone().getName();
+			if (virtualSkeleton.hasBone(boneName)) {
+				VirtualBone vBone = virtualSkeleton.bones.get(boneName);
+				String slotName = s.getName();
+				VirtualSlot vSlot;
+				if (!vBone.hasSlot(slotName)) {
+					vSlot = new VirtualSlot(vBone, slotName);
+					masterSlots.add(vSlot);
+					vBone.addSlot(vSlot);
+				} else {
+					vSlot = vBone.slots.get(slotName);
+				}
+				vSlot.set(s);
+			}
+		});
 	}
 
 	public void setupThemes() {
@@ -327,8 +400,6 @@ public class Model extends EventHandlerManager {
 		dataStore.addColourTheme("template", templateColours);
 		dataStore.addColourTheme("home", homeColours);
 		dataStore.addColourTheme("away", awayColours);
-		
-		//controller.onColourThemesChanged(dataStore.getColourThemes());
 	}
 
 	public Diagram getDiagram(int skeletonId, String diagramName) {
@@ -381,7 +452,7 @@ public class Model extends EventHandlerManager {
 								return;
 							}
 
-							setSkeleton(skeleton);
+							//setSkeleton(skeleton);
 
 							dataStore.setSlots(skeleton.getSlots());
 							dataStore.setBones(skeleton.getBones());
@@ -401,12 +472,16 @@ public class Model extends EventHandlerManager {
 							taskManager.runBatch();
 
 							delayedTasks.add(() -> {
-								//controller.onBonesChanged(skeleton.getBones());
-								masterSlots.setAll(skeleton.getSlots().stream().map(s -> new VirtualSlot(s)).collect(Collectors.toList()));
-
-								masterDiagrams.clear();
-								masterDiagrams.addAll(diagrams.stream().map(d -> new VirtualDiagram(d)).collect(Collectors.toList()));
+								masterSkeleton.get().set(skeleton);
+								masterSlots.clear();
+								masterSkeleton.get().realSkeletons.values().forEach(rSkeleton -> {
+									updateBones(rSkeleton);
+									updateSlots(rSkeleton.getSlots());
+									updateDiagrams(diagrams);
+								});
 							});
+
+							SkeletonChanged();
 
 						} catch (Exception e) {
 							taskManager.stopProgress();
@@ -427,6 +502,21 @@ public class Model extends EventHandlerManager {
 		};
 
 		taskManager.runInBackground(task);
+	}
+
+	private void updateBones(Skeleton rSkeleton) {
+		VirtualSkeleton virtualSkeleton = masterSkeleton.get();
+		rSkeleton.getBones().forEach(rBone -> {
+			String boneName = rBone.getName();
+			VirtualBone vBone;
+			if (!virtualSkeleton.hasBone(boneName)) {
+				vBone = new VirtualBone(virtualSkeleton, rBone.getName());
+				virtualSkeleton.addBone(vBone);
+			} else {
+				vBone = virtualSkeleton.bones.get(boneName);
+			}
+			vBone.set(rBone);
+		});
 	}
 
 	public BufferedImage getImage(String imageName) {
@@ -472,12 +562,7 @@ public class Model extends EventHandlerManager {
 	}
 
 	public Skeleton getSkeleton(Perspective perspective) {
-		if (perspective == Perspective.Front) {
-			return frontSkeleton.get();
-		} else if (perspective == Perspective.Side) {
-			return sideSkeleton.get();
-		}
-		return null;
+		return masterSkeleton.get().realSkeletons.get(perspective);
 	}
 
 	private Diagram GenerateDiagram(Perspective perspective, VirtualSlot slot, String name) {
@@ -492,12 +577,11 @@ public class Model extends EventHandlerManager {
 		Diagram frontDiagram = GenerateDiagram(Perspective.Front, slot, name);
 		Diagram sideDiagram = GenerateDiagram(Perspective.Side, slot, name);
 
-		dataStore.addDiagram(frontSkeleton.get(), name, frontDiagram);
-		dataStore.addDiagram(sideSkeleton.get(), name, sideDiagram);
-		dataLoader.saveDiagram(frontDiagram);
-		dataLoader.saveDiagram(sideDiagram);
+		//dataStore.addDiagram(frontSkeleton.get(), name, frontDiagram);
+		//dataStore.addDiagram(sideSkeleton.get(), name, sideDiagram);
+		//dataLoader.saveDiagram(frontDiagram);
+		//dataLoader.saveDiagram(sideDiagram);
 
-		masterDiagrams.add(new VirtualDiagram(slot, name));
 	}
 
 	public void saveDiagram(Diagram d) {

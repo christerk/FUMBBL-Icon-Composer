@@ -50,8 +50,7 @@ public class BaseRenderer {
 				Skin skin = new Skin();
 
 				for (VirtualSlot slot : model.masterSlots) {
-					Collection<VirtualDiagram> diagrams = mainController.getDiagrams(slot);
-					VirtualDiagram randomDiagram = random(diagrams);
+					VirtualDiagram randomDiagram = random(slot.diagrams.values());
 					skin.setDiagram(slot.getName(), randomDiagram);
 				}
 

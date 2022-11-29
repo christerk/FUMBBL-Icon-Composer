@@ -17,11 +17,15 @@ public class CellFactory<T extends NamedItem> {
 	private final Image slotIcon;
 	private final Image diagramIcon;
 	private final Image imageIcon;
+	private final Image skeletonIcon;
+	private final Image boneIcon;
 
 	public CellFactory() {
 		slotIcon = new Image("/ui/Slot.png");
 		diagramIcon = new Image("/ui/Diagram.png");
 		imageIcon = new Image("/ui/Image.png");
+		skeletonIcon = new Image("/ui/Skeleton.png");
+		boneIcon = new Image("/ui/Bone.png");
 	}
 	
 	public static void setController(Controller controller) {
@@ -64,6 +68,10 @@ public class CellFactory<T extends NamedItem> {
 		});
 	}
 
+	public void apply(TreeView<NamedItem> tree, BaseController base) {
+
+	}
+
 	private Callback<TreeView<T>,TreeCell<T>> createTree() {
 		return p -> {
 			TextFieldTreeCell<T> cell = new TextFieldTreeCell<T>() {
@@ -80,11 +88,15 @@ public class CellFactory<T extends NamedItem> {
 						textProperty().bind(item.nameProperty());
 
 						//setText(item.getName());
-						if (item instanceof VirtualSlot) {
+						if (item instanceof VirtualSkeleton) {
+							setGraphic(new ImageView(skeletonIcon));
+						} else if (item instanceof VirtualBone) {
+							setGraphic(new ImageView(boneIcon));
+						} else if (item instanceof VirtualSlot) {
 							setGraphic(new ImageView(slotIcon));
 						} else if (item instanceof VirtualDiagram) {
 							setGraphic(new ImageView(diagramIcon));
-						} else if (item instanceof NamedImage) {
+						} else if (item instanceof VirtualImage) {
 							setGraphic(new ImageView(imageIcon));
 						}
 					}

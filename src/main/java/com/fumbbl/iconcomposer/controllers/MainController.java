@@ -11,24 +11,18 @@ import com.fumbbl.iconcomposer.ColourTheme.ColourType;
 import com.fumbbl.iconcomposer.events.SkeletonChangedEvent;
 import com.fumbbl.iconcomposer.model.Perspective;
 import com.fumbbl.iconcomposer.model.types.*;
+import com.fumbbl.iconcomposer.ui.SkeletonTreeItem;
 import com.fumbbl.iconcomposer.ui.StageType;
 
 import javafx.application.Platform;
-import javafx.beans.binding.Bindings;
-import javafx.beans.binding.BooleanBinding;
-import javafx.beans.binding.LongBinding;
-import javafx.beans.binding.StringBinding;
+import javafx.beans.binding.*;
 import javafx.beans.property.SimpleObjectProperty;
-import javafx.beans.value.ChangeListener;
-import javafx.beans.value.ObservableValue;
-import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
 import javafx.embed.swing.SwingFXUtils;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.fxml.Initializable;
 import javafx.geometry.Point2D;
-import javafx.scene.Node;
 import javafx.scene.control.*;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
@@ -124,13 +118,10 @@ public class MainController extends BaseController implements Initializable {
 			}
 		});
 
-		TreeItem<NamedItem> root = new TreeItem<>(new NamedItem());
-		treeView.setRoot(root);
-		root.setExpanded(true);
 		treeView.setShowRoot(false);
-		treeView.setContextMenu(treeContext);
 
-		new CellFactory<>().apply(treeView, NamedItem.class, this);
+		new CellFactory<>().apply(treeView, NamedItem.class, controller);
+
 
 		treeView.addEventFilter(ContextMenuEvent.CONTEXT_MENU_REQUESTED, event -> {
 			TreeItem<NamedItem> selectedItem = treeView.getSelectionModel().getSelectedItem();
@@ -145,13 +136,15 @@ public class MainController extends BaseController implements Initializable {
 			}
 		});
 
+
 		treeView.setEditable(false);
 		treeView.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> {
 			if (newValue != null) {
-				if (((TreeItem<NamedItem>)newValue).getValue() instanceof VirtualDiagram) {
-					VirtualDiagram diagram = (VirtualDiagram) ((TreeItem<NamedItem>) newValue).getValue();
+				if (newValue.getValue() instanceof VirtualDiagram) {
+					VirtualDiagram diagram = (VirtualDiagram) newValue.getValue();
 					controller.displayDiagrams(diagram.getName());
-					slotChoices.getSelectionModel().select(slotChoices.getItems().stream().filter(s->s.getName().equals(diagram.getSlot().getName())).findFirst().get());
+					slotChoices.getSelectionModel().select(diagram.slot);
+					setSlotInfo(diagram);
 				tabs.getSelectionModel().select(diagramTab);
 			}
 			} else {
@@ -162,12 +155,12 @@ public class MainController extends BaseController implements Initializable {
 		slotChoices.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> {
 			Diagram d = controller.viewState.getActiveDiagram(Perspective.Front);
 			if (d != null) {
-				d.setSlot(model.getSlot(model.frontSkeleton.get().id, d.getSlot().getName()));
+				d.setSlot(model.getSlot(model.masterSkeleton.get().realSkeletons.get(Perspective.Front).id, d.getSlot().getName()));
 			}
 
 			d = controller.viewState.getActiveDiagram(Perspective.Side);
 			if (d != null) {
-				d.setSlot(model.getSlot(model.sideSkeleton.get().id, d.getSlot().getName()));
+				d.setSlot(model.getSlot(model.masterSkeleton.get().realSkeletons.get(Perspective.Side).id, d.getSlot().getName()));
 			}
 		});
 
@@ -180,6 +173,18 @@ public class MainController extends BaseController implements Initializable {
 		}
 
 		super.onShow();
+
+		SkeletonTreeItem root = new SkeletonTreeItem(model.masterSkeleton.get());
+		root.valueProperty().set(model.masterSkeleton.get());
+		treeView.setRoot(root);
+		root.setExpanded(true);
+
+		model.masterSkeleton.addListener((obs, oldValue, newValue) -> {
+			treeView.setRoot(new SkeletonTreeItem(model.masterSkeleton.get()));
+		});
+
+		treeView.setContextMenu(treeContext);
+
 
 		positionChoice.setItems(model.masterPositions);
 
@@ -197,124 +202,25 @@ public class MainController extends BaseController implements Initializable {
 		labelProgress.textProperty().bind(model.taskManager.taskStateProperty);
 		progressBar.progressProperty().bind(model.taskManager.taskPctProperty);
 
-		LongBinding b = Bindings.createLongBinding(() -> {
-			long combinations = 1;
-			for (VirtualSlot slot : model.masterSlots) {
-				long count = getDiagrams(slot).size();
+		model.addEventHandler(SkeletonChangedEvent.SKELETON_CHANGED, e -> {
+			model.masterSkeleton.get().realSkeletons.values().forEach(s->renderSkeleton(s));
+			renderPreview();
+			Platform.runLater(() -> combinationsLabel.setText(String.format("%d", CountCombinations())));
+		});
+	}
+
+	private long CountCombinations() {
+		long combinations = 1;
+
+		for (VirtualBone bone : model.masterSkeleton.get().bones.values()) {
+			for (VirtualSlot slot : bone.slots.values()) {
+				long count = slot.diagrams.size();
 				if (count > 0) {
 					combinations *= count;
 				}
 			}
-			return combinations;
-		}, model.masterSlots, model.masterDiagrams);
-		combinationsLabel.textProperty().bind(Bindings.format("%d", b));
-
-		model.masterSlots.addListener((ListChangeListener<VirtualSlot>) c -> {
-			TreeItem<NamedItem> root = treeView.getRoot();
-			ObservableList<TreeItem<NamedItem>> children = root.getChildren();
-			while (c.next()) {
-				if (c.wasPermutated()) {
-					for (int i = c.getFrom(); i < c.getTo(); ++i) {
-						//permutate
-					}
-				} else if (c.wasUpdated()) {
-				} else {
-					for (VirtualSlot remitem : c.getRemoved()) {
-						List<TreeItem<NamedItem>> x = children.stream().filter(s -> s.getValue() == remitem).collect(Collectors.toList());
-
-						children.removeAll(x);
-					}
-					for (VirtualSlot additem : c.getAddedSubList()) {
-						children.add(new TreeItem<>(additem));
-					}
-				}
-			}
-		});
-
-		model.masterDiagrams.addListener((ListChangeListener<VirtualDiagram>) c -> {
-			TreeItem<NamedItem> root = treeView.getRoot();
-			ObservableList<TreeItem<NamedItem>> children = root.getChildren();
-			while (c.next()) {
-				if (c.wasPermutated()) {
-					for (int i = c.getFrom(); i < c.getTo(); ++i) {
-						//permutate
-					}
-				} else if (c.wasUpdated()) {
-					//update item
-				} else {
-					for (VirtualDiagram remitem : c.getRemoved()) {
-						VirtualSlot slot = remitem.getSlot();
-						Optional<TreeItem<NamedItem>> opt = children.stream().filter(s -> s.getValue().getName().equals(slot.getName())).findFirst();
-						if (opt.isPresent()) {
-							TreeItem<NamedItem> parent = opt.get();
-
-							List<TreeItem<NamedItem>> x = children.stream().filter(s -> s.getValue() == remitem).collect(Collectors.toList());
-							parent.getChildren().removeAll(x);
-						}
-					}
-					for (VirtualDiagram additem : c.getAddedSubList()) {
-						VirtualSlot slot = additem.getSlot();
-						Optional<TreeItem<NamedItem>> opt = children.stream().filter(s -> s.getValue().getName().equals(slot.getName())).findFirst();
-						if (opt.isPresent()) {
-							TreeItem<NamedItem> parent = opt.get();
-							parent.getChildren().add(new TreeItem<>(additem));
-						}
-
-					}
-				}
-			}
-		});
-
-		model.masterImages.addListener((ListChangeListener<NamedImage>) c -> {
-			TreeItem<NamedItem> root = treeView.getRoot();
-			ObservableList<TreeItem<NamedItem>> children = root.getChildren();
-			while (c.next()) {
-				if (c.wasPermutated()) {
-					for (int i = c.getFrom(); i < c.getTo(); ++i) {
-						//permutate
-					}
-				} else if (c.wasUpdated()) {
-					//update item
-				} else {
-					for (NamedImage remitem : c.getRemoved()) {
-						String diagramName = remitem.getName().replaceFirst("(front_|side_)", "");
-
-						Optional<TreeItem<NamedItem>> opt = children.stream().filter(s -> diagramName.startsWith(s.getValue().getName())).findFirst();
-						if (opt.isPresent()) {
-							TreeItem<NamedItem> parentSlot = opt.get();
-
-							Optional<TreeItem<NamedItem>> opt2 = parentSlot.getChildren().stream().filter(i -> i.getValue().getName().equals(diagramName)).findFirst();
-							if (opt2.isPresent()) {
-								TreeItem<NamedItem> parentDiagram = opt2.get();
-
-								List<TreeItem<NamedItem>> x = parentDiagram.getChildren().stream().filter(s -> s.getValue() == remitem).collect(Collectors.toList());
-								parentDiagram.getChildren().removeAll(x);
-							}
-						}
-					}
-					for (NamedImage additem : c.getAddedSubList()) {
-						String diagramName = additem.getName().replaceFirst("(front_|side_)", "");
-
-						Optional<TreeItem<NamedItem>> opt = children.stream().filter(s -> diagramName.startsWith(s.getValue().getName())).findFirst();
-						if (opt.isPresent()) {
-							TreeItem<NamedItem> parentSlot = opt.get();
-
-							Optional<TreeItem<NamedItem>> opt2 = parentSlot.getChildren().stream().filter(i -> i.getValue().getName().equals(diagramName)).findFirst();
-							if (opt2.isPresent()) {
-								TreeItem<NamedItem> parentDiagram = opt2.get();
-								parentDiagram.getChildren().add(new TreeItem<>(additem));
-							}
-						}
-					}
-				}
-			}
-		});
-
-		model.addEventHandler(SkeletonChangedEvent.SKELETON_CHANGED, e -> {
-			renderSkeleton(model.frontSkeleton.get());
-			renderSkeleton(model.sideSkeleton.get());
-			renderPreview();
-		});
+		}
+		return combinations;
 	}
 
 	/*
@@ -397,7 +303,6 @@ public class MainController extends BaseController implements Initializable {
 			model.masterSlots.clear();
 			setBones(null);
 
-			model.masterDiagrams.clear();
 			return;
 		}
 
@@ -439,10 +344,6 @@ public class MainController extends BaseController implements Initializable {
 		view.setImage(SwingFXUtils.toFXImage(i, null));
 	}
 
-	public void setApiStatus(String status) {
-		apiStatus.setText(status);
-	}
-
 	public void showColourPane() {
 		colourPane.setVisible(true);
 	}
@@ -451,11 +352,13 @@ public class MainController extends BaseController implements Initializable {
 		colourPane.setVisible(false);
 	}
 	
-	public void setSlotInfo(Perspective perspective, VirtualSlot slot, double x, double y) {
-		slotChoices.setValue(slot);
+	public void setSlotInfo(VirtualDiagram diagram) {
+		slotChoices.setValue(diagram.slot);
 
-		(perspective==Perspective.Front ? frontDiagramX : sideDiagramX).setText(Integer.toString((int)x));
-		(perspective==Perspective.Front ? frontDiagramY : sideDiagramY).setText(Integer.toString((int)y));
+		diagram.realDiagrams.forEach((perspective, d)->{
+			(perspective==Perspective.Front ? frontDiagramX : sideDiagramX).setText(Integer.toString((int)d.x));
+			(perspective==Perspective.Front ? frontDiagramY : sideDiagramY).setText(Integer.toString((int)d.y));
+		});
 	}
 
 	public void setFrontDiagramImage(WritableImage image) {
@@ -509,29 +412,8 @@ public class MainController extends BaseController implements Initializable {
 		}
 	}
 
-	public void onProgressStart(String description) {
-		Platform.runLater(() -> {
-			labelProgress.setText(description);
-			progressPane.setVisible(true);
-		});
-	}
-
-	public void onProgressComplete() {
-		Platform.runLater(() -> progressPane.setVisible(false));
-	}
-
-	public void onProgress(double progress, boolean complete) {
-		if (!complete) {
-			progressBar.setProgress(progress);
-		}
-	}
-
 	public void renderPreview() {
 		controller.displayPreview();
-	}
-
-	public Collection<VirtualDiagram> getDiagrams(VirtualSlot slot) {
-		return model.masterDiagrams.stream().filter(d -> d.getSlot().getName().equals(slot.getName())).collect(Collectors.toList());
 	}
 
 	public void renameItem(NamedItem renamedObject, String newName) {
@@ -549,8 +431,8 @@ public class MainController extends BaseController implements Initializable {
 	}
 
 	public void newComponent(ActionEvent e) {
-		VirtualSlot slot = (VirtualSlot) treeView.getSelectionModel().getSelectedItem().getValue();
-		controller.showNewComponentDialog(slot);
+		//VirtualSlot slot = (VirtualSlot) treeView.getSelectionModel().getSelectedItem().getValue();
+		//controller.showNewComponentDialog(slot);
 	}
 
 	public void deleteItem(ActionEvent e) {

@@ -1,16 +1,23 @@
 package com.fumbbl.iconcomposer.model.types;
 
 import com.fumbbl.iconcomposer.model.Perspective;
+import com.fumbbl.iconcomposer.ui.SkeletonTreeItem;
+import com.sun.javafx.binding.StringConstant;
+import javafx.beans.binding.Bindings;
+import javafx.beans.binding.ListBinding;
 import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
 import javafx.collections.ObservableMap;
 
 public class VirtualSkeleton extends NamedItem {
-    private ObservableMap<String, VirtualBone> bones;
-    private ObservableMap<Perspective, Skeleton> realSkeletons;
+    public ObservableMap<String, VirtualBone> bones;
+    public ObservableMap<Perspective, Skeleton> realSkeletons;
 
     public VirtualSkeleton() {
+        super();
         bones = FXCollections.observableHashMap();
         realSkeletons = FXCollections.observableHashMap();
+        setName("Skeleton");
     }
 
     public void addBone(VirtualBone bone) {
@@ -33,5 +40,20 @@ public class VirtualSkeleton extends NamedItem {
         if (valid(skeleton)) {
             realSkeletons.put(skeleton.perspective, skeleton);
         }
+    }
+
+    public void clear(Perspective perspective) {
+        if (perspective != null) {
+            realSkeletons.remove(perspective);
+        }
+    }
+
+    public boolean hasBone(String name) {
+        return bones.containsKey(name);
+    }
+
+    @Override
+    public ObservableMap<String, ? extends NamedItem> getChildren() {
+        return bones;
     }
 }

@@ -6,6 +6,9 @@ import com.fumbbl.iconcomposer.controllers.Controller;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
+import javafx.collections.ObservableMap;
 import javafx.scene.control.TreeItem;
 
 public class NamedItem {
@@ -33,4 +36,8 @@ public class NamedItem {
 	public void setName(String newName) {
 		this.name.set(newName);
 	}
+
+    public ObservableMap<String, ? extends NamedItem> getChildren() {
+		return FXCollections.emptyObservableMap();
+    }
 }

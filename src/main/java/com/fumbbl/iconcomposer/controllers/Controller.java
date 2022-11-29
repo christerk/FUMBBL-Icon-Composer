@@ -48,15 +48,6 @@ public class Controller extends BaseController {
 		return stageManager;
 	}
 	
-
-	public void onProgress(double progress, boolean complete) {
-		controllerManager.getMain().onProgress(progress, complete);
-		if (complete) {
-			controllerManager.getMain().onProgressComplete();
-		}
-	}
-	
-
 	/*
 	 * Change events 
 	 */
@@ -135,10 +126,10 @@ public class Controller extends BaseController {
 	}
 
 	public void displayDiagrams(String diagramName) {
-		Diagram d = model.getDiagram(model.frontSkeleton.get().id, diagramName);
+		Diagram d = model.getDiagram(model.masterSkeleton.get().realSkeletons.get(Perspective.Front).id, diagramName);
 		displayDiagram(d);
 
-		d = model.getDiagram(model.sideSkeleton.get().id, diagramName);
+		d = model.getDiagram(model.masterSkeleton.get().realSkeletons.get(Perspective.Side).id, diagramName);
 		displayDiagram(d);
 	}
 
@@ -157,7 +148,7 @@ public class Controller extends BaseController {
 
 			Slot slot = d.getSlot();
 
-			controllerManager.getMain().setSlotInfo(d.perspective, new VirtualSlot(slot), d.x, d.y);
+			//controllerManager.getMain().setSlotInfo(d.perspective, new VirtualSlot(slot), d.x, d.y);
 
 			renderer.renderCursor(d.perspective, d.x, d.y);
 		} else {
@@ -169,8 +160,8 @@ public class Controller extends BaseController {
 
 	public void displayBones() {
 		controllerManager.getMain().hideColourPane();
-		renderer.renderSkeleton(Perspective.Front, model.frontSkeleton.get());
-		renderer.renderSkeleton(Perspective.Side, model.sideSkeleton.get());
+		renderer.renderSkeleton(Perspective.Front, model.masterSkeleton.get().realSkeletons.get(Perspective.Front));
+		renderer.renderSkeleton(Perspective.Side, model.masterSkeleton.get().realSkeletons.get(Perspective.Side));
 		onSkeletonImageChanged();
 	}
 	

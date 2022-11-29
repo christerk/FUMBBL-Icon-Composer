@@ -5,12 +5,16 @@ import javafx.collections.FXCollections;
 import javafx.collections.ObservableMap;
 
 public class VirtualBone extends NamedItem {
-    private ObservableMap<String, VirtualSlot> slots;
+    public ObservableMap<String, VirtualSlot> slots;
     private ObservableMap<Perspective, Bone> realBones;
+    public final VirtualSkeleton skeleton;
 
-    public VirtualBone() {
+    public VirtualBone(VirtualSkeleton skeleton, String name) {
+        super();
+        setName(name);
         slots = FXCollections.observableHashMap();
         realBones = FXCollections.observableHashMap();
+        this.skeleton = skeleton;
     }
 
     public void addSlot(VirtualSlot slot) {
@@ -24,7 +28,7 @@ public class VirtualBone extends NamedItem {
             slots.remove(slot.getName());
         }
     }
-    public boolean valid(Bone bone) {
+    public static boolean valid(Bone bone) {
         return bone != null && bone.getSkeleton() != null && VirtualSkeleton.valid(bone.getSkeleton());
     }
 
@@ -32,5 +36,20 @@ public class VirtualBone extends NamedItem {
         if (valid(bone)) {
             realBones.put(bone.getSkeleton().perspective, bone);
         }
+    }
+
+    public void clear(Perspective perspective) {
+        if (perspective != null) {
+            realBones.remove(perspective);
+        }
+    }
+
+    public boolean hasSlot(String slotName) {
+        return slots.containsKey(slotName);
+    }
+
+    @Override
+    public ObservableMap<String, ? extends NamedItem> getChildren() {
+        return slots;
     }
 }
