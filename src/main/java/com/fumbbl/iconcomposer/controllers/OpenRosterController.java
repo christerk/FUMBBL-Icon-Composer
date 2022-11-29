@@ -3,13 +3,16 @@ package com.fumbbl.iconcomposer.controllers;
 import java.net.URL;
 import java.util.Collection;
 import java.util.ResourceBundle;
+import java.util.stream.Collectors;
 
 import com.fumbbl.iconcomposer.model.types.NamedItem;
+import com.fumbbl.iconcomposer.model.types.Position;
 import com.fumbbl.iconcomposer.model.types.Roster;
 import com.fumbbl.iconcomposer.model.types.Ruleset;
 import com.fumbbl.iconcomposer.ui.StageType;
 
-import javafx.beans.value.ChangeListener;
+import javafx.beans.binding.ListBinding;
+import javafx.beans.property.SimpleListProperty;
 import javafx.beans.value.ObservableValue;
 import javafx.collections.ObservableList;
 import javafx.fxml.Initializable;
@@ -29,8 +32,17 @@ public class OpenRosterController extends BaseController implements Initializabl
 	
 	@Override
 	public void onShow() {
-		Collection<Ruleset> rulesets = controller.loadRulesets();
-		
+		if (!initialized) {
+			super.onShow();
+
+			model.loadedRuleset.addListener((obj, oldValue, newValue) -> {
+				rosterList.getItems().setAll(newValue.rosters);
+				rosterList.getItems().sort(NamedItem.Comparator);
+			});
+		}
+
+		Collection<Ruleset> rulesets = model.loadRulesets();
+
 		ObservableList<Ruleset> items = rulesetList.getItems();
 		items.clear();
 		items.addAll(rulesets);
@@ -42,7 +54,9 @@ public class OpenRosterController extends BaseController implements Initializabl
 
 	@Override
 	public void initialize(URL location, ResourceBundle resources) {
-		rulesetList.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> loadRosters(newValue));
+		rulesetList.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> {
+			model.loadRuleset(newValue.id);
+		});
 		
 		rosterList.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> openButton.setDisable(newValue == null));
 		
@@ -50,10 +64,6 @@ public class OpenRosterController extends BaseController implements Initializabl
 			@Override
 			protected void updateItem(Ruleset item, boolean empty) {
 				super.updateItem(item, empty);
-				
-				if(getIndex() == 0) {
-					this.getStyleClass().add("first");
-			    }
 				
 				if (empty || item == null) {
 					setText(null);
@@ -75,20 +85,5 @@ public class OpenRosterController extends BaseController implements Initializabl
 				}
 			}
 		});		
-	}
-	
-	protected void loadRosters(Ruleset ruleset) {
-		if (ruleset == null) {
-			rosterList.getItems().clear();
-			return;
-		}
-		
-		controller.loadRuleset(ruleset.id);
-	}
-
-	public void onRulesetLoaded(Ruleset ruleset) {
-		ObservableList<Roster> items = rosterList.getItems();
-		items.setAll(ruleset.rosters);
-		items.sort(NamedItem.Comparator);
 	}
 }

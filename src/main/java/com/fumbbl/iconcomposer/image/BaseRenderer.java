@@ -122,7 +122,7 @@ public class BaseRenderer {
 	}
 
 
-	public void renderSkeleton(Perspective perspective, Skeleton skeleton, String currentBone) {
+	public void renderSkeleton(Perspective perspective, Skeleton skeleton) {
 		int scale = 8;
 
 		Graphics2D g2 = controller.viewState.getSkeletonGraphics2D(perspective);
@@ -173,10 +173,6 @@ public class BaseRenderer {
 			g2.fillOval(cx-3, cy-3, 6, 6);
 			g2.setColor(Color.black);
 			g2.drawOval(cx-3, cy-3, 6, 6);
-
-			if (b.name.equals(currentBone)) {
-				g2.drawString(b.name, cx+4, cy-2);
-			}
 		}
 	}
 	
@@ -259,7 +255,7 @@ public class BaseRenderer {
 			return;
 		}
 
-		Position p = controller.viewState.getActivePosition();
+		Position p = model.selectedPosition.get();
 		ColourTheme template = p.templateColours;
 
 		if (template != theme) {

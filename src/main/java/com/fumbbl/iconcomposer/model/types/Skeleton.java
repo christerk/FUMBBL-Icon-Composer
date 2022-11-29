@@ -1,6 +1,13 @@
 package com.fumbbl.iconcomposer.model.types;
 
 import com.fumbbl.iconcomposer.model.Perspective;
+import javafx.beans.Observable;
+import javafx.beans.property.MapProperty;
+import javafx.beans.property.SimpleMapProperty;
+import javafx.beans.value.ObservableObjectValue;
+import javafx.beans.value.ObservableValue;
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableMap;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -12,8 +19,8 @@ public class Skeleton extends NamedItem {
 	public String name;
 	public Perspective perspective;
 
-	private final Map<String,Bone> bones;
-	private final Map<String,Slot> slots;
+	private final ObservableMap<String,Bone> bones;
+	private final ObservableMap<String,Slot> slots;
 	
 	public double x = 0, y = 0;
 	public final double scaleX = 1;
@@ -22,8 +29,8 @@ public class Skeleton extends NamedItem {
 	
 	public Skeleton() {
 		super();
-		bones = new HashMap<>();
-		slots = new HashMap<>();
+		bones = FXCollections.observableHashMap();
+		slots = FXCollections.observableHashMap();
 		id = -1;
 		perspective = Perspective.Unknown;
 	}
@@ -43,17 +50,8 @@ public class Skeleton extends NamedItem {
 		return bones.get(boneName);
 	}
 	
-	public Bone getBone(int boneId) {
-		for (Bone b : bones.values()) {
-			if (b.id == boneId) {
-				return b;
-			}
-		}
-		return null;
-	}
-	
 	public Collection<Bone> getBones() {
-		return new ArrayList<>(bones.values());
+		return bones.values();
 	}
 	
 	public void setSlots(Collection<Slot> slots) {
@@ -65,10 +63,6 @@ public class Skeleton extends NamedItem {
 				s.setSkeleton(this);
 			}
 		}
-	}
-	
-	public Slot getSlot(String slotName) {
-		return slots.get(slotName);
 	}
 	
 	public Collection<Slot> getSlots() {

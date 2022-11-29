@@ -21,13 +21,11 @@ public class Controller extends BaseController {
 	private StageManager stageManager;
 	private ControllerManager controllerManager;
 	public final ViewState viewState;
-	final TaskQueue taskQueue;
-	
+
 	public Controller(Model model) {
 		this.model = model;
 		renderer = new BaseRenderer(model, this);
 		viewState = new ViewState();
-		taskQueue = new TaskQueue(this);
 	}
 
 	public void setStageManager(StageManager stageManager) {
@@ -50,14 +48,7 @@ public class Controller extends BaseController {
 		return stageManager;
 	}
 	
-	public void runInBackground(Runnable task) {
-		taskQueue.execute(task);
-	}
-	
-	public void startProgress() {
-		taskQueue.startProgress();
-	}
-	
+
 	public void onProgress(double progress, boolean complete) {
 		controllerManager.getMain().onProgress(progress, complete);
 		if (complete) {
@@ -65,31 +56,11 @@ public class Controller extends BaseController {
 		}
 	}
 	
-	public void stopProgress() {
-		taskQueue.stopProgress();
-	}
-	
-	public void shutdown() {
-		taskQueue.shutdownNow();
-		Platform.exit();
-	}
-	
+
 	/*
 	 * Change events 
 	 */
 	
-	public void onBonesChanged(Collection<Bone> bones) {
-		controllerManager.getMain().setBones(bones);
-	}
-
-	public void onColourThemesChanged(Collection<ColourTheme> themes) {
-		controllerManager.getMain().setColourThemes(themes);
-	}
-
-	public void onColourThemeChanged(ColourTheme t) {
-		controllerManager.getMain().setColourTheme(t);
-	}
-
 	public void onDiagramImageChanged() {
 		WritableImage image = viewState.getDiagramImage(Perspective.Front);
 		controllerManager.getMain().setFrontDiagramImage(image);
@@ -109,9 +80,6 @@ public class Controller extends BaseController {
 
 		image = viewState.getSkeletonImage(Perspective.Side);
 		controllerManager.getMain().setSideSkeletonImage(image);
-	}
-	public void onAuthenticateChange(boolean success) {
-		controllerManager.getMain().setApiStatus(success ? "Authorized" : "Not Authorized");
 	}
 
 	/*
@@ -134,21 +102,8 @@ public class Controller extends BaseController {
 	 * Model
 	 */
 
-
-	public Collection<Ruleset> loadRulesets() {
-		return model.loadRulesets();
-	}
-
-	public void loadRuleset(int id) {
-		model.loadRuleset(id);
-	}
-	
-	public void loadSkeletons(Position position) {
-		model.loadSkeletons(position);
-	}
-
 	public boolean isAuthorized() {
-		return model.isAuthorized();
+		return model.isAuthenticated();
 	}
 
 	public Config getConfig() {
@@ -158,11 +113,7 @@ public class Controller extends BaseController {
 	public void handleDroppedFile(String path) {
 		model.handleDroppedFile(path);
 	}
-	
-	public void authenticate() {
-		model.authenticate();
-	}
-	
+
 	public void loadRoster(Roster selectedItem) {
 		model.loadRoster(selectedItem.id);
 	}
@@ -216,35 +167,15 @@ public class Controller extends BaseController {
 		onDiagramImageChanged();
 	}
 
-	public void displayBones(String value) {
+	public void displayBones() {
 		controllerManager.getMain().hideColourPane();
-		renderer.renderSkeleton(Perspective.Front, model.frontSkeleton.get(), value);
-		renderer.renderSkeleton(Perspective.Side, model.sideSkeleton.get(), value);
+		renderer.renderSkeleton(Perspective.Front, model.frontSkeleton.get());
+		renderer.renderSkeleton(Perspective.Side, model.sideSkeleton.get());
 		onSkeletonImageChanged();
 	}
 	
-	public void onRulesetLoaded(Ruleset ruleset) {
-		((OpenRosterController)controllerManager.get(StageType.openRoster)).onRulesetLoaded(ruleset);
-	}
-
-	public void onProgressStart(String description) {
-		controllerManager.getMain().onProgressStart(description);
-	}
-
 	public void onItemRenamed(NamedItem item, String oldName) {
 		model.onItemRenamed(item, oldName);
-	}
-
-	public void startBatch() {
-		taskQueue.startBatch();
-	}
-
-	public void runBatch() {
-		taskQueue.runBatch();
-	}
-
-	public void clearDiagrams() {
-		model.clearDiagrams();
 	}
 
 	public Collection<NamedImage> getImagesForDiagram(VirtualDiagram d) {
@@ -253,10 +184,6 @@ public class Controller extends BaseController {
 
 	public void setPositionColour(Position p, ColourTheme.ColourType type, String rgb) {
 		model.setPositionColour(p, type, rgb);
-	}
-
-	public Diagram getDiagram(int skeletonId, String diagramName) {
-		return model.getDiagram(skeletonId, diagramName);
 	}
 
 	public void showNewComponentDialog(VirtualSlot slot) {

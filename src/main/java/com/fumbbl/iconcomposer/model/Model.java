@@ -17,10 +17,12 @@ import java.util.stream.Collectors;
 import com.fumbbl.iconcomposer.ColourTheme;
 import com.fumbbl.iconcomposer.ColourTheme.ColourType;
 import com.fumbbl.iconcomposer.Config;
-import com.fumbbl.iconcomposer.controllers.Controller;
+import com.fumbbl.iconcomposer.TaskManager;
 import com.fumbbl.iconcomposer.dto.fumbbl.*;
+import com.fumbbl.iconcomposer.events.SkeletonChangedEvent;
 import com.fumbbl.iconcomposer.model.types.*;
 
+import com.sun.javafx.event.EventHandlerManager;
 import javafx.application.Platform;
 import javafx.beans.Observable;
 import javafx.beans.property.SimpleObjectProperty;
@@ -30,13 +32,11 @@ import javafx.collections.ObservableList;
 
 import javax.imageio.ImageIO;
 
-public class Model {
+public class Model extends EventHandlerManager {
 	private final DataStore dataStore;
 	
 	private final Config cfg;
-	private final DataLoader dataLoader;
-
-	private Controller controller;
+	public final DataLoader dataLoader;
 
 	public final ObservableList<VirtualDiagram> masterDiagrams;
 	public final ObservableList<Position> masterPositions;
@@ -48,11 +48,17 @@ public class Model {
 	public final SimpleObjectProperty<Skeleton> sideSkeleton;
 
 	public final SimpleObjectProperty<Position> selectedPosition;
+	public final SimpleObjectProperty<Ruleset> loadedRuleset;
+	public final TaskManager taskManager;
 
-	public Model() {
+	public Model(Config config, DataLoader dataLoader, TaskManager taskManager) {
+		super(Model.class);
+
 		dataStore = new DataStore();
-		cfg = new Config();
-		dataLoader = new DataLoader(cfg);
+		this.dataLoader = dataLoader;
+		cfg = config;
+
+		this.taskManager = taskManager;
 
 		masterPositions = FXCollections.observableArrayList(item -> new Observable[] { item.nameProperty() });
 		masterBones = FXCollections.observableArrayList(item -> new Observable[] { item.nameProperty() });
@@ -63,6 +69,7 @@ public class Model {
 		frontSkeleton = new SimpleObjectProperty<>();
 		sideSkeleton = new SimpleObjectProperty<>();
 		selectedPosition = new SimpleObjectProperty<>();
+		loadedRuleset = new SimpleObjectProperty<>();
 
 		sortByName(masterPositions);
 		sortByName(masterBones);
@@ -145,7 +152,7 @@ public class Model {
 	private Diagram getDiagram(Perspective perspective, String slotName) {
 		Skeleton s = getSkeleton(perspective);
 		if (s != null) {
-			return controller.getDiagram(s.id, slotName);
+			return dataStore.getDiagram(s.id, slotName);
 		}
 		return null;
 	}
@@ -159,7 +166,6 @@ public class Model {
 	public void loadRoster(int rosterId) {
 		dataStore.clearDiagrams();
 		dataStore.clearSlots();
-		dataStore.clearPosition();
 
 		DtoRoster roster = dataLoader.getRoster(rosterId);
 
@@ -180,15 +186,17 @@ public class Model {
 
 		loadSkeletons(position);
 
-		controller.onProgressStart("Loading images");
-		controller.startBatch();
+		taskManager.onProgressStart("Loading images");
+		taskManager.startBatch();
 
 		loadParts(frontSkeleton.get());
 		loadParts(sideSkeleton.get());
 
-		controller.runBatch();
+		taskManager.runInBackground(() -> {
+			dispatchBubblingEvent(new SkeletonChangedEvent(SkeletonChangedEvent.SKELETON_CHANGED));
+		});
 
-		controller.viewState.setActivePosition(position);
+		taskManager.runBatch();
 	}
 
 	private void loadParts(Skeleton skeleton) {
@@ -218,8 +226,7 @@ public class Model {
 	}
 	
 	public void loadRuleset(int rulesetId) {
-		dataStore.setRuleset(dataLoader.getRuleset(rulesetId).toRuleset());
-		controller.onRulesetLoaded(dataStore.getRuleset());
+		loadedRuleset.set(dataLoader.getRuleset(rulesetId).toRuleset());
 	}
 	
 	public void loadSkeletons(Position position) {
@@ -245,7 +252,7 @@ public class Model {
 			Diagram diagram = d.toDiagram(skeleton.perspective);
 
 			if (diagram.imageId > 0) {
-				controller.runInBackground(() -> loadImage(diagram));
+				taskManager.runInBackground(() -> loadImage(diagram));
 			}
 			diagramMap.put(d.id, diagram);
 		});
@@ -321,12 +328,7 @@ public class Model {
 		dataStore.addColourTheme("home", homeColours);
 		dataStore.addColourTheme("away", awayColours);
 		
-		controller.onColourThemesChanged(dataStore.getColourThemes());
-	}
-
-	public void setController(Controller controller) {
-		this.controller = controller;
-		dataLoader.setController(controller);
+		//controller.onColourThemesChanged(dataStore.getColourThemes());
 	}
 
 	public Diagram getDiagram(int skeletonId, String diagramName) {
@@ -341,17 +343,7 @@ public class Model {
 		return dataStore.getColourTheme(theme);
 	}
 
-	public void authenticate() {
-		boolean success = false;
-		String clientId = getConfig().getClientId();
-		String clientSecret = getConfig().getClientSecret();
-		if (clientId != null && clientId.length() > 0) {
-			success = dataLoader.authenticate(clientId, clientSecret);
-		}
-		controller.onAuthenticateChange(success);
-	}
-
-	public boolean isAuthorized() {
+	public boolean isAuthenticated() {
 		return dataLoader.isAuthenticated();
 	}
 
@@ -373,7 +365,7 @@ public class Model {
 					byte[] bytes = Files.readAllBytes(p);
 
 					if (jsonMatcher.matches(p)) {
-						controller.onProgressStart("Importing Spine");
+						taskManager.onProgressStart("Importing Spine");
 						try {
 							SpineImporter importer = new SpineImporter();
 							importer.importSkeleton(new String(bytes));
@@ -394,7 +386,7 @@ public class Model {
 							dataStore.setSlots(skeleton.getSlots());
 							dataStore.setBones(skeleton.getBones());
 
-							controller.startBatch();
+							taskManager.startBatch();
 							dataLoader.saveSkeleton(pos, skeleton);
 							dataLoader.setPerspective(pos, skeleton);
 							dataLoader.saveBones(skeleton);
@@ -406,10 +398,10 @@ public class Model {
 
 							Collection<Skin> skins = importer.getSkins();
 
-							controller.runBatch();
+							taskManager.runBatch();
 
 							delayedTasks.add(() -> {
-								controller.onBonesChanged(skeleton.getBones());
+								//controller.onBonesChanged(skeleton.getBones());
 								masterSlots.setAll(skeleton.getSlots().stream().map(s -> new VirtualSlot(s)).collect(Collectors.toList()));
 
 								masterDiagrams.clear();
@@ -417,25 +409,24 @@ public class Model {
 							});
 
 						} catch (Exception e) {
-							controller.getMainController().onProgressComplete();
-							controller.stopProgress();
+							taskManager.stopProgress();
 						}
 					} else if (pngMatcher.matches(p)) {
-						controller.runInBackground(() -> importPng(p, bytes));
+						taskManager.runInBackground(() -> importPng(p, bytes));
 					}
 				}
 
-				controller.runInBackground(() -> Platform.runLater(() -> {
+				taskManager.runInBackground(() -> Platform.runLater(() -> {
 					for (Runnable task1 : delayedTasks) {
 						task1.run();
 					}
 				}));
 			} catch (IOException e) {
-				controller.onProgress(1, true);
+				taskManager.onProgress(1, true);
 			}
 		};
-		
-		controller.runInBackground(task);
+
+		taskManager.runInBackground(task);
 	}
 
 	public BufferedImage getImage(String imageName) {
@@ -448,7 +439,7 @@ public class Model {
 
 	public void onItemRenamed(NamedItem item, String oldName) {
 		if (item instanceof Skeleton) {
-			dataLoader.saveSkeleton(dataStore.getPosition(), (Skeleton)item);
+			dataLoader.saveSkeleton(selectedPosition.get(), (Skeleton)item);
 		} else if (item instanceof NamedImage) {
 			dataStore.renameImage(oldName, item.getName());
 			//controller.onImagesChanged(dataStore.getImages());
@@ -465,7 +456,7 @@ public class Model {
 
 	public void setPerspective(Skeleton s)
 	{
-		dataLoader.setPerspective(dataStore.getPosition(), s);
+		dataLoader.setPerspective(selectedPosition.get(), s);
 	}
 
 	public void clearDiagrams() {
@@ -511,5 +502,9 @@ public class Model {
 
 	public void saveDiagram(Diagram d) {
 		dataLoader.saveDiagram(d);
+	}
+
+	public void authenticate() {
+		dataLoader.authenticate();
 	}
 }

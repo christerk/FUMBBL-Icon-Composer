@@ -21,7 +21,7 @@ public class DtoRuleset {
 		if (rosters != null) {
 			rosters.forEach(roster -> list.add(roster.toRoster()));
 		}
-		r.rosters = list;
+		r.rosters.setAll(list);
 		return r;
 	}
 }

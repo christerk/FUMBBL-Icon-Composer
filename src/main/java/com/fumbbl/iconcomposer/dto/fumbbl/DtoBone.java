@@ -6,8 +6,8 @@ public class DtoBone {
 	public int id;
 	public String name;
 	public int parentId;
-	public final double x = 0;
-	public final double y = 0;
+	public double x = 0;
+	public double y = 0;
 	
 	public Bone toBone() {
 		Bone b = new Bone();

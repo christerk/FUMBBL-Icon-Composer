@@ -9,6 +9,7 @@ import java.util.List;
 import java.util.Map;
 
 import com.fumbbl.iconcomposer.Config;
+import com.fumbbl.iconcomposer.TaskManager;
 import com.fumbbl.iconcomposer.controllers.Controller;
 import com.fumbbl.iconcomposer.dto.fumbbl.*;
 import com.fumbbl.iconcomposer.model.types.Bone;
@@ -19,11 +20,16 @@ import com.fumbbl.iconcomposer.model.types.Skin;
 import com.fumbbl.iconcomposer.model.types.Slot;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
+import javafx.beans.property.SimpleBooleanProperty;
+import javafx.beans.value.ObservableBooleanValue;
 import javafx.util.Callback;
 
 public class DataLoader {
+	private final TaskManager taskManager;
+	public SimpleBooleanProperty isAuthenticated = new SimpleBooleanProperty();
 	private final APIClient apiClient;
 	private final Gson gson;
+	private final Config config;
 	private Controller controller;
 
 	private static final Type boneListType = new TypeToken<List<DtoBone>>() {}.getType();
@@ -33,9 +39,21 @@ public class DataLoader {
 	private static final Type rulesetListType = new TypeToken<List<DtoRuleset>>() {}.getType();
 	private static final Type skinListType = new TypeToken<List<DtoSkin>>() {}.getType();
 
-	public DataLoader(Config cfg) {
+	public DataLoader(Config cfg, TaskManager taskManager) {
+		this.config = cfg;
+		this.taskManager = taskManager;
 		apiClient = new APIClient(cfg.getSiteBase(), cfg.getApiBase());
 		gson = new Gson();
+	}
+
+	public void authenticate() {
+		boolean success = false;
+		String clientId = config.getClientId();
+		String clientSecret = config.getClientSecret();
+		if (clientId != null && clientId.length() > 0) {
+			success = authenticate(clientId, clientSecret);
+		}
+		isAuthenticated.set(success);
 	}
 
 	public boolean authenticate(String clientId, String clientSecret) {
@@ -114,7 +132,7 @@ public class DataLoader {
 			String content = apiClient.post("/iconskeleton/create", params, true);
 			skeleton.id = gson.fromJson(content, Integer.class);
 		};
-		controller.runInBackground(task);
+		taskManager.runInBackground(task);
 	}
 
 	public void setPerspective(Position position, Skeleton skeleton)
@@ -129,7 +147,7 @@ public class DataLoader {
 			params.put("positionId", Integer.toString(position.id));
 			String content = apiClient.post("/iconskeleton/setPerspective", params, true);
 		};
-		controller.runInBackground(task);
+		taskManager.runInBackground(task);
 	}
 
 	public void setPositionVariable(Position position, String variable, String value)
@@ -145,7 +163,7 @@ public class DataLoader {
 			params.put("value", value);
 			String result = apiClient.post("/iconskeleton/setPositionVariable", params, true);
 		};
-		controller.runInBackground(task);
+		taskManager.runInBackground(task);
 	}
 
 	public void saveBones(Skeleton skeleton) {
@@ -178,8 +196,8 @@ public class DataLoader {
 			String content = apiClient.post("/iconskeleton/setBone", params, true);
 			bone.id = gson.fromJson(content, Integer.class);
 		};
-		
-		controller.runInBackground(task);
+
+		taskManager.runInBackground(task);
 	}
 
 	public void saveSlots(Skeleton skeleton) {
@@ -201,8 +219,8 @@ public class DataLoader {
 			String content = apiClient.post("/iconskeleton/setSlot", params, true);
 			slot.id = gson.fromJson(content, Integer.class);
 		};
-		
-		controller.runInBackground(task);
+
+		taskManager.runInBackground(task);
 	}
 
 	public void saveDiagram(Diagram diagram) {
@@ -218,14 +236,14 @@ public class DataLoader {
 			String content = apiClient.post("/iconskeleton/setDiagram", params, true);
 			diagram.id = gson.fromJson(content, Integer.class);
 		};
-		
-		controller.runInBackground(task);
+
+		taskManager.runInBackground(task);
 	}
 
 	public void deleteSkeleton(Skeleton skeleton) {
 		Runnable task = () -> apiClient.post("/iconskeleton/delete/" + skeleton.id, null, true);
-		
-		controller.runInBackground(task);
+
+		taskManager.runInBackground(task);
 	}
 
 	public void saveSkin(Position position, Skin skin) {
@@ -238,8 +256,8 @@ public class DataLoader {
 			String content = apiClient.post("/iconskeleton/setSkin", params, true);
 			skin.id = gson.fromJson(content, Integer.class);
 		};
-		
-		controller.runInBackground(task);
+
+		taskManager.runInBackground(task);
 	}
 
 	public void uploadFile(int diagramId, String fileId, byte[] image)

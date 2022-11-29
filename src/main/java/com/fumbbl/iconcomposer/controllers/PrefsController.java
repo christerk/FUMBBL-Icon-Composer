@@ -27,7 +27,7 @@ public class PrefsController extends BaseController {
 		cfg.setClientSecret(clientSecret.getText());
 		
 		if (!oldClientId.equals(clientId.getText()) || !oldClientSecret.contentEquals(clientSecret.getText())) {
-			controller.authenticate();
+			model.authenticate();
 		}
 		
 		controller.getStageManager().hide(StageType.prefs);

@@ -14,8 +14,6 @@ public class DataStore {
 	private final Map<String,ColourTheme> colourThemes;
 
 	private final Map<String, NamedPng> images;
-	private Ruleset ruleset;
-	private Position position;
 
 	private final Map<Integer,Map<String,Slot>> slotsByName;
 	private final Map<Integer,Bone> bones;
@@ -86,7 +84,11 @@ public class DataStore {
 	}
 
 	public Diagram getDiagram(int skeletonId, String image) {
-		return getDiagramsForSkeleton(skeletonId).get(image.toLowerCase());
+		Map<String,Diagram> diagrams = getDiagramsForSkeleton(skeletonId);
+		if (diagrams == null) {
+			return null;
+		}
+		return diagrams.get(image.toLowerCase());
 	}
 	
 	public void addDiagram(Skeleton skeleton, String name, Diagram diagram) {
@@ -220,37 +222,5 @@ public class DataStore {
 
 	public void clearBones() {
 		this.bones.clear();
-	}
-
-	/*
-	 * Skeleton 
-	 */
-	
-	/*
-	 * Ruleset 
-	 */
-	
-	public void setRuleset(Ruleset ruleset) {
-		this.ruleset = ruleset;
-	}
-	
-	public Ruleset getRuleset() {
-		return ruleset;
-	}
-
-	/*
-	 * Position
-	 */
-	
-	public void setPosition(Position position) {
-		this.position = position;
-	}
-	
-	public Position getPosition() {
-		return this.position;
-	}
-
-	public void clearPosition() {
-		this.position = null;
 	}
 }

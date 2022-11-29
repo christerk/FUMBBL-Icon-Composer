@@ -39,6 +39,6 @@ public class MainStage extends BaseStage {
 			event.consume();
 		});
 		
-		stage.setOnCloseRequest(e -> mainController.shutdown());
+		stage.setOnCloseRequest(e -> model.taskManager.shutdown());
 	}
 }

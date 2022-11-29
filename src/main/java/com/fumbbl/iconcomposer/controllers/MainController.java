@@ -8,6 +8,7 @@ import java.util.stream.Collectors;
 
 import com.fumbbl.iconcomposer.ColourTheme;
 import com.fumbbl.iconcomposer.ColourTheme.ColourType;
+import com.fumbbl.iconcomposer.events.SkeletonChangedEvent;
 import com.fumbbl.iconcomposer.model.Perspective;
 import com.fumbbl.iconcomposer.model.types.*;
 import com.fumbbl.iconcomposer.ui.StageType;
@@ -16,6 +17,8 @@ import javafx.application.Platform;
 import javafx.beans.binding.Bindings;
 import javafx.beans.binding.BooleanBinding;
 import javafx.beans.binding.LongBinding;
+import javafx.beans.binding.StringBinding;
+import javafx.beans.property.SimpleObjectProperty;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
 import javafx.collections.ListChangeListener;
@@ -25,6 +28,7 @@ import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.fxml.Initializable;
 import javafx.geometry.Point2D;
+import javafx.scene.Node;
 import javafx.scene.control.*;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
@@ -182,9 +186,16 @@ public class MainController extends BaseController implements Initializable {
 		BooleanBinding positionChoiceVisible = Bindings.createBooleanBinding(() -> !model.masterPositions.isEmpty(), model.masterPositions);
 		positionChoice.visibleProperty().bind(positionChoiceVisible);
 
+		StringBinding isAuthorized = Bindings.createStringBinding(() -> model.isAuthenticated() ? "Authenticated" : "Not Authenticated", model.dataLoader.isAuthenticated);
+		apiStatus.textProperty().bind(isAuthorized);
+
 		slotChoices.setItems(model.masterSlots);
 
 		model.selectedPosition.addListener((o, oldValue, newValue) -> setColourTheme(newValue.templateColours));
+
+		progressPane.visibleProperty().bind(model.taskManager.taskRunningProperty);
+		labelProgress.textProperty().bind(model.taskManager.taskStateProperty);
+		progressBar.progressProperty().bind(model.taskManager.taskPctProperty);
 
 		LongBinding b = Bindings.createLongBinding(() -> {
 			long combinations = 1;
@@ -197,15 +208,6 @@ public class MainController extends BaseController implements Initializable {
 			return combinations;
 		}, model.masterSlots, model.masterDiagrams);
 		combinationsLabel.textProperty().bind(Bindings.format("%d", b));
-
-		model.masterBones.addListener((ListChangeListener<Bone>) c -> {
-			renderSkeleton(model.frontSkeleton.get());
-			renderSkeleton(model.sideSkeleton.get());
-		});
-
-		model.frontSkeleton.addListener((observable, oldValue, newValue) -> renderSkeleton(newValue));
-
-		model.sideSkeleton.addListener((observable, oldValue, newValue) -> renderSkeleton(newValue));
 
 		model.masterSlots.addListener((ListChangeListener<VirtualSlot>) c -> {
 			TreeItem<NamedItem> root = treeView.getRoot();
@@ -307,6 +309,12 @@ public class MainController extends BaseController implements Initializable {
 				}
 			}
 		});
+
+		model.addEventHandler(SkeletonChangedEvent.SKELETON_CHANGED, e -> {
+			renderSkeleton(model.frontSkeleton.get());
+			renderSkeleton(model.sideSkeleton.get());
+			renderPreview();
+		});
 	}
 
 	/*
@@ -326,7 +334,7 @@ public class MainController extends BaseController implements Initializable {
 		double y = e.getY();
 		MouseButton button = e.getButton();
 
-		Position p = controller.viewState.getActivePosition();
+		Position p = model.selectedPosition.get();
 
 		Diagram d = model.getDiagram(model.getSkeleton(perspective).id, treeView.getSelectionModel().getSelectedItem().getValue().getName());
 
@@ -337,7 +345,7 @@ public class MainController extends BaseController implements Initializable {
 			
 			p.templateColours.setColour(type, c);
 			controller.setPositionColour(p, type, "#"+Integer.toHexString(c.getRGB()).substring(2));
-			controller.onColourThemeChanged(p.templateColours);
+			setColourTheme(p.templateColours);
 		} else if (button == MouseButton.SECONDARY) {
 			Point2D point = controller.getRenderer().getImageOffset(x, y);
 			d.x = point.getX();
@@ -351,15 +359,15 @@ public class MainController extends BaseController implements Initializable {
 	public void activateColour(MouseEvent e) {
 		controller.viewState.setActiveColourType(ColourType.fromString(((ImageView)e.getSource()).getId()));
 		if (e.getButton() == MouseButton.SECONDARY) {
-			Position p = controller.viewState.getActivePosition();
+			Position p = model.selectedPosition.get();
 			ColourType type = controller.viewState.getActiveColourType();
 			p.templateColours.resetColour(type);
-			controller.onColourThemeChanged(p.templateColours);
+			setColourTheme(p.templateColours);
 		}
 	}
 
 	public void quit() {
-		controller.shutdown();
+		model.taskManager.shutdown();
 	}
 	
 	public void showPreferences() {
@@ -385,7 +393,7 @@ public class MainController extends BaseController implements Initializable {
 	public void renderSkeleton(Skeleton newValue) {
 		if (newValue == null) {
 			controller.setSkeleton(null);
-			controller.displayBones(null);
+			controller.displayBones();
 			model.masterSlots.clear();
 			setBones(null);
 
@@ -393,7 +401,7 @@ public class MainController extends BaseController implements Initializable {
 			return;
 		}
 
-		controller.displayBones(null);
+		controller.displayBones();
 	}
 	
 	public void setColourTheme(ColourTheme t) {

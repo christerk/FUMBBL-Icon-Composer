@@ -3,6 +3,7 @@ package com.fumbbl.iconcomposer.model.types;
 import java.util.Comparator;
 
 import com.fumbbl.iconcomposer.controllers.Controller;
+import javafx.beans.property.SimpleObjectProperty;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
 import javafx.scene.control.TreeItem;

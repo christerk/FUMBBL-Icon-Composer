@@ -1,5 +1,7 @@
 package com.fumbbl.iconcomposer.controllers;
 
+import com.fumbbl.iconcomposer.TaskManager;
+
 import java.util.LinkedList;
 import java.util.Stack;
 import java.util.concurrent.ExecutorService;
@@ -10,10 +12,10 @@ public class TaskQueue {
 	private final ExecutorService threadPool;
 	private final Stack<LinkedList<Runnable>> queue;
 
-	private final Controller controller;
+	private final TaskManager manager;
 	
-	public TaskQueue(Controller controller) {
-		this.controller = controller;
+	public TaskQueue(TaskManager manager) {
+		this.manager = manager;
 		threadPool = Executors.newSingleThreadExecutor();
 		queue = new Stack<>();
 	}
@@ -46,13 +48,13 @@ public class TaskQueue {
 		queue.push(new LinkedList<>());
 	}
 
-	public void runBatch() {
+	public void runBatch(Runnable completedCallback) {
 		if (!queue.empty()) {
 			LinkedList<Runnable> currentBatch = queue.pop();
 
 			int numTasks = currentBatch.size();
 			if (numTasks == 0) {
-				controller.onProgress(1, true);
+				manager.onProgress(1, true);
 				return;
 			}
 
@@ -66,7 +68,7 @@ public class TaskQueue {
 						System.out.println(e.getMessage());
 					}
 					completeTasks[0]++;
-					controller.onProgress(((double) completeTasks[0]) / ((double)numTasks), completeTasks[0] >= numTasks);
+					manager.onProgress(((double) completeTasks[0]) / ((double)numTasks), completeTasks[0] >= numTasks);
 				});
 			}
 		}

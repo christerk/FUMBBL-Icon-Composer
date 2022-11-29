@@ -18,15 +18,6 @@ public class ViewState {
 	private ColourType activeColourType;
 	private final HashMap<Perspective, Diagram> activeDiagrams;
 	private ColourTheme activeColourTheme;
-	private Position activePosition;
-
-	public Position getActivePosition() {
-		return activePosition;
-	}
-
-	public void setActivePosition(Position position) {
-		this.activePosition = position;
-	}
 
 	private enum ImageType {
 		SkeletonFront,
