@@ -71,6 +71,12 @@ public class Slot extends NamedItem {
 	}
 
 	public static final java.util.Comparator<Slot> ReverseComparator = (o1, o2) -> {
+		if (o1 == null) {
+			return -1;
+		}
+		if (o2 == null) {
+			return 1;
+		}
 		int r = o1.order-o2.order;
 		if (r == 0) {
 			r = o2.getName().compareTo(o1.getName());

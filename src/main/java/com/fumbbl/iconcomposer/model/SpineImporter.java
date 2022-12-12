@@ -32,7 +32,7 @@ public class SpineImporter {
 		skeleton = new Skeleton();
 		skeleton.setName("Imported");
 
-		processSkeleton(data, skeleton);
+		//processSkeleton(data, skeleton);
 		processBones(data, skeleton);
 		processSlots(data, skeleton);
 		processSkins(data, skeleton);

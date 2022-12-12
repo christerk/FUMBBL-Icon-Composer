@@ -24,6 +24,10 @@ public class VirtualDiagram extends NamedItem {
         }
     }
 
+    public boolean hasImage(String slotName) {
+        return images.containsKey(slotName);
+    }
+
     public void removeImage(VirtualImage image) {
         if (image != null && image.getName() != null) {
             images.remove(image.getName());

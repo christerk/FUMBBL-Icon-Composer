@@ -126,6 +126,10 @@ public class Controller extends BaseController {
 	}
 
 	public void displayDiagrams(String diagramName) {
+		if (diagramName == null) {
+			displayDiagram(null);
+			return;
+		}
 		Diagram d = model.getDiagram(model.masterSkeleton.get().realSkeletons.get(Perspective.Front).id, diagramName);
 		displayDiagram(d);
 
@@ -185,5 +189,9 @@ public class Controller extends BaseController {
 
 	public Model getModel() {
 		return model;
+	}
+
+	public void relocateSlot(String slotName, VirtualBone target) {
+		model.relocateSlot(model.getVirtualSlot(slotName), target);
 	}
 }

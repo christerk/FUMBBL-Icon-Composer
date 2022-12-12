@@ -7,8 +7,11 @@ import javafx.scene.control.cell.TextFieldListCell;
 import javafx.scene.control.cell.TextFieldTreeCell;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
+import javafx.scene.input.*;
 import javafx.util.Callback;
 import javafx.util.StringConverter;
+
+import java.util.Objects;
 
 public class CellFactory<T extends NamedItem> {
 	private Class<T> c;
@@ -53,7 +56,7 @@ public class CellFactory<T extends NamedItem> {
 
 	public void apply(TreeView<T> tree, Class<T> c, BaseController base) {
 		this.c = c;
-		tree.setCellFactory(this.createTree());
+		tree.setCellFactory(this.createTree(tree));
 
 		tree.setOnEditStart(event -> {
 		});
@@ -68,11 +71,7 @@ public class CellFactory<T extends NamedItem> {
 		});
 	}
 
-	public void apply(TreeView<NamedItem> tree, BaseController base) {
-
-	}
-
-	private Callback<TreeView<T>,TreeCell<T>> createTree() {
+	private Callback<TreeView<T>,TreeCell<T>> createTree(TreeView<T> tree) {
 		return p -> {
 			TextFieldTreeCell<T> cell = new TextFieldTreeCell<T>() {
 				@Override
@@ -103,6 +102,10 @@ public class CellFactory<T extends NamedItem> {
 				}
 			};
 
+			cell.setOnDragDetected((MouseEvent event) -> dragDetected(event, cell, tree));
+			cell.setOnDragOver((DragEvent event) -> dragOver(event, cell, tree));
+			cell.setOnDragDropped((DragEvent event) -> drop(event, cell, tree));
+			cell.setOnDragDone((DragEvent event) -> clearDropLocation());
 
 			cell.setConverter(new StringConverter<T>() {
 				@Override
@@ -131,6 +134,56 @@ public class CellFactory<T extends NamedItem> {
 
 			return cell;
 		};
+	}
+
+	private static final String DROP_HINT_STYLE = "-fx-background-color: #eea82f;";
+	private TextFieldTreeCell<T> dropZone;
+	private void clearDropLocation() {
+		if (dropZone != null) {
+			dropZone.setStyle("");
+			dropZone = null;
+		}
+	}
+
+	private void drop(DragEvent event, TextFieldTreeCell<T> cell, TreeView<T> tree) {
+		NamedItem target = cell.getItem();
+		if (!(target instanceof VirtualBone)) {
+			return;
+		}
+
+		Dragboard db = event.getDragboard();
+		String slotName = db.getString();
+		controller.relocateSlot(slotName, ((VirtualBone) target));
+		clearDropLocation();
+	}
+
+	private void dragOver(DragEvent event, TextFieldTreeCell<T> cell, TreeView<T> tree) {
+		NamedItem target = cell.getItem();
+		if (!(target instanceof VirtualBone)) {
+			clearDropLocation();
+			return;
+		}
+
+		event.acceptTransferModes(TransferMode.MOVE);
+		if (!Objects.equals(dropZone, cell)) {
+			clearDropLocation();
+			dropZone = cell;
+			dropZone.setStyle(DROP_HINT_STYLE);
+		}
+	}
+
+	private void dragDetected(MouseEvent event, TextFieldTreeCell<T> cell, TreeView<T> tree) {
+		NamedItem item = cell.getItem();
+		if (!(item instanceof VirtualSlot)) {
+			return;
+		}
+
+		Dragboard db = cell.startDragAndDrop(TransferMode.MOVE);
+		ClipboardContent content = new ClipboardContent();
+		content.putString(cell.getText());
+		db.setContent(content);
+		db.setDragView(cell.snapshot(null, null));
+		event.consume();
 	}
 
 	private Callback<ListView<T>,ListCell<T>> create() {

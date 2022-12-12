@@ -55,7 +55,9 @@ public class OpenRosterController extends BaseController implements Initializabl
 	@Override
 	public void initialize(URL location, ResourceBundle resources) {
 		rulesetList.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> {
-			model.loadRuleset(newValue.id);
+			if (newValue != null) {
+				model.loadRuleset(newValue.id);
+			}
 		});
 		
 		rosterList.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> openButton.setDisable(newValue == null));

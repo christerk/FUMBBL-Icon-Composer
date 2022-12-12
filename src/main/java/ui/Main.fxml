@@ -50,7 +50,7 @@
                               <MenuItem fx:id="treeContextNewComponent" mnemonicParsing="false" onAction="#newComponent" text="New Component" />
                             <MenuItem fx:id="treeContextRename" mnemonicParsing="false" onAction="#renameItem" text="Rename" />
                               <SeparatorMenuItem mnemonicParsing="false" />
-                              <MenuItem mnemonicParsing="false" onAction="#deleteItem" text="Delete" />
+                              <MenuItem fx:id="treeContextDeleteItem" mnemonicParsing="false" onAction="#deleteItem" text="Delete" />
                           </items>
                         </ContextMenu>
                      </contextMenu>
@@ -70,7 +70,7 @@
                                                       <VBox spacing="5.0">
                                                          <children>
                                                             <Label alignment="CENTER" contentDisplay="CENTER" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" text="Front" />
-                                                            <ImageView fx:id="frontSkeleton" fitHeight="480.0" fitWidth="480.0" onMouseClicked="#frontImageClicked" pickOnBounds="true" preserveRatio="true">
+                                                            <ImageView fx:id="frontSkeleton" fitHeight="480.0" fitWidth="480.0" onMouseClicked="#frontSkeletonClicked" pickOnBounds="true" preserveRatio="true">
                                                                <effect>
                                                                   <DropShadow color="#0000006a" height="43.74" radius="20.6275" spread="0.31" width="40.77" />
                                                                </effect>
@@ -84,7 +84,7 @@
                                                       <VBox spacing="5.0">
                                                          <children>
                                                             <Label alignment="CENTER" contentDisplay="CENTER" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" text="Side" />
-                                                            <ImageView fx:id="sideSkeleton" fitHeight="480.0" fitWidth="480.0" onMouseClicked="#sideImageClicked" pickOnBounds="true" preserveRatio="true">
+                                                            <ImageView fx:id="sideSkeleton" fitHeight="480.0" fitWidth="480.0" onMouseClicked="#sideSkeletonClicked" pickOnBounds="true" preserveRatio="true">
                                                                <effect>
                                                                   <DropShadow color="#0000006a" height="43.74" radius="20.6275" spread="0.31" width="40.77" />
                                                                </effect>
@@ -318,7 +318,7 @@
                                        <children>
                                           <VBox alignment="CENTER" spacing="10.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
                                              <children>
-                                                <ImageView fx:id="preview" fitHeight="265.0" fitWidth="915.0" pickOnBounds="true" preserveRatio="true" />
+                                                <ImageView fx:id="preview" fitHeight="261.0" fitWidth="906.0" pickOnBounds="true" preserveRatio="true" />
                                                 <Button mnemonicParsing="false" onAction="#renderPreview" text="Randomize" />
                                              </children>
                                           </VBox>

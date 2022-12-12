@@ -22,7 +22,6 @@ public class Skeleton extends NamedItem {
 	private final ObservableMap<String,Bone> bones;
 	private final ObservableMap<String,Slot> slots;
 	
-	public double x = 0, y = 0;
 	public final double scaleX = 1;
 	public final double scaleY = 1;
 	public double width = 0, height = 0;

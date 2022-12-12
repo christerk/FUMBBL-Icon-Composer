@@ -78,13 +78,22 @@ public class BaseRenderer {
 
 		Graphics2D g2 = controller.viewState.getPreviewGraphics2D();
 		g2.setColor(iconBackground);
-		g2.fillRect(x*65 + 5, y*65 + 5, 60, 60);
+		g2.fillRect(x*64 + 5, y*64 + 5, 59, 59);
 
 		g2.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_NEAREST_NEIGHBOR);
 		g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 
 		skeleton.updateTransforms();
-		drawIcon(g2, skeleton, skin, x*65+5, y*65+5);
+		drawIcon(g2, skeleton, skin, x, y);
+	}
+
+	private void recenterSkeleton(Graphics2D g2, Skeleton skeleton) {
+		Bone rootBone = skeleton.getBone("root");
+
+		double cx = rootBone.x;
+		double cy = rootBone.y;
+
+		g2.translate(-cx, cy);
 	}
 
 	public void renderDiagram(Perspective perspective, Diagram diagram) {
@@ -138,24 +147,35 @@ public class BaseRenderer {
 			return;
 		}
 
+		double centerX = 0;
+		double centerY = 0;
 		// Find center; should correspond to "root" bone.
 		for (Bone b : skeleton.getBones()) {
 			if ("root".equals(b.getName())) {
-				skeleton.x = b.x;
-				skeleton.y = -b.y;
+				centerX = b.x;
+				centerY = b.y;
 			}
 		}
 
 		skeleton.updateTransforms();
 
+		Diagram skeletonDiagram = model.getDiagram(skeleton.id, "skeleton");
+		if (skeletonDiagram != null) {
+			AffineTransform at = g2.getTransform();
+			g2.scale(scale, scale);
+			g2.translate(-centerX, centerY);
+			renderDiagram(g2, skeletonDiagram, skeleton, skeletonDiagram.getSlot(), controller.getColourTheme());
+			g2.setTransform(at);
+		}
+
 		for (Bone b : skeleton.getBones()) {
-			int cx = (int) (this.width/2 + scale*b.worldX/2);
-			int cy = (int) (this.height/2 - scale*b.worldY/2);
+			int cx = (int) (this.width/2 + scale*(b.worldX - centerX));
+			int cy = (int) (this.height/2 - scale*(b.worldY - centerY));
 
 			if (b.parentBone != null) {
 				Bone parent = b.parentBone;
-				int px = (int) (this.width/2 + scale*parent.worldX/2);
-				int py = (int) (this.height/2 - scale*parent.worldY/2);
+				int px = (int) (this.width/2 + scale*(parent.worldX - centerX));
+				int py = (int) (this.height/2 - scale*(parent.worldY - centerY));
 				
 				g2.setColor(gridColor);
 				g2.setStroke(new BasicStroke(1, BasicStroke.CAP_SQUARE, BasicStroke.JOIN_ROUND, 1f, new float[] {1, 4}, 0));
@@ -211,28 +231,61 @@ public class BaseRenderer {
 
 	private void drawIcon(Graphics2D g2, Skeleton skeleton, Skin skin, double x, double y) {
 		AffineTransform originalTransform = g2.getTransform();
-		
-		AffineTransform at = g2.getTransform();
+
+		// Set center to middle of square
+		g2.translate(5 + x * 64 + 29, 5 + y * 64 + 29);
+
+		// Draw square bounds
+		g2.setColor(Color.darkGray);
+		g2.drawRect(-22, -22, 44, 44);
+
+		recenterSkeleton(g2, skeleton);
+
 		ColourTheme theme = controller.getColourTheme();
 
+		//AffineTransform at = g2.getTransform();
 		List<Slot> orderedSlots = model.masterSlots.stream().map(vs->model.getSlot(skeleton.id,vs.getName())).sorted(Slot.ReverseComparator).collect(Collectors.toList());
 		for (Slot slot : orderedSlots) {
+			if (slot == null) {
+				continue;
+			}
 			VirtualDiagram virtualDiagram = skin.getDiagram(slot.getName());
 			if (virtualDiagram != null) {
 				Diagram diagram = model.getDiagram(skeleton.id, virtualDiagram.getName());
 
 				if (diagram != null) {
 					//diagram.setColour(controller.getSvg(diagram.getImage().getName()), theme);
-					g2.translate(x, y);
-					renderDiagram(g2, diagram, skeleton, slot, theme);
+					//g2.translate(-29, -5);
+					renderTransformedDiagram(g2, diagram, skeleton, slot, theme);
 				}
 			}
-			g2.setTransform(at);
+			//g2.setTransform(at);
 		}
 
 		g2.setTransform(originalTransform);
 	}
 
+	private void renderTransformedDiagram(Graphics2D g2, Diagram diagram, Skeleton skeleton, Slot slot, ColourTheme theme) {
+		if (diagram != null) {
+			AffineTransform at = g2.getTransform();
+
+			skeleton.getTransform(slot.getBone().name, diagram);
+
+			g2.translate(diagram.worldX, -diagram.worldY);
+			centerComponentImage(g2, diagram);
+
+			renderDiagram(g2, diagram, theme);
+			g2.setTransform(at);
+		}
+	}
+
+	private void centerComponentImage(Graphics2D g2, Diagram diagram) {
+		if (diagram != null) {
+			double xFix = diagram.width % 2 == 0 ? 0.0 : 0.5;
+			double yFix = diagram.height % 2 == 0 ? 0.0 : 0.5;
+			g2.translate(- diagram.width / 2 - xFix, - diagram.height / 2 - yFix);
+		}
+	}
 	private void renderDiagram(Graphics2D g2, Diagram diagram, Skeleton skeleton, Slot slot, ColourTheme theme) {
 		if (diagram != null) {
 			AffineTransform at = g2.getTransform();

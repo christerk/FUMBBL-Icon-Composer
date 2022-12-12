@@ -37,7 +37,16 @@ public class SkeletonTreeItem extends TreeItem<NamedItem> {
             }
 
             if (change.wasRemoved()) {
-               SkeletonTreeItem.this.getChildren().remove(new SkeletonTreeItem(change.getValueRemoved()));
+                NamedItem item = change.getValueRemoved();
+                TreeItem<NamedItem> treeItem = null;
+                for (TreeItem<NamedItem> i : SkeletonTreeItem.this.getChildren()) {
+                    if (i.getValue().getClass() == item.getClass() && i.getValue().getName().equals(item.getName())) {
+                        treeItem = i;
+                    }
+                }
+                if (treeItem != null) {
+                    SkeletonTreeItem.this.getChildren().remove(treeItem);
+                }
             }
         });
     }

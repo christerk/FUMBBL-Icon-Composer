@@ -6,7 +6,7 @@ import javafx.collections.ObservableMap;
 
 public class VirtualBone extends NamedItem {
     public ObservableMap<String, VirtualSlot> slots;
-    private ObservableMap<Perspective, Bone> realBones;
+    public ObservableMap<Perspective, Bone> realBones;
     public final VirtualSkeleton skeleton;
 
     public VirtualBone(VirtualSkeleton skeleton, String name) {

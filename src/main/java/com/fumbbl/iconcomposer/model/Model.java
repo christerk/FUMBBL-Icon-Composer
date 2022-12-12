@@ -136,9 +136,20 @@ public class Model extends EventHandlerManager {
 			NamedPng newImage = new NamedPng(prefix+diagram.getName(), image);
 			VirtualDiagram vDiagram = findVirtualDiagram(diagram);
 
-			VirtualImage vImage = new VirtualImage(vDiagram, newImage.getName());
+			if (vDiagram == null) {
+				return null;
+			}
+
+			VirtualImage vImage;
+			String imageName = vDiagram.getName();
+			if (!vDiagram.hasImage(imageName)) {
+				vImage = new VirtualImage(vDiagram, imageName);
+				vDiagram.addImage(vImage);
+			} else {
+				vImage = vDiagram.images.get(imageName);
+			}
+
 			vImage.set(newImage);
-			vDiagram.addImage(vImage);
 
 			dataStore.addImage(newImage);
 			masterImages.add(newImage);
@@ -185,12 +196,12 @@ public class Model extends EventHandlerManager {
 
 		masterSkeleton.get().realSkeletons.values().forEach(s->loadParts(s));
 
-		SkeletonChanged();
+		skeletonChanged();
 
 		taskManager.runBatch();
 	}
 
-	private void SkeletonChanged() {
+	private void skeletonChanged() {
 		taskManager.runInBackground(() -> {
 			dispatchBubblingEvent(new SkeletonChangedEvent(SkeletonChangedEvent.SKELETON_CHANGED));
 		});
@@ -481,7 +492,7 @@ public class Model extends EventHandlerManager {
 								});
 							});
 
-							SkeletonChanged();
+							skeletonChanged();
 
 						} catch (Exception e) {
 							taskManager.stopProgress();
@@ -519,6 +530,72 @@ public class Model extends EventHandlerManager {
 		});
 	}
 
+	public void setBonePosition(Perspective perspective, VirtualBone vBone, Bone rBone, double newX, double newY, boolean repositionDiagrams) {
+		Bone rootBone = rBone.getSkeleton().getBone("root");
+
+		double dX = (rootBone.x + newX - (rBone.parentBone != null ? rBone.parentBone.worldX : 0)) - rBone.x;
+		double dY = (rootBone.y + newY - (rBone.parentBone != null ? rBone.parentBone.worldY : 0)) - rBone.y;
+
+		for (VirtualBone vb : masterSkeleton.get().bones.values()) {
+			Bone b = vb.realBones.get(perspective);
+			if (b == null) {
+				continue;
+			}
+			if (b.parentBone == rBone) {
+				setBonePosition(perspective, vb, b, b.x - dX, b.y - dY, false);
+			}
+		}
+
+		rBone.x += dX;
+		rBone.y += dY;
+		if (repositionDiagrams) {
+			repositionDiagrams(perspective, vBone, -dX, -dY);
+		}
+		saveBone(rBone);
+	}
+
+	public void relocateSlot(VirtualSlot slot, VirtualBone targetBone) {
+		VirtualBone oldBone = slot.bone;
+
+		oldBone.removeSlot(slot);
+		targetBone.addSlot(slot);
+
+		for (Slot s : slot.realSlots.values()) {
+			s.setBone(targetBone.realBones.get(s.getSkeleton().perspective));
+			dataLoader.saveSlot(s);
+		}
+
+		relocateSlot(slot, targetBone, oldBone, Perspective.Front);
+		relocateSlot(slot, targetBone, oldBone, Perspective.Side);
+
+		skeletonChanged();
+	}
+
+	private void relocateSlot(VirtualSlot slot, VirtualBone targetBone, VirtualBone oldBone, Perspective perspective) {
+		Bone rTargetBone = targetBone.realBones.get(perspective);
+		Bone rOldBone = oldBone.realBones.get(perspective);
+		double dX = rTargetBone.worldX - rOldBone.worldX;
+		double dY = rTargetBone.worldY - rOldBone.worldY;
+		repositionDiagrams(perspective, slot, dX, dY);
+	}
+
+	public void repositionDiagrams(Perspective perspective, VirtualBone vBone, double deltaX, double deltaY) {
+		for (VirtualSlot vSlot : vBone.slots.values()) {
+			repositionDiagrams(perspective, vSlot, deltaX, deltaY);
+		}
+	}
+
+	private void repositionDiagrams(Perspective perspective, VirtualSlot vSlot, double deltaX, double deltaY) {
+		for (VirtualDiagram vDiagram : vSlot.diagrams.values()) {
+			Diagram rDiagram = vDiagram.realDiagrams.get(perspective);
+			if (rDiagram != null) {
+				rDiagram.x += deltaX;
+				rDiagram.y += deltaY;
+				saveDiagram(rDiagram);
+			}
+		}
+	}
+
 	public BufferedImage getImage(String imageName) {
 		NamedItem image = dataStore.getImage(imageName.toLowerCase());
 		if (image != null && image instanceof NamedPng) {
@@ -541,6 +618,11 @@ public class Model extends EventHandlerManager {
 			dataStore.renameDiagramImages(oldName, item.getName());
 			dataLoader.saveDiagram(dataStore.getDiagram(getSkeleton(Perspective.Front).id, item.getName()));
 			dataLoader.saveDiagram(dataStore.getDiagram(getSkeleton(Perspective.Side).id, item.getName()));
+		} else if (item instanceof VirtualBone) {
+			for (Bone b : ((VirtualBone)item).realBones.values()) {
+				b.name = item.getName();
+				dataLoader.saveBone(b);
+			}
 		}
 	}
 
@@ -584,6 +666,10 @@ public class Model extends EventHandlerManager {
 
 	}
 
+	public void saveBone(Bone b) {
+		dataLoader.saveBone(b);
+	}
+
 	public void saveDiagram(Diagram d) {
 		dataLoader.saveDiagram(d);
 	}
@@ -591,4 +677,27 @@ public class Model extends EventHandlerManager {
 	public void authenticate() {
 		dataLoader.authenticate();
 	}
+
+	public void deleteSlot(VirtualSlot vSlot) {
+		vSlot.realSlots.values().forEach(slot -> dataLoader.deleteSlot(slot));
+		vSlot.bone.removeSlot(vSlot);
+		skeletonChanged();
+	}
+
+	public void deleteBone(VirtualBone vBone) {
+		vBone.realBones.values().forEach(bone -> dataLoader.deleteBone(bone));
+		vBone.skeleton.removeBone(vBone);
+		skeletonChanged();
+	}
+
+	public VirtualSlot getVirtualSlot(String slotName) {
+		for (VirtualBone b : masterSkeleton.get().bones.values()) {
+			if (b.hasSlot(slotName)) {
+				return b.slots.get(slotName);
+			}
+		}
+		return null;
+	}
+
+
 }

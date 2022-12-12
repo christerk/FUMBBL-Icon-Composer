@@ -33,9 +33,8 @@ public class ImageRenderer {
         if (image == null) {
             return;
         }
-        AffineTransform at = g2.getTransform();
+
         g2.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_NEAREST_NEIGHBOR);
         g2.drawImage(image, 0, 0, null);
-        g2.setTransform(at);
     }
 }

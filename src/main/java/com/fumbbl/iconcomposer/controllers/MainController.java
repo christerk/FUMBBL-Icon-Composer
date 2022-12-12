@@ -86,6 +86,7 @@ public class MainController extends BaseController implements Initializable {
 	public Menu menuColourThemes;
 	public ContextMenu treeContext;
 	public MenuItem treeContextNewComponent;
+	public MenuItem treeContextDeleteItem;
 
 	public MainController() {
 	}
@@ -127,7 +128,8 @@ public class MainController extends BaseController implements Initializable {
 			TreeItem<NamedItem> selectedItem = treeView.getSelectionModel().getSelectedItem();
 			if (selectedItem != null) {
 				NamedItem item = selectedItem.getValue();
-				if (item instanceof NamedImage) {
+				boolean isRootBone = (item instanceof VirtualBone && item.getName().equals("root"));
+				if (item instanceof VirtualImage || isRootBone) {
 					event.consume();
 				}
 				treeContextNewComponent.setVisible(item instanceof VirtualSlot);
@@ -185,7 +187,6 @@ public class MainController extends BaseController implements Initializable {
 
 		treeView.setContextMenu(treeContext);
 
-
 		positionChoice.setItems(model.masterPositions);
 
 		BooleanBinding positionChoiceVisible = Bindings.createBooleanBinding(() -> !model.masterPositions.isEmpty(), model.masterPositions);
@@ -196,7 +197,11 @@ public class MainController extends BaseController implements Initializable {
 
 		slotChoices.setItems(model.masterSlots);
 
-		model.selectedPosition.addListener((o, oldValue, newValue) -> setColourTheme(newValue.templateColours));
+		model.selectedPosition.addListener((o, oldValue, newValue) -> {
+			if (newValue != null) {
+				setColourTheme(newValue.templateColours);
+			}
+		});
 
 		progressPane.visibleProperty().bind(model.taskManager.taskRunningProperty);
 		labelProgress.textProperty().bind(model.taskManager.taskStateProperty);
@@ -235,6 +240,14 @@ public class MainController extends BaseController implements Initializable {
 		imageClicked(Perspective.Side, e);
 	}
 
+	public void frontSkeletonClicked(MouseEvent e) {
+		skeletonClicked(Perspective.Front, e);
+	}
+
+	public void sideSkeletonClicked(MouseEvent e) {
+		skeletonClicked(Perspective.Side, e);
+	}
+
 	public void imageClicked(Perspective perspective, MouseEvent e) {
 		double x = e.getX();
 		double y = e.getY();
@@ -242,17 +255,21 @@ public class MainController extends BaseController implements Initializable {
 
 		Position p = model.selectedPosition.get();
 
+		if (p == null || model.getSkeleton(perspective) == null) {
+			return;
+		}
+
 		Diagram d = model.getDiagram(model.getSkeleton(perspective).id, treeView.getSelectionModel().getSelectedItem().getValue().getName());
 
 		ColourType type = controller.viewState.getActiveColourType();
 		
-		if (button == MouseButton.PRIMARY && controller != null && type != null) {
+		if (p != null && button == MouseButton.PRIMARY && controller != null && type != null) {
 			Color c = controller.viewState.getPixelRGB(perspective, (int)x, (int)y);
 			
 			p.templateColours.setColour(type, c);
 			controller.setPositionColour(p, type, "#"+Integer.toHexString(c.getRGB()).substring(2));
 			setColourTheme(p.templateColours);
-		} else if (button == MouseButton.SECONDARY) {
+		} else if (d != null && button == MouseButton.SECONDARY) {
 			Point2D point = controller.getRenderer().getImageOffset(x, y);
 			d.x = point.getX();
 			d.y = point.getY();
@@ -260,6 +277,30 @@ public class MainController extends BaseController implements Initializable {
 			d.updateTransform();
 			controller.displayDiagram(d);
 		}
+	}
+
+	public void skeletonClicked(Perspective perspective, MouseEvent e) {
+		double x = e.getX();
+		double y = e.getY();
+
+		Position p = model.selectedPosition.get();
+
+		Skeleton skeleton = model.getSkeleton(perspective);
+		if (p == null || skeleton == null) {
+			return;
+		}
+
+		VirtualBone vBone = (VirtualBone) treeView.getSelectionModel().getSelectedItem().getValue();
+		Bone rBone = vBone.realBones.get(perspective);
+
+		double oldX = rBone.x;
+		double oldY = rBone.y;
+
+		double newX = Math.round((x - 480.0 / 2) / 8);
+		double newY = Math.round((480.0 / 2 - y) / 8);
+		model.setBonePosition(perspective, vBone, rBone, newX, newY, true);
+
+		renderSkeleton(skeleton);
 	}
 
 	public void activateColour(MouseEvent e) {
@@ -438,6 +479,10 @@ public class MainController extends BaseController implements Initializable {
 	public void deleteItem(ActionEvent e) {
 		NamedItem item = treeView.getSelectionModel().getSelectedItem().getValue();
 
-
+		if (item instanceof VirtualSlot) {
+			model.deleteSlot((VirtualSlot) item);
+		} else if (item instanceof VirtualBone) {
+			model.deleteBone((VirtualBone) item);
+		}
 	}
 }

@@ -184,10 +184,10 @@ public class DataLoader {
 		}
 	}
 
-	private void saveBone(Bone bone) {
+	public void saveBone(Bone bone) {
 		Runnable task = () -> {
 			Map<String, String> params = new HashMap<>();
-			params.put("boneID", Integer.toString(bone.id));
+			params.put("boneId", Integer.toString(bone.id));
 			params.put("skeletonId", Integer.toString(bone.getSkeleton().id));
 			params.put("name", bone.name);
 			params.put("parentId", Integer.toString(bone.parentBone != null ? bone.parentBone.id : -1));
@@ -206,6 +206,14 @@ public class DataLoader {
 		for (Slot slot : slots) {
 			saveSlot(slot);
 		}
+	}
+
+	public void deleteSlot(Slot slot) {
+		taskManager.runInBackground(() -> {
+			Map<String, String> params = new HashMap<>();
+			params.put("slotId", Integer.toString(slot.id));
+			String content = apiClient.post("/iconskeleton/deleteSlot", params, true);
+		});
 	}
 
 	public void saveSlot(Slot slot) {
@@ -271,5 +279,13 @@ public class DataLoader {
 
 	public void loadImage(int imageId, Callback<BufferedImage, BufferedImage> callback) {
 		apiClient.loadImage(imageId, callback);
+	}
+
+    public void deleteBone(Bone bone) {
+		taskManager.runInBackground(() -> {
+			Map<String, String> params = new HashMap<>();
+			params.put("boneId", Integer.toString(bone.id));
+			String content = apiClient.post("/iconskeleton/deleteBone", params, true);
+		});
 	}
 }

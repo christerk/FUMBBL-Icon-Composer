@@ -63,7 +63,7 @@ public class ViewState {
 		imageData.put(ImageType.DiagramSide, new ImageData(480));
 		imageData.put(ImageType.SkeletonFront, new ImageData(480));
 		imageData.put(ImageType.SkeletonSide, new ImageData(480));
-		imageData.put(ImageType.Preview, new ImageData(65*14+5, 65*4+5));
+		imageData.put(ImageType.Preview, new ImageData(64*14+5, 64*4+5));
     }
 
 	public Graphics2D getDiagramGraphics2D(Perspective perspective) {

@@ -46,8 +46,8 @@ public class Bone extends NamedItem {
 			c = Math.sin(Math.toRadians(rotation + shearX)) * scaleX * sx;
 			d = Math.sin(Math.toRadians(rotationY)) * scaleY * sy;
 			
-			worldX = x * sx + skeleton.x;
-			worldY = y * sy + skeleton.y;
+			worldX = x * sx;
+			worldY = y * sy;
 			return;
 		}
 		

@@ -6,7 +6,7 @@ import javafx.collections.ObservableMap;
 
 public class VirtualSlot extends NamedItem {
     public ObservableMap<String, VirtualDiagram> diagrams;
-    private ObservableMap<Perspective, Slot> realSlots;
+    public ObservableMap<Perspective, Slot> realSlots;
     public final VirtualBone bone;
 
     public VirtualSlot(VirtualBone bone, String name) {
