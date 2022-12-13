@@ -157,12 +157,12 @@ public class MainController extends BaseController implements Initializable {
 		slotChoices.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> {
 			Diagram d = controller.viewState.getActiveDiagram(Perspective.Front);
 			if (d != null) {
-				d.setSlot(model.getSlot(model.masterSkeleton.get().realSkeletons.get(Perspective.Front).id, d.getSlot().getName()));
+				//d.setSlot(model.getSlot(model.masterSkeleton.get().realSkeletons.get(Perspective.Front).id, d.getSlot().getName()));
 			}
 
 			d = controller.viewState.getActiveDiagram(Perspective.Side);
 			if (d != null) {
-				d.setSlot(model.getSlot(model.masterSkeleton.get().realSkeletons.get(Perspective.Side).id, d.getSlot().getName()));
+				//d.setSlot(model.getSlot(model.masterSkeleton.get().realSkeletons.get(Perspective.Side).id, d.getSlot().getName()));
 			}
 		});
 
@@ -194,8 +194,6 @@ public class MainController extends BaseController implements Initializable {
 
 		StringBinding isAuthorized = Bindings.createStringBinding(() -> model.isAuthenticated() ? "Authenticated" : "Not Authenticated", model.dataLoader.isAuthenticated);
 		apiStatus.textProperty().bind(isAuthorized);
-
-		slotChoices.setItems(model.masterSlots);
 
 		model.selectedPosition.addListener((o, oldValue, newValue) -> {
 			if (newValue != null) {
@@ -259,7 +257,12 @@ public class MainController extends BaseController implements Initializable {
 			return;
 		}
 
-		Diagram d = model.getDiagram(model.getSkeleton(perspective).id, treeView.getSelectionModel().getSelectedItem().getValue().getName());
+		NamedItem item = treeView.getSelectionModel().getSelectedItem().getValue();
+		if (!(item instanceof VirtualDiagram)) {
+			return;
+		}
+
+		Diagram d = ((VirtualDiagram)item).realDiagrams.get(perspective);
 
 		ColourType type = controller.viewState.getActiveColourType();
 		
@@ -341,7 +344,6 @@ public class MainController extends BaseController implements Initializable {
 		if (newValue == null) {
 			controller.setSkeleton(null);
 			controller.displayBones();
-			model.masterSlots.clear();
 			setBones(null);
 
 			return;
@@ -434,10 +436,6 @@ public class MainController extends BaseController implements Initializable {
 			menuItems.add(item);
 			item.setOnAction(action);
 		}
-	}
-	
-	public void setImages(Collection<NamedImage> images) {
-		model.masterImages.setAll(images);
 	}
 
 	public void setBones(Collection<Bone> bones) {

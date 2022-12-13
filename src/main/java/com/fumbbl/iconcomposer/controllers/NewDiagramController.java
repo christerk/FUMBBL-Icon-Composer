@@ -33,7 +33,7 @@ public class NewDiagramController extends BaseController implements Initializabl
 	
 	@Override
 	public void onShow() {
-		slotChoice.setItems(model.masterSlots);
+		//slotChoice.setItems(model.masterSlots);
 	}
 	
 	public void createDiagram() {

@@ -56,4 +56,39 @@ public class VirtualSkeleton extends NamedItem {
     public ObservableMap<String, ? extends NamedItem> getChildren() {
         return bones;
     }
+
+    public VirtualDiagram findDiagram(String diagramName) {
+        for (VirtualBone bone : bones.values()) {
+            for (VirtualSlot slot : bone.slots.values()) {
+                if (slot.diagrams.containsKey(diagramName)) {
+                    return slot.diagrams.get(diagramName);
+                }
+            }
+        }
+        return null;
+    }
+
+    public Bone getBoneById(int boneId) {
+        for (VirtualBone bone : bones.values()) {
+            for (Bone b : bone.realBones.values()) {
+                if (b.id == boneId) {
+                    return b;
+                }
+            }
+        }
+        return null;
+    }
+
+    public Slot getSlotById(int slotId) {
+        for (VirtualBone bone : bones.values()) {
+            for (VirtualSlot slot : bone.slots.values()) {
+                for (Slot s : slot.realSlots.values()) {
+                    if (s.id == slotId) {
+                        return s;
+                    }
+                }
+            }
+        }
+        return null;
+    }
 }

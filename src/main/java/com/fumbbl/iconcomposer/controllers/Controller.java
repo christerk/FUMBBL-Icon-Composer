@@ -130,11 +130,9 @@ public class Controller extends BaseController {
 			displayDiagram(null);
 			return;
 		}
-		Diagram d = model.getDiagram(model.masterSkeleton.get().realSkeletons.get(Perspective.Front).id, diagramName);
-		displayDiagram(d);
 
-		d = model.getDiagram(model.masterSkeleton.get().realSkeletons.get(Perspective.Side).id, diagramName);
-		displayDiagram(d);
+		VirtualDiagram vDiagram = model.getVirtualDiagram(diagramName);
+		vDiagram.realDiagrams.values().forEach(d -> displayDiagram(d));
 	}
 
 	public void displayDiagram(Diagram d) {
@@ -171,10 +169,6 @@ public class Controller extends BaseController {
 	
 	public void onItemRenamed(NamedItem item, String oldName) {
 		model.onItemRenamed(item, oldName);
-	}
-
-	public Collection<NamedImage> getImagesForDiagram(VirtualDiagram d) {
-		return model.getImagesForDiagram(d);
 	}
 
 	public void setPositionColour(Position p, ColourTheme.ColourType type, String rgb) {

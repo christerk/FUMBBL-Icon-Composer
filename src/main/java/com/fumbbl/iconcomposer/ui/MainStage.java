@@ -34,6 +34,7 @@ public class MainStage extends BaseStage {
 
 					mainController.handleDroppedFile(path);
 				}
+				model.skeletonChanged();
 			}
 			event.setDropCompleted(success);
 			event.consume();

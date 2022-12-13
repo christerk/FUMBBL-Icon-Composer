@@ -3,6 +3,7 @@ package com.fumbbl.iconcomposer.image;
 import java.awt.*;
 import java.awt.geom.AffineTransform;
 import java.awt.image.BufferedImage;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -49,9 +50,11 @@ public class BaseRenderer {
 				MainController mainController = controller.getMainController();
 				Skin skin = new Skin();
 
-				for (VirtualSlot slot : model.masterSlots) {
-					VirtualDiagram randomDiagram = random(slot.diagrams.values());
-					skin.setDiagram(slot.getName(), randomDiagram);
+				for (VirtualBone b : model.masterSkeleton.get().bones.values()) {
+					for (VirtualSlot slot : b.slots.values()) {
+						VirtualDiagram randomDiagram = random(slot.diagrams.values());
+						skin.setDiagram(slot.getName(), randomDiagram);
+					}
 				}
 
 				renderSkin(Perspective.Front, skin, x, y * 2);
@@ -159,13 +162,17 @@ public class BaseRenderer {
 
 		skeleton.updateTransforms();
 
-		Diagram skeletonDiagram = model.getDiagram(skeleton.id, "skeleton");
-		if (skeletonDiagram != null) {
-			AffineTransform at = g2.getTransform();
-			g2.scale(scale, scale);
-			g2.translate(-centerX, centerY);
-			renderDiagram(g2, skeletonDiagram, skeleton, skeletonDiagram.getSlot(), controller.getColourTheme());
-			g2.setTransform(at);
+		VirtualDiagram vDiagram = model.getVirtualDiagram("skeleton");
+
+		if (vDiagram != null) {
+			Diagram skeletonDiagram = vDiagram.realDiagrams.get(perspective);
+			if (skeletonDiagram != null) {
+				AffineTransform at = g2.getTransform();
+				g2.scale(scale, scale);
+				g2.translate(-centerX, centerY);
+				renderDiagram(g2, skeletonDiagram, skeleton, skeletonDiagram.getSlot(), controller.getColourTheme());
+				g2.setTransform(at);
+			}
 		}
 
 		for (Bone b : skeleton.getBones()) {
@@ -243,23 +250,27 @@ public class BaseRenderer {
 
 		ColourTheme theme = controller.getColourTheme();
 
-		//AffineTransform at = g2.getTransform();
-		List<Slot> orderedSlots = model.masterSlots.stream().map(vs->model.getSlot(skeleton.id,vs.getName())).sorted(Slot.ReverseComparator).collect(Collectors.toList());
+		Collection<Slot> allSlots = new ArrayList<>();
+
+		model.masterSkeleton.get().bones.values().stream()
+				.forEach(b -> allSlots.addAll(
+						b.slots.values().stream()
+								.map(vs -> vs.realSlots.get(skeleton.perspective))
+								.collect(Collectors.toList())
+				));
+		List<Slot> orderedSlots = allSlots.stream().sorted(Slot.ReverseComparator).collect(Collectors.toList());
 		for (Slot slot : orderedSlots) {
 			if (slot == null) {
 				continue;
 			}
 			VirtualDiagram virtualDiagram = skin.getDiagram(slot.getName());
 			if (virtualDiagram != null) {
-				Diagram diagram = model.getDiagram(skeleton.id, virtualDiagram.getName());
+				Diagram diagram = virtualDiagram.realDiagrams.get(skeleton.perspective);
 
 				if (diagram != null) {
-					//diagram.setColour(controller.getSvg(diagram.getImage().getName()), theme);
-					//g2.translate(-29, -5);
 					renderTransformedDiagram(g2, diagram, skeleton, slot, theme);
 				}
 			}
-			//g2.setTransform(at);
 		}
 
 		g2.setTransform(originalTransform);
@@ -301,7 +312,15 @@ public class BaseRenderer {
 	}
 	
 	private void renderDiagram(Graphics2D g2, Diagram diagram, ColourTheme theme) {
-		BufferedImage image = model.getImage(diagram.perspective.name()+"_"+diagram.getName());
+		if (diagram == null || diagram.perspective == null) {
+			return;
+		}
+		//BufferedImage image = model.getImage(diagram.perspective.name()+"_"+diagram.getName());
+
+		VirtualDiagram vDiagram = model.getVirtualDiagram(diagram.getName());
+		VirtualImage vImage = vDiagram.images.get(diagram.getName());
+		NamedPng png = (NamedPng) vImage.realImages.get(diagram.perspective);
+		BufferedImage image = png.image;
 
 		if (image == null) {
 			return;
@@ -332,7 +351,10 @@ public class BaseRenderer {
 		if (image instanceof NamedPng) {
 			imageRenderer.renderImage(perspective, ((NamedPng)image).image);
 		} else {
-			imageRenderer.renderImage(perspective, model.getImage(perspective.name()+"_"+image.getName()));
+			String imageName = image.getName();
+			VirtualDiagram vDiagram = model.getVirtualDiagram(imageName);
+			NamedPng png = (NamedPng) vDiagram.images.get(imageName).realImages.get(perspective);
+			imageRenderer.renderImage(perspective, png.image);
 		}
 	}
 }
