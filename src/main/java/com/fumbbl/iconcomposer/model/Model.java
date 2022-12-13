@@ -99,7 +99,7 @@ public class Model extends EventHandlerManager {
 				fileId = fileId.substring(5);
 			}
 			diagram = getDiagram(perspective, fileId);
-			VirtualDiagram vDiagram = null;
+			VirtualDiagram vDiagram = getVirtualDiagram(fileId);
 
 			if (diagram == null) {
 				VirtualSlot vSlot = getVirtualSlotForFile(fileId);
@@ -135,11 +135,13 @@ public class Model extends EventHandlerManager {
 					vImage = vDiagram.images.get(vDiagram.getName());
 				} else {
 					vImage = new VirtualImage(vDiagram, vDiagram.getName());
+					vDiagram.addImage(vImage);
 				}
 				vImage.set(newImage);
 			}
 
 			dataLoader.uploadFile(diagram.id, originalName, bytes);
+			skeletonChanged();
 		} catch (IOException ioe) {
 
 		}
@@ -197,12 +199,19 @@ public class Model extends EventHandlerManager {
 	}
 
 	public void loadRoster(int rosterId) {
+		selectedPosition.set(null);
 		DtoRoster roster = dataLoader.getRoster(rosterId);
 
 		masterPositions.setAll(roster.toRoster().positions);
 	}
 
 	private void loadPosition(Position position) {
+		if (position == null) {
+			masterSkeleton.set(null);
+			skeletonChanged();
+			return;
+		}
+
 		taskManager.onProgressStart("Loading");
 		taskManager.startBatch();
 

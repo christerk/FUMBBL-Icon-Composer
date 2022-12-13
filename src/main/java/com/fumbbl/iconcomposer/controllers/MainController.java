@@ -71,7 +71,6 @@ public class MainController extends BaseController implements Initializable {
 	public ImageView skinMid;
 	public ImageView skinHi;
 	public GridPane colourPane;
-	public ChoiceBox<VirtualSlot> slotChoices;
 	public TextField frontDiagramX;
 	public TextField frontDiagramY;
 	public TextField sideDiagramX;
@@ -107,18 +106,6 @@ public class MainController extends BaseController implements Initializable {
 			}
 		});
 
-		slotChoices.setConverter(new StringConverter<VirtualSlot>() {
-			@Override
-			public String toString(VirtualSlot object) {
-				return object.getName();
-			}
-
-			@Override
-			public VirtualSlot fromString(String string) {
-				return null;
-			}
-		});
-
 		treeView.setShowRoot(false);
 
 		new CellFactory<>().apply(treeView, NamedItem.class, controller);
@@ -145,7 +132,6 @@ public class MainController extends BaseController implements Initializable {
 				if (newValue.getValue() instanceof VirtualDiagram) {
 					VirtualDiagram diagram = (VirtualDiagram) newValue.getValue();
 					controller.displayDiagrams(diagram.getName());
-					slotChoices.getSelectionModel().select(diagram.slot);
 					setSlotInfo(diagram);
 				tabs.getSelectionModel().select(diagramTab);
 			}
@@ -153,20 +139,6 @@ public class MainController extends BaseController implements Initializable {
 				controller.displayDiagrams(null);
 			}
 		});
-
-		slotChoices.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> {
-			Diagram d = controller.viewState.getActiveDiagram(Perspective.Front);
-			if (d != null) {
-				//d.setSlot(model.getSlot(model.masterSkeleton.get().realSkeletons.get(Perspective.Front).id, d.getSlot().getName()));
-			}
-
-			d = controller.viewState.getActiveDiagram(Perspective.Side);
-			if (d != null) {
-				//d.setSlot(model.getSlot(model.masterSkeleton.get().realSkeletons.get(Perspective.Side).id, d.getSlot().getName()));
-			}
-		});
-
-		positionChoice.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> model.selectedPosition.set(newValue));
 	}
 
 	public void onShow() {
@@ -192,6 +164,8 @@ public class MainController extends BaseController implements Initializable {
 		BooleanBinding positionChoiceVisible = Bindings.createBooleanBinding(() -> !model.masterPositions.isEmpty(), model.masterPositions);
 		positionChoice.visibleProperty().bind(positionChoiceVisible);
 
+		model.selectedPosition.bindBidirectional(positionChoice.valueProperty());
+
 		StringBinding isAuthorized = Bindings.createStringBinding(() -> model.isAuthenticated() ? "Authenticated" : "Not Authenticated", model.dataLoader.isAuthenticated);
 		apiStatus.textProperty().bind(isAuthorized);
 
@@ -206,15 +180,22 @@ public class MainController extends BaseController implements Initializable {
 		progressBar.progressProperty().bind(model.taskManager.taskPctProperty);
 
 		model.addEventHandler(SkeletonChangedEvent.SKELETON_CHANGED, e -> {
-			model.masterSkeleton.get().realSkeletons.values().forEach(s->renderSkeleton(s));
+			VirtualSkeleton skeleton = model.masterSkeleton.get();
+			renderSkeleton(null);
+			if (skeleton != null) {
+				skeleton.realSkeletons.values().forEach(s -> renderSkeleton(s));
+			}
 			renderPreview();
 			Platform.runLater(() -> combinationsLabel.setText(String.format("%d", CountCombinations())));
 		});
 	}
 
 	private long CountCombinations() {
-		long combinations = 1;
+		if (model.masterSkeleton.get() == null) {
+			return 0;
+		}
 
+		long combinations = 1;
 		for (VirtualBone bone : model.masterSkeleton.get().bones.values()) {
 			for (VirtualSlot slot : bone.slots.values()) {
 				long count = slot.diagrams.size();
@@ -341,14 +322,6 @@ public class MainController extends BaseController implements Initializable {
 	 */
 	
 	public void renderSkeleton(Skeleton newValue) {
-		if (newValue == null) {
-			controller.setSkeleton(null);
-			controller.displayBones();
-			setBones(null);
-
-			return;
-		}
-
 		controller.displayBones();
 	}
 	
@@ -396,8 +369,6 @@ public class MainController extends BaseController implements Initializable {
 	}
 	
 	public void setSlotInfo(VirtualDiagram diagram) {
-		slotChoices.setValue(diagram.slot);
-
 		diagram.realDiagrams.forEach((perspective, d)->{
 			(perspective==Perspective.Front ? frontDiagramX : sideDiagramX).setText(Integer.toString((int)d.x));
 			(perspective==Perspective.Front ? frontDiagramY : sideDiagramY).setText(Integer.toString((int)d.y));
@@ -435,19 +406,6 @@ public class MainController extends BaseController implements Initializable {
 			MenuItem item = new MenuItem(s.name);
 			menuItems.add(item);
 			item.setOnAction(action);
-		}
-	}
-
-	public void setBones(Collection<Bone> bones) {
-		if (bones == null) {
-			return;
-		}
-		Map<String,Bone> boneMap = new HashMap<>();
-		Map<String,TreeItem<String>> itemMap = new HashMap<>();
-
-		for (Bone b : bones) {
-			boneMap.put(b.name, b);
-			itemMap.put(b.name, new TreeItem<>(b.name));
 		}
 	}
 

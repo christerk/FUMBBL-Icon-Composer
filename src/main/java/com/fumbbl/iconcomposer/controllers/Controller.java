@@ -161,9 +161,13 @@ public class Controller extends BaseController {
 	}
 
 	public void displayBones() {
-		controllerManager.getMain().hideColourPane();
-		renderer.renderSkeleton(Perspective.Front, model.masterSkeleton.get().realSkeletons.get(Perspective.Front));
-		renderer.renderSkeleton(Perspective.Side, model.masterSkeleton.get().realSkeletons.get(Perspective.Side));
+		if (model.masterSkeleton.get() != null) {
+			renderer.renderSkeleton(Perspective.Front, model.masterSkeleton.get().realSkeletons.get(Perspective.Front));
+			renderer.renderSkeleton(Perspective.Side, model.masterSkeleton.get().realSkeletons.get(Perspective.Side));
+		} else {
+			renderer.renderSkeleton(Perspective.Front, null);
+			renderer.renderSkeleton(Perspective.Side, null);
+		}
 		onSkeletonImageChanged();
 	}
 	

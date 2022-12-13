@@ -43,6 +43,10 @@ public class BaseRenderer {
 		g2.setColor(renderBackground);
 		g2.fillRect(0, 0, (int)image.getWidth(), (int)image.getHeight());
 
+		if (model.masterSkeleton.get() == null) {
+			return;
+		}
+
 		controller.viewState.setActiveColourTheme(model.getColourTheme("template"));
 
 		for (int y=0; y<2; y++) {
@@ -315,13 +319,23 @@ public class BaseRenderer {
 		if (diagram == null || diagram.perspective == null) {
 			return;
 		}
-		//BufferedImage image = model.getImage(diagram.perspective.name()+"_"+diagram.getName());
 
 		VirtualDiagram vDiagram = model.getVirtualDiagram(diagram.getName());
-		VirtualImage vImage = vDiagram.images.get(diagram.getName());
-		NamedPng png = (NamedPng) vImage.realImages.get(diagram.perspective);
-		BufferedImage image = png.image;
+		if (vDiagram == null) {
+			return;
+		}
 
+		VirtualImage vImage = vDiagram.images.get(diagram.getName());
+		if (vImage == null) {
+			return;
+		}
+
+		NamedPng png = (NamedPng) vImage.realImages.get(diagram.perspective);
+		if (png == null) {
+			return;
+		}
+
+		BufferedImage image = png.image;
 		if (image == null) {
 			return;
 		}
